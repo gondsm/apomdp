@@ -2,7 +2,7 @@
 # https://github.com/JuliaPOMDP/POMDPs.jl
 # https://nbviewer.jupyter.org/github/sisl/POMDPs.jl/blob/master/examples/Tiger.ipynb
 #  Imports
-using POMDPs, POMDPModels, POMDPToolbox, QMDP, SARSOP
+using POMDPs, POMDPModels, POMDPToolbox, QMDP, SARSOP, RobotOS
 
 # Define a POMDP type
 type MyPOMDP <: POMDP{Bool, Symbol, Bool} # POMDP{State, Action, Observation} all parametarized by Int64s
