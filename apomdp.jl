@@ -12,7 +12,7 @@ end
 
 # Default constructor, initializes everything as uniform
 function aPOMDP()
-    # Only works for two state variables for now
+    # TODO: Only works for two state variables for now
     # (fors are repeated along n_var_states twice only, will have to
     # be expanded to work on n variables with iterators or something)
     # Initialize problem dimensions
@@ -111,6 +111,7 @@ POMDPs.initial_state_distribution(pomdp::aPOMDP) = pomdp.transition_matrix[[1,1,
 
 # Define state and action indices
 function POMDPs.state_index(::aPOMDP, ::Array{Int64, 1})
+    # TODO
     return 1
 end
 
@@ -121,6 +122,7 @@ end
 
 # Define evaluation of distributions
 function pdf(dist::Array, state::Array)
+    # TODO
 end
 
 pomdp = aPOMDP()
