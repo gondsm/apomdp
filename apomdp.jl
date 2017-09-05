@@ -119,7 +119,7 @@ end
 function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     key = state[:]
     append!(key, action)
-    println("Actual reward called")
+    #println("Actual reward called ", state, " ", action, " -> ", pomdp.reward_matrix[key])
     return pomdp.reward_matrix[key]
 end
 
@@ -131,7 +131,7 @@ POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(POMDPs.sta
 
 # Define state indices
 function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
-    println("Returning state index ", state, " -> ", pomdp.state_indices[state])
+    #println("Returning state index ", state, " -> ", pomdp.state_indices[state])
     return pomdp.state_indices[state]
 end
 
@@ -140,23 +140,28 @@ POMDPs.action_index(::aPOMDP, action::Int64) = action;
 
 # Define distribution calculation
 function POMDPs.pdf(dist::apomdpDistribution, state::Array)
-    println("Called dist array pdf with ", dist.dist, " ", state)
-    return 1.0
+    #println("Called dist array pdf with ", dist.dist, " ", state, " -> ", dist.dist[state[1], state[2]])
+    return dist.dist[state[1], state[2]]
 end
 
 # Initialize POMDP
+println("Initializing aPOMDP")
 pomdp = aPOMDP()
 
 # Initialize solver
+println("Initializing solver")
 solver = QMDPSolver()
 #solver = SARSOPSolver() # Brings a whole new host of problems
 
 # Get a policy
+print("Solving... ")
 policy = solve(solver, pomdp)
+println("Done!")
 
 #print(policy)
 
 # # Create a belief updater 
+# println("Creating belief updater")
 # belief_updater = updater(policy)
 
 # # Run a simulation
