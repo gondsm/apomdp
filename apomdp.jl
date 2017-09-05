@@ -123,16 +123,6 @@ function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     return pomdp.reward_matrix[key]
 end
 
-# function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64, number::Float64)
-#     key = state[:]
-#     append!(key, action)
-#     println("Bogus reward called")
-#     println("State: ", state)
-#     println("Action ", action)
-#     println("Number: ", number)
-#     return 1
-# end
-
 # Define observation model. Fully observed for now.
 POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1}) = state;
 
@@ -147,25 +137,6 @@ end
 
 # Define action indices
 POMDPs.action_index(::aPOMDP, action::Int64) = action;
-
-# Define evaluation of distributions
-# function POMDPs.pdf(dist::Array, state::Array)
-#     # TODO: currently returning 1 to force compilation
-#     println("Called array array pdf")
-#     return 1.0
-# end
-
-# function POMDPs.pdf(arr::Array{Float64,2}, numba::Float64)
-#     # TODO: currently returning 1 to force compilation
-#     println("Called array float pdf ", arr, " ", numba)
-#     return 1.0
-# end
-
-# function POMDPs.pdf(arr::Array{Int64,1}, numba::Int64)
-#     # TODO: currently returning 1 to force compilation
-#     println("Called array int pdf with ", arr, " ", numba)
-#     return 1.0
-# end 
 
 # Define distribution calculation
 function POMDPs.pdf(dist::apomdpDistribution, state::Array)
