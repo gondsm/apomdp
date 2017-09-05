@@ -8,7 +8,17 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     transition_matrix::Dict # Maintains the transition probabilities in a dict of the form [S,A] (vector) -> P(S') (n-d matrix)
     reward_matrix::Dict # Maintains the rewards associated with states in a dict of the form [S,A] (vector) -> R (float)
     discount_factor::Float64
+    state_indices::Dict # Maintains the state indices as a dict of the form [S] (vector) -> Int
 end
+
+# Define probability distribution type
+type apomdpDistribution
+    state_space::Array
+    dist::Array{Float64, 2}
+end
+
+# Define iterator over distribution
+POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP()
@@ -27,6 +37,14 @@ function aPOMDP()
             key = [i,j]
             state_values_dict[key] = 0
         end
+    end
+
+    # Initialize state-index matrix
+    curr_index = 1
+    state_indices = Dict()
+    for i = 1:n_var_states, j = 1:n_var_states
+        state_indices[[i,j]] = curr_index
+        curr_index += 1
     end
 
     # Initialize uniform transition matrix
@@ -52,7 +70,8 @@ function aPOMDP()
                   state_values_dict,
                   transition_dict, 
                   reward_dict,
-                  0.9)
+                  0.9,
+                  state_indices)
 end
 
 # Define state space
@@ -90,48 +109,100 @@ POMDPs.n_observations(pomdp::aPOMDP) = size(POMDPs.observations(pomdp))[1];
 
 # Define transition model
 function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
+    # Returning the distribution over states, as mandated
     key = state[:]
     append!(key, action)
-    return pomdp.transition_matrix[key]
+    return apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[key])
 end
 
 # Define reward model
 function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     key = state[:]
     append!(key, action)
+    println("Actual reward called")
     return pomdp.reward_matrix[key]
 end
 
-# Define observation model
-POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1}) = true;
+# function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64, number::Float64)
+#     key = state[:]
+#     append!(key, action)
+#     println("Bogus reward called")
+#     println("State: ", state)
+#     println("Action ", action)
+#     println("Number: ", number)
+#     return 1
+# end
 
-# Define initial state distribution
-POMDPs.initial_state_distribution(pomdp::aPOMDP) = pomdp.transition_matrix[[1,1,1]][:];
+# Define observation model. Fully observed for now.
+POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1}) = state;
 
+# Define uniform initial state distribution
+POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[[1,1,1]]);
 
-# Define state and action indices
-function POMDPs.state_index(::aPOMDP, ::Array{Int64, 1})
-    # TODO
-    return 1
+# Define state indices
+function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
+    println("Returning state index ", state, " -> ", pomdp.state_indices[state])
+    return pomdp.state_indices[state]
 end
 
-function POMDPs.action_index(::aPOMDP, action::Int64)
-    return action
-end
-
+# Define action indices
+POMDPs.action_index(::aPOMDP, action::Int64) = action;
 
 # Define evaluation of distributions
-function pdf(dist::Array, state::Array)
-    # TODO
+# function POMDPs.pdf(dist::Array, state::Array)
+#     # TODO: currently returning 1 to force compilation
+#     println("Called array array pdf")
+#     return 1.0
+# end
+
+# function POMDPs.pdf(arr::Array{Float64,2}, numba::Float64)
+#     # TODO: currently returning 1 to force compilation
+#     println("Called array float pdf ", arr, " ", numba)
+#     return 1.0
+# end
+
+# function POMDPs.pdf(arr::Array{Int64,1}, numba::Int64)
+#     # TODO: currently returning 1 to force compilation
+#     println("Called array int pdf with ", arr, " ", numba)
+#     return 1.0
+# end 
+
+# Define distribution calculation
+function POMDPs.pdf(dist::apomdpDistribution, state::Array)
+    println("Called dist array pdf with ", dist.dist, " ", state)
+    return 1.0
 end
 
+# Initialize POMDP
 pomdp = aPOMDP()
 
 # Initialize solver
 solver = QMDPSolver()
+#solver = SARSOPSolver() # Brings a whole new host of problems
 
 # Get a policy
 policy = solve(solver, pomdp)
+
+#print(policy)
+
+# # Create a belief updater 
+# belief_updater = updater(policy)
+
+# # Run a simulation
+# println("Simulating POMDP")
+# history = simulate(HistoryRecorder(max_steps=20), 
+#                    pomdp, 
+#                    policy, 
+#                    belief_updater)
+
+# # look at what happened
+# for (s, b, a, o) in eachstep(history, "sbao")
+#     println("State was $s,")
+#     println("belief was $b,")
+#     println("action $a was taken,")
+#     println("and observation $o was received.\n")
+# end
+# println("Discounted reward was $(discounted_reward(history)).")
 
 # Print stuff for checking:
 # println("State space:")
