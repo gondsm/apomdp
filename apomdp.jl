@@ -58,7 +58,6 @@ function aPOMDP()
     end 
 
     # Initialize uniform reward matrix
-    # TODO: initialize from transition matrix
     reward_dict = Dict()
     for i = 1:n_var_states, j = 1:n_var_states, k = 1:n_actions
         key = [i,j,k]
@@ -74,6 +73,18 @@ function aPOMDP()
                   reward_dict,
                   0.9,
                   state_indices)
+end
+
+# Define reward calculation function
+function calculate_reward(pomdp::aPOMDP)
+    # TODO
+    # Re-calculate the whole reward matrix according to the current transition matrix
+end
+
+# Define knowledge integration function
+function update_transition()
+    # TODO
+    # Update the transition function/matrix with new knowledge
 end
 
 # Define state space
