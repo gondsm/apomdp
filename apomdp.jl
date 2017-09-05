@@ -1,3 +1,4 @@
+# Type and method definitions for the $\alpha$POMDP.
 using POMDPs, POMDPModels, POMDPToolbox, QMDP, SARSOP, RobotOS
 
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
@@ -99,19 +100,31 @@ POMDPs.isterminal_obs(::aPOMDP, ::Array{Int64, 1}) = false;
 POMDPs.discount(pomdp::aPOMDP) = pomdp.discount_factor;
 
 # Define number of states
-POMDPs.n_states(pomdp::aPOMDP) = size(POMDPs.states(pomdp))[1];
+function POMDPs.n_states(pomdp::aPOMDP)
+    println("Called n_states: ", size(POMDPs.states(pomdp))[1])
+    return size(POMDPs.states(pomdp))[1]
+end
+
 
 # Define number of actions
-POMDPs.n_actions(pomdp::aPOMDP) = size(POMDPs.actions(pomdp))[1];
+function POMDPs.n_actions(pomdp::aPOMDP)
+    println("Called n_actions: ", size(POMDPs.actions(pomdp))[1])
+    return size(POMDPs.actions(pomdp))[1]
+end
+
 
 # Define number of observations
-POMDPs.n_observations(pomdp::aPOMDP) = size(POMDPs.observations(pomdp))[1];
+function POMDPs.n_observations(pomdp::aPOMDP)
+    println("Called n_observations: ", size(POMDPs.observations(pomdp))[1])
+    return size(POMDPs.observations(pomdp))[1]
+end
 
 # Define transition model
 function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # Returning the distribution over states, as mandated
     key = state[:]
     append!(key, action)
+    println("Called the transition function ", state, " ", action)
     return apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[key])
 end
 
@@ -119,7 +132,7 @@ end
 function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     key = state[:]
     append!(key, action)
-    #println("Actual reward called ", state, " ", action, " -> ", pomdp.reward_matrix[key])
+    println("Reward called ", state, " ", action, " -> ", pomdp.reward_matrix[key])
     return pomdp.reward_matrix[key]
 end
 
@@ -127,11 +140,14 @@ end
 POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1}) = state;
 
 # Define uniform initial state distribution
-POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[[1,1,1]]);
+function POMDPs.initial_state_distribution(pomdp::aPOMDP)
+    println("Called initial state dist")
+    return apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[[1,1,1]])
+end
 
 # Define state indices
 function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
-    #println("Returning state index ", state, " -> ", pomdp.state_indices[state])
+    println("Returning state index ", state, " -> ", pomdp.state_indices[state])
     return pomdp.state_indices[state]
 end
 
@@ -140,56 +156,14 @@ POMDPs.action_index(::aPOMDP, action::Int64) = action;
 
 # Define distribution calculation
 function POMDPs.pdf(dist::apomdpDistribution, state::Array)
-    #println("Called dist array pdf with ", dist.dist, " ", state, " -> ", dist.dist[state[1], state[2]])
+    println("Called dist array pdf with ", dist.dist, " ", state, " -> ", dist.dist[state[1], state[2]])
     return dist.dist[state[1], state[2]]
 end
 
-# Initialize POMDP
-println("Initializing aPOMDP")
-pomdp = aPOMDP()
+# Define sampling function to sample a state from the transition probability
+function POMDPs.rand(::AbstractRNG, ::apomdpDistribution)
+    # TODO
+    return [1, 1]
+end
 
-# Initialize solver
-println("Initializing solver")
-solver = QMDPSolver()
-#solver = SARSOPSolver() # Brings a whole new host of problems
 
-# Get a policy
-print("Solving... ")
-policy = solve(solver, pomdp)
-println("Done!")
-
-#print(policy)
-
-# # Create a belief updater 
-# println("Creating belief updater")
-# belief_updater = updater(policy)
-
-# # Run a simulation
-# println("Simulating POMDP")
-# history = simulate(HistoryRecorder(max_steps=20), 
-#                    pomdp, 
-#                    policy, 
-#                    belief_updater)
-
-# # look at what happened
-# for (s, b, a, o) in eachstep(history, "sbao")
-#     println("State was $s,")
-#     println("belief was $b,")
-#     println("action $a was taken,")
-#     println("and observation $o was received.\n")
-# end
-# println("Discounted reward was $(discounted_reward(history)).")
-
-# Print stuff for checking:
-# println("State space:")
-# println(POMDPs.states(pomdp))
-# println("Action space:")
-# println(POMDPs.actions(pomdp))
-# println("Observation space:")
-# println(POMDPs.observations(pomdp))
-# println("Number of states:")
-# println(POMDPs.n_states(pomdp))
-# println("Number of actions:")
-# println(POMDPs.n_actions(pomdp))
-# println("Number of observations:")
-# println(POMDPs.n_observations(pomdp))
