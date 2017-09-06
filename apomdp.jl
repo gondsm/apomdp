@@ -53,7 +53,7 @@ function aPOMDP()
     for i = 1:n_var_states, j = 1:n_var_states, k = 1:n_actions
         # For every S, A combination, we have a probability distribution indexed by 
         key = [i,j,k]
-        transition_dict[key] = ones(Float64, 3, 3)
+        transition_dict[key] = ones(Float64, 3, 3)/1000
     end 
 
     # Initialize uniform reward matrix
