@@ -1,29 +1,51 @@
 # Type and method definitions for the $\alpha$POMDP.
-using POMDPs, POMDPModels, POMDPToolbox, QMDP, SARSOP
+# This script defines the aPOMDP types and associated functions that allow
+# for the definition and solving of this POMDP.
+# It has been tested using Julia0.6 and the QMDP solver
+using POMDPs, POMDPModels, POMDPToolbox, QMDP
 
+# Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
-    n_state_vars::Int64 # Number of state variables
-    n_var_states::Int64 # Number of variable states
-    n_actions::Int64 # Number of possible actions
-    state_values # Maintains the value of each state according to the goal. A dict of the form [S] (vector) -> V (float)
-    transition_matrix::Dict # Maintains the transition history in a dict of the form [S,A] (vector) -> P(S') (n-d matrix). It is not normalized and acts as a history of occurrences
-    reward_matrix::Dict # Maintains the rewards associated with states in a dict of the form [S,A] (vector) -> R (float)
+    # Number of state variables
+    # TODO: This is still fixed at 2
+    n_state_vars::Int64
+    # Number of variable states
+    # TODO: for now, all variables have the same number of states
+    n_var_states::Int64 
+    # Number of possible actions
+    # Actions will be 1 through n_action
+    n_actions::Int64 
+    # Maintains the value of each state according to the goal. A dict of the form [S] (vector) -> V (float)
+    state_values 
+    # Maintains the transition history in a dict of the form [S,A] (vector) -> P(S') (n-d matrix).
+    # It is not normalized and acts as a history of occurrences. Normalization into a proper distribution
+    # happens when it is queried via the transition() function
+    transition_matrix::Dict 
+    # Maintains the rewards associated with states in a dict of the form [S,A] (vector) -> R (float)
+    reward_matrix::Dict 
+    # The good old discount factor
     discount_factor::Float64
-    state_indices::Dict # Maintains the state indices as a dict of the form [S] (vector) -> Int
+    # Maintains the state indices as a dict of the form [S] (vector) -> Int
+    state_indices::Dict 
 end
 
 # Define probability distribution type
 type apomdpDistribution
+    # A list which each possible state
     state_space::Array
+    # A distribution over the next state
+    # This distribution is bi-dimensional, for both state dimensions
+    # TODO: still limited to 2 state variables
     dist::Array{Float64, 2}
 end
 
-# Define iterator over distribution
+# Define iterator over distribution, returns the list of possible states
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP()
     # TODO: Only works for two state variables for now
+    # TODO: constants on matrix definitions
     # (fors are repeated along n_var_states twice only, will have to
     # be expanded to work on n variables with iterators or something)
     # Initialize problem dimensions
@@ -70,7 +92,7 @@ function aPOMDP()
                   state_values_dict,
                   transition_dict, 
                   reward_dict,
-                  0.9,
+                  0.95,
                   state_indices)
 end
 
@@ -93,9 +115,9 @@ end
 
 # Define knowledge integration function
 function integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
-    # TODO: decide the learning factor (if summing 1 is enough or not, essentially)
     # Update the transition function/matrix with new knowledge.
-    # Since the matrix is not normalized, we can treat it as a simple occurrence counter.
+    # Since the matrix is not normalized, we can treat it as a simple occurrence counter and get away
+    # with simply summing 1 to the counter.
     key = prev_state[:]
     append!(key, action)
     pomdp.transition_matrix[key][final_state[1], final_state[2]] += 1
@@ -109,6 +131,8 @@ end
 
 # Define state space
 function POMDPs.states(pomdp::aPOMDP)
+    # Simple iteration over all possible state combinations
+    # TODO: still limiter to 2 state variables
     state_space = []
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
         state_space = append!(state_space, [[i,j]])
@@ -118,12 +142,13 @@ end
 
 # Define action space
 POMDPs.actions(pomdp::aPOMDP) = collect(1:pomdp.n_actions);
+# Convenience: actions are the same regardless of state
 POMDPs.actions(pomdp::aPOMDP, state::Array) = POMDPs.actions(pomdp);
 
 # Define observation space
 POMDPs.observations(pomdp::aPOMDP, s::Array{Int64, 1}) = POMDPs.states(pomdp);
 
-# Define terminality
+# Define terminality (no terminal states exist)
 POMDPs.isterminal(::aPOMDP, ::Array{Int64, 1}) = false;
 POMDPs.isterminal_obs(::aPOMDP, ::Array{Int64, 1}) = false;
 
@@ -141,11 +166,11 @@ POMDPs.n_observations(pomdp::aPOMDP) = size(POMDPs.observations(pomdp))[1]
 
 # Define transition model
 function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
-    # Returning the distribution over states, as mandated
+    # Returns the distribution over states
     # The distribution is first normalized, and then returned
+    # TODO: probably also limited to 2 state variables (indirectly)
     key = state[:]
     append!(key, action)
-    #println("Called the transition function ", state, " ", action, " -> ", pomdp.transition_matrix[key])
     dist = copy(pomdp.transition_matrix[key])
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
@@ -153,26 +178,27 @@ end
 
 # Define reward model
 function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
+    # Get the corresponding reward from the reward matrix
+    # TODO: also likely limited to 2 state vars
     key = state[:]
     append!(key, action)
-    #println("Reward called ", state, " ", action, " -> ", pomdp.reward_matrix[key])
     return pomdp.reward_matrix[key]
 end
 
 # Define observation model. Fully observed for now.
 function POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1})
-    # Return certainty as to the observed state, for now
-    # println("Observation function called with state ", state)
+    # Return a distribution over possible states given the observation
+    # TODO: make partially observed
+    # TODO: also likely limited to 2 state vars
+    # TODO: constants on distribution definition
     dist = zeros(Float64, 3, 3)
     dist[state[1], state[2]] = 100
     dist[:] = normalize(dist[:], 1)
-    # println(dist)
-    #println("Called observation function ", dist)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
 
 # Define uniform initial state distribution
-POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[[1,1,1]]);
+POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(POMDPs.states(pomdp), copy(pomdp.transition_matrix[[1,1,1]]));
 
 # Define state indices
 POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1}) = pomdp.state_indices[state];
@@ -193,7 +219,6 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     # BE CAREFUL: when manipulating the transition matrix, this will have to be kept consistent!
     # Get a random number
     r = rand(rng)
-    #println("Number: ", r)
 
     # Determine in which "box" it fits
     idx = 0
@@ -204,8 +229,6 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
             break
         end
     end
-    #println("Found index: ", idx)
-    #println("Called rand ", dist.dist'[:], " -> ", dist.state_space[idx])
     
     # Return the corresponding state
     return dist.state_space[idx]
