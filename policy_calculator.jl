@@ -6,6 +6,15 @@ using RobotOS
 println("Initializing aPOMDP")
 pomdp = aPOMDP()
 
+# Initialize values and rewards
+integrate_transition(pomdp, [1,1], [1,2], 1)
+integrate_transition(pomdp, [1,2], [1,2], 3)
+integrate_transition(pomdp, [1,1], [1,3], 2)
+integrate_transition(pomdp, [1,3], [1,3], 2)
+set_state_value(pomdp, [1,2], 10)
+set_state_value(pomdp, [1,3], 20)
+calculate_reward_matrix(pomdp)
+
 # Initialize solver
 println("Initializing solver")
 solver = QMDPSolver()
