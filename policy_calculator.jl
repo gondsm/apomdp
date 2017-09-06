@@ -8,9 +8,9 @@ pomdp = aPOMDP()
 
 # Initialize values and rewards
 integrate_transition(pomdp, [1,1], [1,2], 1)
-integrate_transition(pomdp, [1,2], [1,2], 3)
+#integrate_transition(pomdp, [1,2], [1,2], 3)
 integrate_transition(pomdp, [1,1], [1,3], 2)
-integrate_transition(pomdp, [1,3], [1,3], 2)
+#integrate_transition(pomdp, [1,3], [1,3], 2)
 set_state_value(pomdp, [1,2], 10)
 set_state_value(pomdp, [1,3], 20)
 calculate_reward_matrix(pomdp)
@@ -25,21 +25,20 @@ print("Solving... ")
 policy = solve(solver, pomdp)
 println("Done!")
 
-#println(policy)
-
 # Create a belief updater 
 println("Creating belief updater")
 belief_updater = updater(policy)
 
 # Run a simulation
 println("Simulating POMDP")
-history = simulate(HistoryRecorder(show_progress=true, max_steps=20), pomdp, policy, belief_updater)
+history = simulate(HistoryRecorder(max_steps=20), pomdp, policy, belief_updater)
 
 # look at what happened
-for (s, b, a, o) in eachstep(history, "sbao")
+for (s, b, a, o, r) in eachstep(history, "sbaor")
     println("State was $s,")
     println("belief was $b,")
     println("action $a was taken,")
+    println("reward $r was received")
     println("and observation $o was received.\n")
 end
 println("Discounted reward was $(discounted_reward(history)).")
