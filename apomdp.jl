@@ -75,9 +75,21 @@ function aPOMDP()
 end
 
 # Define reward calculation function
-function calculate_reward(pomdp::aPOMDP)
-    # TODO
-    # Re-calculate the whole reward matrix according to the current transition matrix
+function calculate_reward_matrix(pomdp::aPOMDP)
+    # TODO: Only works for two state variables
+    # TODO: Integrate information metric
+    # Re-calculate the whole reward matrix according to the current transition matrix and state values
+    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
+        key = [i,j,k]
+        sum_var = 0
+        # Get P(S'|S,A)
+        dist = transition(pomdp, [i,j], k)
+        for state = dist.state_space
+            sum_var += pdf(dist, state)*(pomdp.state_values[state]-pomdp.state_values[[i,j]])
+        end
+        pomdp.reward_matrix[key] = sum_var
+    end
+    println(pomdp.reward_matrix)
 end
 
 # Define knowledge integration function
@@ -88,6 +100,12 @@ function integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Arr
     key = prev_state[:]
     append!(key, action)
     pomdp.transition_matrix[key][final_state[1], final_state[2]] += 1
+end
+
+# Set a state's value
+function set_state_value(pomdp::aPOMDP, state::Array, value::Int64)
+    # Set the value of a certain state to the given value
+    pomdp.state_values[state[:]] = value
 end
 
 # Define state space
@@ -174,7 +192,6 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     # corresponds 1:1 with the states in the state_space vector. (perhaps I could even change
     # this system-wide...)
     # BE CAREFUL: when manipulating the transition matrix, this will have to be kept consistent!
-    
     # Get a random number
     r = rand(rng)
     #println("Number: ", r)
@@ -196,11 +213,15 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
 end
 
 
-# Test integrating transitions
+# Test integrating transitions, rewards, etc
 # pomdp = aPOMDP()
 #integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
 # integrate_transition(pomdp, [1,1], [1,2], 1)
+# integrate_transition(pomdp, [1,1], [1,3], 2)
 # println(transition(pomdp, [1,1], 1))
+# set_state_value(pomdp, [1,2], 10)
+# set_state_value(pomdp, [1,3], 20)
+# calculate_reward_matrix(pomdp)
 
 
 # # Test whether distributions behave the way we want them to
