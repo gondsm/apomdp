@@ -39,6 +39,15 @@ type apomdpDistribution
     dist::Array{Float64, 2}
 end
 
+# Define a deterministic distribution from a simple state
+function apomdpDistribution(pomdp::aPOMDP, state::Array)
+    # TODO: constans on matrix definition
+    dist = ones(Float64, 3, 3)/1000
+    dist[state[1], state[2]] = 1000
+    dist[:] = normalize(dist[:], 1)
+    return apomdpDistribution(POMDPs.states(pomdp), dist)
+end
+
 # Define iterator over distribution, returns the list of possible states
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
