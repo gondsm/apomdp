@@ -6,7 +6,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     n_var_states::Int64 # Number of variable states
     n_actions::Int64 # Number of possible actions
     state_values # Maintains the value of each state according to the goal. A dict of the form [S] (vector) -> V (float)
-    transition_matrix::Dict # Maintains the transition probabilities in a dict of the form [S,A] (vector) -> P(S') (n-d matrix)
+    transition_matrix::Dict # Maintains the transition history in a dict of the form [S,A] (vector) -> P(S') (n-d matrix). It is not normalized and acts as a history of occurrences
     reward_matrix::Dict # Maintains the rewards associated with states in a dict of the form [S,A] (vector) -> R (float)
     discount_factor::Float64
     state_indices::Dict # Maintains the state indices as a dict of the form [S] (vector) -> Int
@@ -54,7 +54,6 @@ function aPOMDP()
         # For every S, A combination, we have a probability distribution indexed by 
         key = [i,j,k]
         transition_dict[key] = ones(Float64, 3, 3)
-        transition_dict[key][:] = normalize(transition_dict[key][:], 1)
     end 
 
     # Initialize uniform reward matrix
@@ -82,9 +81,13 @@ function calculate_reward(pomdp::aPOMDP)
 end
 
 # Define knowledge integration function
-function update_transition()
-    # TODO
-    # Update the transition function/matrix with new knowledge
+function integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
+    # TODO: decide the learning factor (if summing 1 is enough or not, essentially)
+    # Update the transition function/matrix with new knowledge.
+    # Since the matrix is not normalized, we can treat it as a simple occurrence counter.
+    key = prev_state[:]
+    append!(key, action)
+    pomdp.transition_matrix[key][final_state[1], final_state[2]] += 1
 end
 
 # Define state space
@@ -122,10 +125,13 @@ POMDPs.n_observations(pomdp::aPOMDP) = size(POMDPs.observations(pomdp))[1]
 # Define transition model
 function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # Returning the distribution over states, as mandated
+    # The distribution is first normalized, and then returned
     key = state[:]
     append!(key, action)
     #println("Called the transition function ", state, " ", action, " -> ", pomdp.transition_matrix[key])
-    return apomdpDistribution(POMDPs.states(pomdp), pomdp.transition_matrix[key])
+    dist = copy(pomdp.transition_matrix[key])
+    dist[:] = normalize(dist[:], 1)
+    return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
 
 # Define reward model
@@ -188,6 +194,21 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     # Return the corresponding state
     return dist.state_space[idx]
 end
+
+
+# Test integrating transitions
+# pomdp = aPOMDP()
+#integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
+# integrate_transition(pomdp, [1,1], [1,2], 1)
+# println(transition(pomdp, [1,1], 1))
+
+
+# # Test whether distributions behave the way we want them to
+# dist = ones(Float64, 3, 3)
+# println(dist)
+# #dist[state[1], state[2]] = 100
+# dist[:] = normalize(dist[:], 1)
+# println(dist)
 
 # # Test the rand function
 # pomdp = aPOMDP()
