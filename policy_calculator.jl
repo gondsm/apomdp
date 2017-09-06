@@ -1,3 +1,8 @@
+# The main goal of this script is to serve as an interface for a ROS system using aPOMDP as its decision-making
+# technique.
+# It should interface with ROS by receiving the observations from the underlying system and relaying them to 
+# aPOMDP, control the re-calculation of the policy, and by packing and sending the policy in an appropriate
+# message.
 include("./apomdp.jl")
 
 using RobotOS
