@@ -89,7 +89,6 @@ function calculate_reward_matrix(pomdp::aPOMDP)
         end
         pomdp.reward_matrix[key] = sum_var
     end
-    println(pomdp.reward_matrix)
 end
 
 # Define knowledge integration function
