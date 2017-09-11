@@ -27,7 +27,7 @@ end
 
 function toy_example_user_profile(pomdp::aPOMDP)
     # Generates a user profile according to the toy example
-    # TODO: limiter to two state vars
+    # TODO: limited to two state vars
     user_profile = Dict()
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
         # For every S, A combination, we have a probability distribution indexed by 
@@ -41,7 +41,6 @@ function toy_example_user_profile(pomdp::aPOMDP)
         if k == 3
             user_profile[key] = [i < 3 ? i+1 : i, j > 1 ? j-1 : j]
         end
-        #user_profile[key] = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
     end
     return user_profile
 end
@@ -60,6 +59,7 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
     print(".")
+    start_time = now()
     # Initialize POMDP
     pomdp = aPOMDP()
 
@@ -127,7 +127,10 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
         write(f, "  reward_change_interval: $reward_change_interval\n")
         scenario = toy_example ? "toy_example" : "random"
         write(f, "  scenario: $scenario\n")
+        exec_time = now() - start_time
+        exec_time = exec_time.value
         write(f, "  re_calc_interval: $re_calc_interval\n")
+        write(f, "  execution_time_ms: $exec_time\n")
         write(f, "  actions:\n")
         for a in action_history
             write(f, "  - $a\n")
