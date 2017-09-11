@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 import matplotlib.pyplot as plt
+import matplotlib as mp
 from matplotlib import rc
+import matplotlib.patches as mpatches
 import itertools
+import numpy as np
 
 def normalize(lst):
 	return [float(i)/sum(lst) for i in lst]
+
 
 def calc_reward(states, v_s, transition_dist):
 	reward = 0.0
 	for i,state in enumerate(states):
 		reward += transition_dist[i]*v_s[state]
 	return reward
+
 
 def plot_distribution_example():
 	# Define list of possible states
@@ -89,7 +94,80 @@ def plot_distribution_example():
 	plt.savefig("1_action.pdf")
 
 
+def plot_timeseries_data(filename, outfile=None):
+	""" Plot some nice timeseries obtained from the simulations. """
+	# Read raw data
+	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
+	raw_data = []
+	with open(filename) as data_file:
+		for line in data_file:
+			if line[0] != '#':
+				raw_data.append([float(elem) for elem in line.split()])
+
+	# Split for iteration
+	# Data will be a vector of vectors, with data [i] corresponding to all points at iteration i.
+	data = []
+	for i in range(len(raw_data[0])):
+		data.append([elem[i] for elem in raw_data])
+
+	# Calculate cumulative reward
+	cum_reward = []
+	for trial in data:
+		l_cum_reward = []
+		for i in range(len(trial)):
+			l_cum_reward.append(sum(trial[0:i]))
+		cum_reward.append(l_cum_reward)
+
+	# Calculate min, max and average
+	avg_cum_reward = []
+	std_cum_reward = []
+	max_cum_reward = []
+	min_cum_reward = []
+	for i in range(len(cum_reward[0])):
+		vec = [elem[i] for elem in cum_reward]
+		avg_cum_reward.append(np.mean(vec))
+		std_cum_reward.append(np.std(vec))
+		max_cum_reward.append(max(vec))
+		min_cum_reward.append(min(vec))
+
+	# Calc + and - std vectors
+	avg_minus_3std = [avg_cum_reward[i] - 3* std_cum_reward[i] for i in range(len(avg_cum_reward))]
+	avg_plus_3std = [avg_cum_reward[i] + 3* std_cum_reward[i] for i in range(len(avg_cum_reward))]
+	avg_minus_2std = [avg_cum_reward[i] - 2* std_cum_reward[i] for i in range(len(avg_cum_reward))]
+	avg_plus_2std = [avg_cum_reward[i] + 2* std_cum_reward[i] for i in range(len(avg_cum_reward))]
+
+	# Decide which extra plots will be used (yay for "everything is a reference"))
+	extra_border_max = avg_plus_2std
+	extra_border_min = avg_minus_2std
+
+	# Make encapsulating patch
+	points = [[i,val] for i,val in enumerate(extra_border_min)]
+	points.extend([[i,val] for i,val in reversed(list(enumerate(extra_border_max)))])
+	ply = mpatches.Polygon(points, alpha=0.1, facecolor="green")
+
+	# And plot
+	plt.figure(figsize=(6.4, 3.2))
+	plt.hold(True)
+	plt.plot(avg_cum_reward, label="avg")
+	plt.plot(extra_border_max, label="max", color="green")
+	plt.plot(extra_border_min, label="min", color="green")
+	ax = plt.gca()
+	ax.add_patch(ply)
+	plt.xlabel("Iterations")
+	plt.ylabel("Cumulative Reward")
+	plt.yscale('symlog')
+	plt.tight_layout()
+	plt.grid()
+	#plt.legend()
+	if outfile:
+		plt.savefig(outfile)
+	else:
+		plt.show()
+
 
 if __name__ == "__main__":
 	rc('text', usetex=True)
-	plot_distribution_example()
+	#plot_distribution_example()
+	plot_timeseries_data("p0i1000.txt", "p0i1000_2std.pdf")
+	plot_timeseries_data("p1i1000.txt", "p1i1000_2std.pdf")
+	plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
