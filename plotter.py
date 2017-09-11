@@ -5,6 +5,7 @@ from matplotlib import rc
 import matplotlib.patches as mpatches
 import itertools
 import numpy as np
+import yaml
 
 def normalize(lst):
 	return [float(i)/sum(lst) for i in lst]
@@ -165,9 +166,24 @@ def plot_timeseries_data(filename, outfile=None):
 		plt.show()
 
 
+def write_test_yaml():
+	with open("test.yaml", "w") as yaml_file:
+		data = dict()
+		data["states"] = [[1,2], [2,3], [1,2]]
+		data["rewards"] = [2.3454, 2.345, 12.3421]
+		data["actions"] = [1,2,3,4,3,2]
+		yaml.dump([data], yaml_file, default_flow_style=False)
+
+def read_test_yaml():
+	with open("test.txt", "r") as yaml_file:
+		print(yaml.load(yaml_file))
+
+
 if __name__ == "__main__":
 	rc('text', usetex=True)
 	#plot_distribution_example()
-	plot_timeseries_data("p0i1000.txt", "p0i1000_2std.pdf")
-	plot_timeseries_data("p1i1000.txt", "p1i1000_2std.pdf")
-	plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
+	#plot_timeseries_data("p0i1000.txt", "p0i1000_2std.pdf")
+	#plot_timeseries_data("p1i1000.txt", "p1i1000_2std.pdf")
+	#plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
+	#write_test_yaml()
+	read_test_yaml()
