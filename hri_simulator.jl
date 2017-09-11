@@ -123,7 +123,12 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
 
     # Append results to a yaml log file
     if typeof(out_file) == IOStream
-        write(f, "- actions:\n")
+        write(f, "- iterations: $num_iter\n")
+        write(f, "  reward_change_interval: $reward_change_interval\n")
+        scenario = toy_example ? "toy_example" : "random"
+        write(f, "  scenario: $scenario\n")
+        write(f, "  re_calc_interval: $re_calc_interval\n")
+        write(f, "  actions:\n")
         for a in action_history
             write(f, "  - $a\n")
         end
