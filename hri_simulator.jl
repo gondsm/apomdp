@@ -27,8 +27,22 @@ end
 
 function toy_example_user_profile(pomdp::aPOMDP)
     # Generates a user profile according to the toy example
+    # TODO: limiter to two state vars
     user_profile = Dict()
-    # TODO
+    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
+        # For every S, A combination, we have a probability distribution indexed by 
+        key = [i,j,k]
+        if k == 1
+            user_profile[key] = [i > 1 ? i-1 : i, j < 3 ? j+1 : j]
+        end
+        if k == 2
+            user_profile[key] = [i,j]
+        end
+        if k == 3
+            user_profile[key] = [i < 3 ? i+1 : i, j > 1 ? j-1 : j]
+        end
+        #user_profile[key] = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
+    end
     return user_profile
 end
 
@@ -41,7 +55,7 @@ function toy_example_state_values(pomdp::aPOMDP)
 end
 
 # Test cases
-function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0)
+function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false)
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
@@ -53,10 +67,18 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     solver = QMDPSolver()
 
     # Define the user's profile
-    user_profile = random_user_profile(pomdp)
+    if toy_example
+        user_profile = toy_example_user_profile(pomdp)
+    else
+        user_profile = random_user_profile(pomdp)
+    end
 
     # Define the valuable states
-    random_valuable_states(pomdp)
+    if toy_example
+        toy_example_state_values(pomdp)
+    else
+        random_valuable_states(pomdp)
+    end
 
     # Decide initial state
     state = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
@@ -123,7 +145,7 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
 end
 
 f = open("test.txt", "a")
-basic_test(1, 30, f, 10)
+basic_test(1, 30, f, 10, true)
 close(f)
 # # First batch of tests
 # f = open("timeseries_data.txt", "a")
