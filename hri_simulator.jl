@@ -58,7 +58,6 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
-    print(".")
     start_time = now()
     # Initialize POMDP
     pomdp = aPOMDP()
@@ -123,28 +122,28 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
 
     # Append results to a yaml log file
     if typeof(out_file) == IOStream
-        write(f, "- iterations: $num_iter\n")
-        write(f, "  reward_change_interval: $reward_change_interval\n")
+        write(out_file, "- iterations: $num_iter\n")
+        write(out_file, "  reward_change_interval: $reward_change_interval\n")
         scenario = toy_example ? "toy_example" : "random"
-        write(f, "  scenario: $scenario\n")
+        write(out_file, "  scenario: $scenario\n")
         exec_time = now() - start_time
         exec_time = exec_time.value
-        write(f, "  re_calc_interval: $re_calc_interval\n")
-        write(f, "  execution_time_ms: $exec_time\n")
-        write(f, "  actions:\n")
+        write(out_file, "  re_calc_interval: $re_calc_interval\n")
+        write(out_file, "  execution_time_ms: $exec_time\n")
+        write(out_file, "  actions:\n")
         for a in action_history
-            write(f, "  - $a\n")
+            write(out_file, "  - $a\n")
         end
-        write(f, "  states:\n")
+        write(out_file, "  states:\n")
         for i = 1:2:size(state_history)[1]
             s1 = state_history[i]
             s2 = state_history[i+1]
-            write(f, "  - - $s1\n")
-            write(f, "    - $s2\n")
+            write(out_file, "  - - $s1\n")
+            write(out_file, "    - $s2\n")
         end
-        write(f, "  rewards:\n")
+        write(out_file, "  rewards:\n")
         for r in reward_history
-            write(f, "  - $r\n")
+            write(out_file, "  - $r\n")
         end
     end
 
@@ -152,9 +151,95 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     return reward_history
 end
 
-f = open("test.txt", "a")
-basic_test(1, 30, f, 10, true)
-close(f)
+# Second Batch of Test Cases
+# basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false)
+
+# Tests with random scenario
+f1 = open("random_scenario.yaml", "a")
+println("Starting random scenario with re_calc = 0")
+for i = 1:1000
+    print(".")
+    basic_test(0, 1000, f1, 0, false)
+end
+println()
+println("Starting random scenario with re_calc = 1")
+for i = 1:1000
+    print(".")
+    basic_test(1, 1000, f1, 0, false)
+end
+println()
+println("Starting random scenario with re_calc = 5")
+for i = 1:1000
+    print(".")
+    basic_test(5, 1000, f1, 0, false)
+end
+println()
+println("Starting random scenario with re_calc = 20")
+for i = 1:1000
+    print(".")
+    basic_test(20, 1000, f1, 0, false)
+end
+println()
+close(f1)
+
+
+# Tests with changing values
+f2 = open("random_scenario_changing.yaml", "a")
+println("Starting random scenario with changing value with re_calc = 0")
+for i = 1:1000
+    print(".")
+    basic_test(0, 1000, f2, 200, false)
+end
+println()
+println("Starting random scenario with changing value with re_calc = 1")
+for i = 1:1000
+    print(".")
+    basic_test(1, 1000, f2, 200, false)
+end
+println()
+println("Starting random scenario with changing value with re_calc = 5")
+for i = 1:1000
+    print(".")
+    basic_test(5, 1000, f2, 200, false)
+end
+println()
+println("Starting random scenario with changing value with re_calc = 20")
+for i = 1:1000
+    print(".")
+    basic_test(20, 1000, f2, 200, false)
+end
+println()
+close(f2)
+
+# Tests with toy example
+f3 = open("toy_example.yaml", "a")
+println("Starting toy example with re_calc = 0")
+for i = 1:1000
+    print(".")
+    basic_test(0, 1000, f3, 0, true)
+end
+println()
+println("Starting toy example with re_calc = 1")
+for i = 1:1000
+    print(".")
+    basic_test(1, 1000, f3, 0, true)
+end
+println()
+println("Starting toy example with re_calc = 5")
+for i = 1:1000
+    print(".")
+    basic_test(5, 1000, f3, 0, true)
+end
+println()
+println("Starting toy example with re_calc = 20")
+for i = 1:1000
+    print(".")
+    basic_test(20, 1000, f3, 0, true)
+end
+println()
+close(f3)
+
+
 # # First batch of tests
 # f = open("timeseries_data.txt", "a")
 
