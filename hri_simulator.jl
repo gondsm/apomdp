@@ -25,10 +25,26 @@ function random_valuable_states(pomdp::aPOMDP)
     calculate_reward_matrix(pomdp)
 end
 
+function toy_example_user_profile(pomdp::aPOMDP)
+    # Generates a user profile according to the toy example
+    user_profile = Dict()
+    # TODO
+    return user_profile
+end
+
+function toy_example_state_values(pomdp::aPOMDP)
+    # Generates a reward function that is consonant with the toy example
+    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
+        set_state_value(pomdp, [i,j], 10*i)
+    end
+    calculate_reward_matrix(pomdp)
+end
+
 # Test cases
-function basic_test(re_calc_interval=0, num_iter=1000)
+function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0)
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
+    # If out_file is an IOStream, this function will write its own logs to that file.
     print(".")
     # Initialize POMDP
     pomdp = aPOMDP()
@@ -51,9 +67,12 @@ function basic_test(re_calc_interval=0, num_iter=1000)
     # Simulation loop:
     cumulative_reward = 0.0
     reward_history = []
+    state_history = [] #Matrix(0, 2)
+    action_history = []
     for i = 1:num_iter
         # Get action
         a = action(policy, apomdpDistribution(pomdp, state))
+        append!(action_history, a)
 
         # Gief reward
         cumulative_reward = reward(pomdp, state, a)
@@ -62,6 +81,8 @@ function basic_test(re_calc_interval=0, num_iter=1000)
         # Transition state
         prev_state = copy(state)
         state = user_profile[[state[1], state[2], a]]
+        append!(state_history, prev_state)
+        #state_history = [state_history; state']
 
         # Increment knowledge
         integrate_transition(pomdp, prev_state, state, a)
@@ -71,42 +92,71 @@ function basic_test(re_calc_interval=0, num_iter=1000)
         if re_calc_interval != 0 && i % re_calc_interval == 0
             policy = solve(solver, pomdp)
         end
+
+        # Re-initialize reward function, if we want to
+        if reward_change_interval != 0 && i % reward_change_interval == 0
+            random_valuable_states(pomdp)
+        end
     end
 
+    # Append results to a yaml log file
+    if typeof(out_file) == IOStream
+        write(f, "- actions:\n")
+        for a in action_history
+            write(f, "  - $a\n")
+        end
+        write(f, "  states:\n")
+        for i = 1:2:size(state_history)[1]
+            s1 = state_history[i]
+            s2 = state_history[i+1]
+            write(f, "  - - $s1\n")
+            write(f, "    - $s2\n")
+        end
+        write(f, "  rewards:\n")
+        for r in reward_history
+            write(f, "  - $r\n")
+        end
+    end
+
+    # Return the reward history, for compatibility with previous testing code
     return reward_history
 end
 
-f = open("timeseries_data.txt", "a")
-
-println("Starting period 0")
-write(f, "# Period 0, 1000 iterations\n")
-for i = 1:1000
-    data = basic_test(0, 1000)
-    writedlm(f, data', " ")
-end
-
-println("Starting period 1")
-write(f, "# Period 1, 1000 iterations\n")
-for i = 1:1000
-    data = basic_test(1, 1000)
-    writedlm(f, data', " ")
-end
-
-println("Starting period 5")
-write(f, "# Period 5, 1000 iterations\n")
-for i = 1:1000
-    data = basic_test(5, 1000)
-    writedlm(f, data', " ")
-end
-
-println("Starting period 20")
-write(f, "# Period 20, 1000 iterations\n")
-for i = 1:1000
-    data = basic_test(20, 1000)
-    writedlm(f, data', " ")
-end
-
+f = open("test.txt", "a")
+basic_test(1, 30, f, 10)
 close(f)
+# # First batch of tests
+# f = open("timeseries_data.txt", "a")
+
+# println("Starting period 0")
+# write(f, "# Period 0, 1000 iterations\n")
+# for i = 1:1000
+#     data = basic_test(0, 1000)
+#     writedlm(f, data', " ")
+# end
+
+# println("Starting period 1")
+# write(f, "# Period 1, 1000 iterations\n")
+# for i = 1:1000
+#     data = basic_test(1, 1000)
+#     writedlm(f, data', " ")
+# end
+
+# println("Starting period 5")
+# write(f, "# Period 5, 1000 iterations\n")
+# for i = 1:1000
+#     data = basic_test(5, 1000)
+#     writedlm(f, data', " ")
+# end
+
+# println("Starting period 20")
+# write(f, "# Period 20, 1000 iterations\n")
+# for i = 1:1000
+#     data = basic_test(20, 1000)
+#     writedlm(f, data', " ")
+# end
+
+# close(f)
 
 
 
