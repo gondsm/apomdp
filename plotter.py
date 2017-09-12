@@ -203,8 +203,27 @@ def calculate_table_entries(filename):
 	""" Calculate the average +- std execution time as well as the avg +- std cumulative reward obtained. 
 	Input file must be a pickle converted from a yaml log by the convert_log_to_pickle() function.
 	"""
+	# Load data
 	data = pickle.load(open(filename, "rb"))
-	
+
+	# Build execution time and cumulative reward vectors
+	# LIST COMPREHENSIONS RULE
+	exec_time_vec = [d["execution_time_ms"] for d in data]
+	cum_reward_vec = [sum(d["rewards"]) for d in data]
+
+	# Print out the good stuff
+	print("Filename:", filename)
+	cum_reward_mean = np.round(np.mean(cum_reward_vec), 3)
+	cum_reward_std = np.round(np.std(cum_reward_vec), 3)
+	exec_time_mean = np.round(np.mean(exec_time_vec), 3)
+	exec_time_std = np.round(np.std(exec_time_vec), 3)
+	#print("Cumulative Reward:")
+	#print("Avg: {}, Std: {}".format(cum_reward_mean, cum_reward_std))
+	#print("Execution Time:")
+	#print("Avg: {}, Std: {}".format(exec_time_mean, exec_time_std))
+	print("Copyable:")
+	print("${}\pm{}$ & ${}\pm{}$".format(cum_reward_mean, cum_reward_std, exec_time_mean, exec_time_std))
+	print()
 
 
 def write_test_yaml():
@@ -228,8 +247,19 @@ if __name__ == "__main__":
 	#plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
 	#write_test_yaml()
 	#read_test_yaml()
-	#files = ["random_scenario_changing_0.yaml", "random_scenario_changing_1.yaml", "random_scenario_changing_5.yaml", "random_scenario_changing_20.yaml"]
-	#files = ["toy_example_0.yaml", "toy_example_1.yaml", "toy_example_5.yaml", "toy_example_20.yaml"]
-	#for f in files:
-	#	convert_log_to_pickle(f)
-	calculate_table_entries("random_scenario_0.pkl")
+
+	# Calculate the stuff we want:
+	random_scenario_files = ["random_scenario_0", "random_scenario_1", "random_scenario_5", "random_scenario_20"]
+	changing_scenario_files = ["random_scenario_changing_0", "random_scenario_changing_1", "random_scenario_changing_5", "random_scenario_changing_20"]
+	toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
+	all_files = []
+	all_files.extend(random_scenario_files)
+	all_files.extend(changing_scenario_files)
+	all_files.extend(toy_example_files)
+
+	for f in all_files:
+		calculate_table_entries(f+".pkl")
+
+	# Convert files to pickle:
+	# for f in all_files:
+	# 	convert_log_to_pickle(f+".yaml")
