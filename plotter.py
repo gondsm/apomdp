@@ -104,10 +104,18 @@ def plot_timeseries_data(filename, outfile=None):
 	# Read raw data
 	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
 	raw_data = []
-	with open(filename) as data_file:
-		for line in data_file:
-			if line[0] != '#':
-				raw_data.append([float(elem) for elem in line.split()])
+	extension = filename.split(".")[1]
+	if extension == "txt":
+		with open(filename) as data_file:
+			for line in data_file:
+				if line[0] != '#':
+					raw_data.append([float(elem) for elem in line.split()])
+	elif extension == "pkl":
+		yaml_data = pickle.load(open(filename, "rb"))
+		raw_data = [d["rewards"] for d in yaml_data]
+	else:
+		print("Error: I don't know this file extension!")
+		return
 
 	# Split for iteration
 	# Data will be a vector of vectors, with data [i] corresponding to all points at iteration i.
@@ -234,6 +242,7 @@ def write_test_yaml():
 		data["actions"] = [1,2,3,4,3,2]
 		yaml.dump([data], yaml_file, default_flow_style=False)
 
+
 def read_test_yaml():
 	with open("test.txt", "r") as yaml_file:
 		print(yaml.load(yaml_file))
@@ -241,24 +250,25 @@ def read_test_yaml():
 
 if __name__ == "__main__":
 	rc('text', usetex=True)
+	# Plot the learning distribution example:
 	#plot_distribution_example()
+
+	# Plot timeseries data
 	#plot_timeseries_data("p0i1000.txt", "p0i1000_2std.pdf")
 	#plot_timeseries_data("p1i1000.txt", "p1i1000_2std.pdf")
 	#plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
-	#write_test_yaml()
-	#read_test_yaml()
+	plot_timeseries_data("random_scenario_changing_1.pkl", "p1i1000c200.pdf")
 
-	# Calculate the stuff we want:
-	random_scenario_files = ["random_scenario_0", "random_scenario_1", "random_scenario_5", "random_scenario_20"]
-	changing_scenario_files = ["random_scenario_changing_0", "random_scenario_changing_1", "random_scenario_changing_5", "random_scenario_changing_20"]
-	toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
-	all_files = []
-	all_files.extend(random_scenario_files)
-	all_files.extend(changing_scenario_files)
-	all_files.extend(toy_example_files)
-
-	for f in all_files:
-		calculate_table_entries(f+".pkl")
+	# Calculate the stuff we want for the table:
+	# random_scenario_files = ["random_scenario_0", "random_scenario_1", "random_scenario_5", "random_scenario_20"]
+	# changing_scenario_files = ["random_scenario_changing_0", "random_scenario_changing_1", "random_scenario_changing_5", "random_scenario_changing_20"]
+	# toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
+	# all_files = []
+	# all_files.extend(random_scenario_files)
+	# all_files.extend(changing_scenario_files)
+	# all_files.extend(toy_example_files)
+	# for f in all_files:
+	# 	calculate_table_entries(f+".pkl")
 
 	# Convert files to pickle:
 	# for f in all_files:
