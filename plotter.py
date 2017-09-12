@@ -6,6 +6,10 @@ import matplotlib.patches as mpatches
 import itertools
 import numpy as np
 import yaml
+from yaml import CLoader as Loader, CDumper as Dumper
+import pickle
+import time
+import sys
 
 def normalize(lst):
 	return [float(i)/sum(lst) for i in lst]
@@ -166,6 +170,43 @@ def plot_timeseries_data(filename, outfile=None):
 		plt.show()
 
 
+def convert_log_to_pickle(filename):
+	""" Convert a yaml log built during a simulation to a pickle file that can be read and written much faster. 
+	This was not able to be performed with log files over 4008000 lines in length. Beware.
+	"""
+	# Inform
+	proper_name = filename.split(".")[0]
+	print("Converting {} file.".format(proper_name))
+
+	# Read data from file
+	start = time.time()
+	print("Reading yaml... ", end="")
+	sys.stdout.flush()
+	with open(filename, "r") as yaml_file:
+		data = yaml.load(yaml_file, Loader=Loader)
+	print("done in {} seconds".format(time.time()-start))
+
+	# Dump to pickle
+	start = time.time()
+	print("Dumping pickle... ", end="")
+	pickle.dump(data, open(proper_name + ".pkl", "wb"))
+	print("done in {} seconds".format(time.time()-start))
+
+	# Try reading from pickle
+	start = time.time()
+	print("Reading pickle... ", end="")
+	data = pickle.load(open(proper_name + ".pkl", "rb"))
+	print("done in {} seconds".format(time.time()-start))
+
+
+def calculate_table_entries(filename):
+	""" Calculate the average +- std execution time as well as the avg +- std cumulative reward obtained. 
+	Input file must be a pickle converted from a yaml log by the convert_log_to_pickle() function.
+	"""
+	data = pickle.load(open(filename, "rb"))
+	
+
+
 def write_test_yaml():
 	with open("test.yaml", "w") as yaml_file:
 		data = dict()
@@ -186,4 +227,9 @@ if __name__ == "__main__":
 	#plot_timeseries_data("p1i1000.txt", "p1i1000_2std.pdf")
 	#plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
 	#write_test_yaml()
-	read_test_yaml()
+	#read_test_yaml()
+	#files = ["random_scenario_changing_0.yaml", "random_scenario_changing_1.yaml", "random_scenario_changing_5.yaml", "random_scenario_changing_20.yaml"]
+	#files = ["toy_example_0.yaml", "toy_example_1.yaml", "toy_example_5.yaml", "toy_example_20.yaml"]
+	#for f in files:
+	#	convert_log_to_pickle(f)
+	calculate_table_entries("random_scenario_0.pkl")
