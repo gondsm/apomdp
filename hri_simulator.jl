@@ -151,93 +151,129 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     return reward_history
 end
 
-# Second Batch of Test Cases
-# basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false)
-
+# Third Batch of Test Cases
 # Tests with random scenario
-f1 = open("random_scenario.yaml", "a")
-println("Starting random scenario with re_calc = 0")
+f1 = open("random_scenario_short_0.yaml", "a")
+println("Starting short random scenario with re_calc = 0")
 for i = 1:1000
     print(".")
-    basic_test(0, 1000, f1, 0, false)
+    basic_test(0, 100, f1, 0, false)
 end
+close(f1)
+f1 = open("random_scenario_short_1.yaml", "a")
 println()
-println("Starting random scenario with re_calc = 1")
+println("Starting short random scenario with re_calc = 1")
 for i = 1:1000
     print(".")
-    basic_test(1, 1000, f1, 0, false)
+    basic_test(1, 100, f1, 0, false)
 end
+close(f1)
+f1 = open("random_scenario_short_5.yaml", "a")
 println()
-println("Starting random scenario with re_calc = 5")
+println("Starting short random scenario with re_calc = 5")
 for i = 1:1000
     print(".")
-    basic_test(5, 1000, f1, 0, false)
+    basic_test(5, 100, f1, 0, false)
 end
+close(f1)
+f1 = open("random_scenario_short_20.yaml", "a")
 println()
-println("Starting random scenario with re_calc = 20")
+println("Starting short random scenario with re_calc = 20")
 for i = 1:1000
     print(".")
-    basic_test(20, 1000, f1, 0, false)
+    basic_test(20, 100, f1, 0, false)
 end
 println()
 close(f1)
 
 
-# Tests with changing values
-f2 = open("random_scenario_changing.yaml", "a")
-println("Starting random scenario with changing value with re_calc = 0")
-for i = 1:1000
-    print(".")
-    basic_test(0, 1000, f2, 200, false)
-end
-println()
-println("Starting random scenario with changing value with re_calc = 1")
-for i = 1:1000
-    print(".")
-    basic_test(1, 1000, f2, 200, false)
-end
-println()
-println("Starting random scenario with changing value with re_calc = 5")
-for i = 1:1000
-    print(".")
-    basic_test(5, 1000, f2, 200, false)
-end
-println()
-println("Starting random scenario with changing value with re_calc = 20")
-for i = 1:1000
-    print(".")
-    basic_test(20, 1000, f2, 200, false)
-end
-println()
-close(f2)
+# Second Batch of Test Cases
+# basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false)
 
-# Tests with toy example
-f3 = open("toy_example.yaml", "a")
-println("Starting toy example with re_calc = 0")
-for i = 1:1000
-    print(".")
-    basic_test(0, 1000, f3, 0, true)
-end
-println()
-println("Starting toy example with re_calc = 1")
-for i = 1:1000
-    print(".")
-    basic_test(1, 1000, f3, 0, true)
-end
-println()
-println("Starting toy example with re_calc = 5")
-for i = 1:1000
-    print(".")
-    basic_test(5, 1000, f3, 0, true)
-end
-println()
-println("Starting toy example with re_calc = 20")
-for i = 1:1000
-    print(".")
-    basic_test(20, 1000, f3, 0, true)
-end
-println()
-close(f3)
+# # Tests with random scenario
+# f1 = open("random_scenario.yaml", "a")
+# println("Starting random scenario with re_calc = 0")
+# for i = 1:1000
+#     print(".")
+#     basic_test(0, 1000, f1, 0, false)
+# end
+# println()
+# println("Starting random scenario with re_calc = 1")
+# for i = 1:1000
+#     print(".")
+#     basic_test(1, 1000, f1, 0, false)
+# end
+# println()
+# println("Starting random scenario with re_calc = 5")
+# for i = 1:1000
+#     print(".")
+#     basic_test(5, 1000, f1, 0, false)
+# end
+# println()
+# println("Starting random scenario with re_calc = 20")
+# for i = 1:1000
+#     print(".")
+#     basic_test(20, 1000, f1, 0, false)
+# end
+# println()
+# close(f1)
+
+
+# # Tests with changing values
+# f2 = open("random_scenario_changing.yaml", "a")
+# println("Starting random scenario with changing value with re_calc = 0")
+# for i = 1:1000
+#     print(".")
+#     basic_test(0, 1000, f2, 200, false)
+# end
+# println()
+# println("Starting random scenario with changing value with re_calc = 1")
+# for i = 1:1000
+#     print(".")
+#     basic_test(1, 1000, f2, 200, false)
+# end
+# println()
+# println("Starting random scenario with changing value with re_calc = 5")
+# for i = 1:1000
+#     print(".")
+#     basic_test(5, 1000, f2, 200, false)
+# end
+# println()
+# println("Starting random scenario with changing value with re_calc = 20")
+# for i = 1:1000
+#     print(".")
+#     basic_test(20, 1000, f2, 200, false)
+# end
+# println()
+# close(f2)
+
+# # Tests with toy example
+# f3 = open("toy_example.yaml", "a")
+# println("Starting toy example with re_calc = 0")
+# for i = 1:1000
+#     print(".")
+#     basic_test(0, 1000, f3, 0, true)
+# end
+# println()
+# println("Starting toy example with re_calc = 1")
+# for i = 1:1000
+#     print(".")
+#     basic_test(1, 1000, f3, 0, true)
+# end
+# println()
+# println("Starting toy example with re_calc = 5")
+# for i = 1:1000
+#     print(".")
+#     basic_test(5, 1000, f3, 0, true)
+# end
+# println()
+# println("Starting toy example with re_calc = 20")
+# for i = 1:1000
+#     print(".")
+#     basic_test(20, 1000, f3, 0, true)
+# end
+# println()
+# close(f3)
 
 
 # # First batch of tests
