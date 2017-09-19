@@ -232,8 +232,15 @@ POMDPs.pdf(dist::apomdpDistribution, state::Array) = dist.dist[state[1], state[2
 
 # Discrete Belief constructor from apomdpDistribution (SARSOP)
 function POMDPToolbox.DiscreteBelief(dist::apomdpDistribution)
-    # TODO: Actually implement
-    return POMDPToolbox.DiscreteBelief(9)
+    # Copy the values in order to a new distribution
+    new_dist = []
+    for state in dist.state_space
+        append!(new_dist, POMDPs.pdf(dist, state))
+    end
+
+    # Construct and return new DiscreteBelief object
+    discrete_b = POMDPToolbox.DiscreteBelief(new_dist)
+    return discrete_b
 end
 
 # Discrete belief converter from apomdpDistribution (SARSOP), adding it to the SARSOP module so it's found
