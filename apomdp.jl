@@ -51,7 +51,6 @@ end
 # Define a uniform distribution
 function apomdpDistribution(pomdp::aPOMDP)
     # TODO: constans on matrix definition
-    println("Called uniform dist!")
     dist = ones(Float64, 3, 3)/1000
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
@@ -268,17 +267,17 @@ function solve(pomdp::aPOMDP, solver_name::String="")
         throw(ArgumentError)
     end
 
-    #
+    # Get policy and return it
     policy = POMDPs.solve(solver, pomdp)
     return policy
 end
 
-#pomdp = aPOMDP()
+# pomdp = aPOMDP()
 
 # Test solver
-#solver = QMDPSolver()
-#solver = SARSOPSolver()
-#policy = solve(solver, pomdp)
+# solver = QMDPSolver()
+# solver = SARSOPSolver()
+# policy = solve(pomdp, "sarsop")
 
 # Test integrating transitions, rewards, etc
 #integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
