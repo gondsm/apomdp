@@ -264,12 +264,14 @@ if __name__ == "__main__":
 	# random_scenario_files = ["random_scenario_0", "random_scenario_1", "random_scenario_5", "random_scenario_20"]
 	# changing_scenario_files = ["random_scenario_changing_0", "random_scenario_changing_1", "random_scenario_changing_5", "random_scenario_changing_20"]
 	# toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
-	short_scenario_files = ["random_scenario_short_{}".format(i) for i in [0,1,5,20]]
+	#short_scenario_files = ["random_scenario_short_{}".format(i) for i in [0,1,5,20]]
+	other_files = ["qmdp", "sarsop"]
 	all_files = []
 	# all_files.extend(random_scenario_files)
 	# all_files.extend(changing_scenario_files)
 	# all_files.extend(toy_example_files)
-	all_files.extend(short_scenario_files)
+	# all_files.extend(short_scenario_files)
+	all_files.extend(other_files)
 
 	# Convert files to pickle:
 	for f in all_files:
@@ -278,5 +280,9 @@ if __name__ == "__main__":
 	# Calculate the stuff we want for the table:
 	for f in all_files:
 		calculate_table_entries(f+".pkl")
+
+	# Plot stuff
+	for f in all_files:
+		plot_timeseries_data(f+".pkl", f+".pdf")
 
 	

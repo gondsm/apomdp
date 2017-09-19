@@ -149,13 +149,13 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 end
 
 f1 = open("sarsop.yaml", "a")
-for i = 1:10
+for i = 1:100
     print(".")
     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop")
 end
 close(f1)
 f1 = open("qmdp.yaml", "a")
-for i = 1:10
+for i = 1:100
     print(".")
     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp")
 end
