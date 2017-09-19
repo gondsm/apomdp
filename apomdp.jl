@@ -2,7 +2,7 @@
 # This script defines the aPOMDP types and associated functions that allow
 # for the definition and solving of this POMDP.
 # It has been tested using Julia0.6 and the QMDP solver
-using POMDPs, POMDPModels, POMDPToolbox, QMDP
+using POMDPs, POMDPModels, POMDPToolbox, QMDP, SARSOP
 
 # Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
@@ -44,6 +44,15 @@ function apomdpDistribution(pomdp::aPOMDP, state::Array)
     # TODO: constans on matrix definition
     dist = ones(Float64, 3, 3)/1000
     dist[state[1], state[2]] = 1000
+    dist[:] = normalize(dist[:], 1)
+    return apomdpDistribution(POMDPs.states(pomdp), dist)
+end
+
+# Define a uniform distribution
+function apomdpDistribution(pomdp::aPOMDP)
+    # TODO: constans on matrix definition
+    println("Called uniform dist!")
+    dist = ones(Float64, 3, 3)/1000
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
@@ -155,7 +164,8 @@ POMDPs.actions(pomdp::aPOMDP) = collect(1:pomdp.n_actions);
 POMDPs.actions(pomdp::aPOMDP, state::Array) = POMDPs.actions(pomdp);
 
 # Define observation space
-POMDPs.observations(pomdp::aPOMDP, s::Array{Int64, 1}) = POMDPs.states(pomdp);
+POMDPs.observations(pomdp::aPOMDP, s::Array{Int64, 1}) = POMDPs.observations(pomdp); #QMDP
+POMDPs.observations(pomdp::aPOMDP) = POMDPs.states(pomdp); #SARSOP
 
 # Define terminality (no terminal states exist)
 POMDPs.isterminal(::aPOMDP, ::Array{Int64, 1}) = false;
@@ -206,14 +216,17 @@ function POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1})
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
 
-# Define uniform initial state distribution
-POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(POMDPs.states(pomdp), copy(pomdp.transition_matrix[[1,1,1]]));
+# Define uniform initial state distribution (SARSOP)
+POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(pomdp);
 
 # Define state indices
 POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1}) = pomdp.state_indices[state];
 
 # Define action indices
-POMDPs.action_index(::aPOMDP, action::Int64) = action
+POMDPs.action_index(::aPOMDP, action::Int64) = action;
+
+# Define observation indices (SARSOP)
+POMDPs.obs_index(pomdp::aPOMDP, state::Array{Int64,1}) = POMDPs.state_index(pomdp, state);
 
 # Define distribution calculation
 POMDPs.pdf(dist::apomdpDistribution, state::Array) = dist.dist[state[1], state[2]]
@@ -243,9 +256,14 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     return dist.state_space[idx]
 end
 
+#pomdp = aPOMDP()
+
+# Test solver
+#solver = QMDPSolver()
+#solver = SARSOPSolver()
+#policy = solve(solver, pomdp)
 
 # Test integrating transitions, rewards, etc
-# pomdp = aPOMDP()
 #integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
 # integrate_transition(pomdp, [1,1], [1,2], 1)
 # integrate_transition(pomdp, [1,1], [1,3], 2)
