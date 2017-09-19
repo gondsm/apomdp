@@ -230,6 +230,17 @@ POMDPs.obs_index(pomdp::aPOMDP, state::Array{Int64,1}) = POMDPs.state_index(pomd
 # Define distribution calculation
 POMDPs.pdf(dist::apomdpDistribution, state::Array) = dist.dist[state[1], state[2]]
 
+# Discrete Belief constructor from apomdpDistribution (SARSOP)
+function POMDPToolbox.DiscreteBelief(dist::apomdpDistribution)
+    # TODO: Actually implement
+    return POMDPToolbox.DiscreteBelief(9)
+end
+
+# Discrete belief converter from apomdpDistribution (SARSOP), adding it to the SARSOP module so it's found
+function SARSOP.convert(::Type{POMDPToolbox.DiscreteBelief}, dist::apomdpDistribution)
+    return POMDPToolbox.DiscreteBelief(dist)
+end
+
 # Define sampling function to sample a state from the transition probability
 function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     # Sample from the distribution
