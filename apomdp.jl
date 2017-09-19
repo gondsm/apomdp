@@ -256,6 +256,23 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     return dist.state_space[idx]
 end
 
+function solve(pomdp::aPOMDP, solver::String="")
+    # Solve the POMDP according to the solver requested
+    # So, apparently Julia doesn't have switch statements. Nice.
+    if solver == "qmdp"
+        solver = QMDPSolver()
+    elseif solver == "sarsop"
+        solver = SARSOPSolver()
+    else
+        println("aPOMDPs solve function received a request for an unknown solver: $solver")
+        throw(ArgumentError)
+    end
+
+    #
+    policy = POMDPs.solve(solver, pomdp)
+    return policy
+end
+
 #pomdp = aPOMDP()
 
 # Test solver
