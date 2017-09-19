@@ -54,16 +54,13 @@ function toy_example_state_values(pomdp::aPOMDP)
 end
 
 # Test cases
-function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false)
+function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp")
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
     start_time = now()
     # Initialize POMDP
     pomdp = aPOMDP()
-
-    # Initialize solver
-    solver = QMDPSolver()
 
     # Define the user's profile
     if toy_example
@@ -83,7 +80,7 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     state = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
 
     # Get an initial policy
-    policy = solve(solver, pomdp)
+    policy = solve(pomdp, solver_name)
 
     # Simulation loop:
     cumulative_reward = 0.0
@@ -111,7 +108,7 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
 
         # Re-calculate policy, if we want to
         if re_calc_interval != 0 && i % re_calc_interval == 0
-            policy = solve(solver, pomdp)
+            policy = solve(pomdp, solver_name)
         end
 
         # Re-initialize reward function, if we want to
@@ -151,40 +148,44 @@ function basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_chang
     return reward_history
 end
 
+f1 = open("sarsop.yaml", "a")
+basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp")
+close(f1)
+
 # Third Batch of Test Cases
 # Tests with random scenario
-f1 = open("random_scenario_short_0.yaml", "a")
-println("Starting short random scenario with re_calc = 0")
-for i = 1:1000
-    print(".")
-    basic_test(0, 100, f1, 0, false)
-end
-close(f1)
-f1 = open("random_scenario_short_1.yaml", "a")
-println()
-println("Starting short random scenario with re_calc = 1")
-for i = 1:1000
-    print(".")
-    basic_test(1, 100, f1, 0, false)
-end
-close(f1)
-f1 = open("random_scenario_short_5.yaml", "a")
-println()
-println("Starting short random scenario with re_calc = 5")
-for i = 1:1000
-    print(".")
-    basic_test(5, 100, f1, 0, false)
-end
-close(f1)
-f1 = open("random_scenario_short_20.yaml", "a")
-println()
-println("Starting short random scenario with re_calc = 20")
-for i = 1:1000
-    print(".")
-    basic_test(20, 100, f1, 0, false)
-end
-println()
-close(f1)
+# f1 = open("random_scenario_short_0.yaml", "a")
+# println("Starting short random scenario with re_calc = 0")
+# for i = 1:1000
+#     print(".")
+#     basic_test(0, 100, f1, 0, false)
+# end
+# close(f1)
+# f1 = open("random_scenario_short_1.yaml", "a")
+# println()
+# println("Starting short random scenario with re_calc = 1")
+# for i = 1:1000
+#     print(".")
+#     basic_test(1, 100, f1, 0, false)
+# end
+# close(f1)
+# f1 = open("random_scenario_short_5.yaml", "a")
+# println()
+# println("Starting short random scenario with re_calc = 5")
+# for i = 1:1000
+#     print(".")
+#     basic_test(5, 100, f1, 0, false)
+# end
+# close(f1)
+# f1 = open("random_scenario_short_20.yaml", "a")
+# println()
+# println("Starting short random scenario with re_calc = 20")
+# for i = 1:1000
+#     print(".")
+#     basic_test(20, 100, f1, 0, false)
+# end
+# println()
+# close(f1)
 
 
 # Second Batch of Test Cases
