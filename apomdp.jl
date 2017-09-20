@@ -278,24 +278,26 @@ function solve(pomdp::aPOMDP, solver_name::String="")
     # So, apparently Julia doesn't have switch statements. Nice.
     if solver_name == "qmdp"
         solver = QMDPSolver()
+        policy = POMDPs.solve(solver, pomdp)
     elseif solver_name == "sarsop"
         solver = SARSOPSolver()
+        policy = POMDPs.solve(solver, pomdp, silent=true)
     else
         println("aPOMDPs solve function received a request for an unknown solver: $solver_name")
         throw(ArgumentError)
     end
 
     # Get policy and return it
-    policy = POMDPs.solve(solver, pomdp)
+    
     return policy
 end
 
-# pomdp = aPOMDP()
+#pomdp = aPOMDP()
 
 # Test solver
 # solver = QMDPSolver()
-# solver = SARSOPSolver()
-# policy = solve(pomdp, "sarsop")
+#solver = SARSOPSolver()
+#policy = solve(pomdp, "sarsop")
 
 # Test integrating transitions, rewards, etc
 #integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
