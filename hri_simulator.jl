@@ -17,16 +17,20 @@ function random_user_profile(pomdp::aPOMDP)
 end
 
 function random_valuable_states(pomdp::aPOMDP)
-    # Generates random state values for simulation purposes
+    # Generates random state values for simulation purposes and returns the value function used
     # TODO: limited to two state vars
+    v_s = Dict()
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
-        set_state_value(pomdp, [i,j], rand(1:100))
+        v = rand(1:100)
+        set_state_value(pomdp, [i,j], v)
+        v_s[[i,j]] = v
     end
     calculate_reward_matrix(pomdp)
+    return v_s
 end
 
 function toy_example_user_profile(pomdp::aPOMDP)
-    # Generates a user profile according to the toy example
+    # Generates a user profile according to the toy example and returns the value function used
     # TODO: limited to two state vars
     user_profile = Dict()
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
@@ -47,10 +51,13 @@ end
 
 function toy_example_state_values(pomdp::aPOMDP)
     # Generates a reward function that is consonant with the toy example
+    v_s = Dict()
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
         set_state_value(pomdp, [i,j], 10*i)
+        v_s[[i,j]] = 10*i
     end
     calculate_reward_matrix(pomdp)
+    return v_s
 end
 
 # Test cases
@@ -71,9 +78,9 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 
     # Define the valuable states
     if toy_example
-        toy_example_state_values(pomdp)
+        v_s = toy_example_state_values(pomdp)
     else
-        random_valuable_states(pomdp)
+        v_s = random_valuable_states(pomdp)
     end
 
     # Decide initial state
@@ -119,18 +126,34 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 
     # Append results to a yaml log file
     if typeof(out_file) == IOStream
+        # Number of iterations used
         write(out_file, "- iterations: $num_iter\n")
+        # Interval of reward change
         write(out_file, "  reward_change_interval: $reward_change_interval\n")
+        # Whether the toy example was run
         scenario = toy_example ? "toy_example" : "random"
         write(out_file, "  scenario: $scenario\n")
+        # Policy re-calculation inteval
+        write(out_file, "  re_calc_interval: $re_calc_interval\n")
+        # Time it took to execute the whole scenario
         exec_time = now() - start_time
         exec_time = exec_time.value
-        write(out_file, "  re_calc_interval: $re_calc_interval\n")
         write(out_file, "  execution_time_ms: $exec_time\n")
+        # The V(S) function used for this scenario
+        write(out_file, "  v_s:\n")
+        for state in keys(v_s)
+            write(out_file, "    ? !!python/tuple\n")
+            for i in state
+                write(out_file, "    - $i\n")
+            end
+            write(out_file, "    : $(v_s[state])\n")
+        end
+        # The timeseries of action the system took
         write(out_file, "  actions:\n")
         for a in action_history
             write(out_file, "  - $a\n")
         end
+        # The timeseries of states the system was in
         write(out_file, "  states:\n")
         for i = 1:2:size(state_history)[1]
             s1 = state_history[i]
@@ -138,6 +161,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
             write(out_file, "  - - $s1\n")
             write(out_file, "    - $s2\n")
         end
+        # The timeseries of the rewards obtained by the system
         write(out_file, "  rewards:\n")
         for r in reward_history
             write(out_file, "  - $r\n")
@@ -148,18 +172,24 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     return reward_history
 end
 
-f1 = open("sarsop_random_1.yaml", "a")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=1, num_iter=1000, out_file=f1, solver_name="sarsop")
+f1 = open("cenas.yaml", "a")
+for i = 1:3
+    basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp")
 end
 close(f1)
-f1 = open("qmdp_random_1.yaml", "a")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=1, num_iter=1000, out_file=f1, solver_name="qmdp")
-end
-close(f1)
+
+# f1 = open("sarsop_random_1.yaml", "a")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=1000, out_file=f1, solver_name="sarsop")
+# end
+# close(f1)
+# f1 = open("qmdp_random_1.yaml", "a")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=1000, out_file=f1, solver_name="qmdp")
+# end
+# close(f1)
 
 # Third Batch of Test Cases
 # Tests with random scenario
