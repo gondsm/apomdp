@@ -178,6 +178,53 @@ def plot_timeseries_data(filename, outfile=None):
 		plt.show()
 
 
+def plot_state_histogram(filename, outfile=None):
+	""" Plots information on what states the system spent the most time on. """
+	# Read raw data
+	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
+	data = []
+	extension = filename.split(".")[1]
+	if extension == "pkl":
+		data = pickle.load(open(filename, "rb"))
+	else:
+		print("Error: I don't know this file extension!")
+		return
+
+	# Vector for plotting the bars:
+	vec = []
+
+	# This needs to be tackled for each trial
+	for entry in data:
+		# Get the series of states into a local (for readability)
+		series = entry["states"]
+		# Get a list of states and of values
+		states = [s for s in entry["v_s"]]
+		values = [entry["v_s"][s] for s in entry["v_s"]]
+		# States ordered from most to least valuable
+		ordered_states = [x for _,x in sorted(zip(values,states), reverse=True)]
+
+		count = [series.count(list(s)) for s in ordered_states]
+
+		if not vec:
+			vec = count
+		else:
+			vec = [vec[i] + count[i] for i in range(len(count))]
+
+	print(vec)
+
+	plt.figure()
+	plt.bar(range(len(vec)), vec)
+	
+	# Show plot of save it
+	if outfile:
+		plt.savefig(outfile)
+	else:
+		plt.show()
+
+	#print(data[0]["states"])
+	#print(data[0]["v_s"][tuple(data[0]["states"][0])])
+
+
 def convert_log_to_pickle(filename):
 	""" Convert a yaml log built during a simulation to a pickle file that can be read and written much faster. 
 	This was not able to be performed with log files over 4008000 lines in length. Beware.
@@ -240,16 +287,22 @@ def write_test_yaml():
 		data["states"] = [[1,2], [2,3], [1,2]]
 		data["rewards"] = [2.3454, 2.345, 12.3421]
 		data["actions"] = [1,2,3,4,3,2]
+		v_s = {(1,2):3}
+		data["v_s"] = v_s
 		yaml.dump([data], yaml_file, default_flow_style=False)
 
 
-def read_test_yaml():
-	with open("test.txt", "r") as yaml_file:
-		print(yaml.load(yaml_file))
+def read_test_yaml(filename):
+	with open(filename, "r") as yaml_file:
+		data = yaml.load(yaml_file)
+		print(data)
+
 
 
 if __name__ == "__main__":
+	# Configure matplotlib
 	rc('text', usetex=True)
+
 	# Plot the learning distribution example:
 	#plot_distribution_example()
 
@@ -264,8 +317,9 @@ if __name__ == "__main__":
 	# random_scenario_files = ["random_scenario_0", "random_scenario_1", "random_scenario_5", "random_scenario_20"]
 	# changing_scenario_files = ["random_scenario_changing_0", "random_scenario_changing_1", "random_scenario_changing_5", "random_scenario_changing_20"]
 	# toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
-	#short_scenario_files = ["random_scenario_short_{}".format(i) for i in [0,1,5,20]]
-	other_files = ["qmdp", "sarsop"]
+	# short_scenario_files = ["random_scenario_short_{}".format(i) for i in [0,1,5,20]]
+	# other_files = ["qmdp_random_1", "sarsop_random_1"]
+	other_files = ["cenas"]
 	all_files = []
 	# all_files.extend(random_scenario_files)
 	# all_files.extend(changing_scenario_files)
@@ -285,4 +339,6 @@ if __name__ == "__main__":
 	for f in all_files:
 		plot_timeseries_data(f+".pkl", f+".pdf")
 
+	for f in all_files:
+		plot_state_histogram(f+".pkl")
 	
