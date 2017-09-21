@@ -2,7 +2,11 @@
 # This script defines the aPOMDP types and associated functions that allow
 # for the definition and solving of this POMDP.
 # It has been tested using Julia0.6 and the QMDP solver
-using POMDPs, POMDPModels, POMDPToolbox, QMDP, SARSOP
+# POMDPs
+using POMDPs, POMDPModels, POMDPToolbox
+
+# Solvers
+using QMDP, SARSOP, DESPOT, MCVI # (MCVI is failing on load)
 
 # Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
@@ -282,6 +286,15 @@ function solve(pomdp::aPOMDP, solver_name::String="")
     elseif solver_name == "sarsop"
         solver = SARSOPSolver()
         policy = POMDPs.solve(solver, pomdp, silent=true)
+    elseif solver_name == "despot"
+        # TODO: fix this stuff
+        solver = DESPOTSolver{Array{Int64, 1}, Int64, Array, Int64, RandomStreams}()
+        policy = POMDPs.solve(solver, pomdp)
+    elseif solver_name == "mcvi"
+        # TODO: build a decent constructor call
+        #solver = MCVISolver(sim, nothing, 1, 10, 8, 50, 100, 500, 10, 1, 10)
+        #solver = MCVISolver()
+        policy = POMDPs.solve(solver, pomdp)
     else
         println("aPOMDPs solve function received a request for an unknown solver: $solver_name")
         throw(ArgumentError)
@@ -297,7 +310,8 @@ end
 # Test solver
 # solver = QMDPSolver()
 #solver = SARSOPSolver()
-#policy = solve(pomdp, "sarsop")
+#policy = solve(pomdp, "despot")
+#policy = solve(pomdp, "despot")
 
 # Test integrating transitions, rewards, etc
 #integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
