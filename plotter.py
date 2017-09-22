@@ -174,6 +174,7 @@ def plot_timeseries_data(filename, outfile=None):
 	#plt.legend()
 	if outfile:
 		plt.savefig(outfile)
+		plt.close()
 	else:
 		plt.show()
 
@@ -190,8 +191,10 @@ def plot_state_histogram(filename, outfile=None):
 		print("Error: I don't know this file extension!")
 		return
 
-	# Vector for plotting the bars:
-	vec = []
+	# List of vectors containing the count according to state value for each trial
+	# vecs[i][0] contains the number of iterations on the most valuable state in
+	# trial i, and so on
+	vecs = []
 
 	# This needs to be tackled for each trial
 	for entry in data:
@@ -202,22 +205,47 @@ def plot_state_histogram(filename, outfile=None):
 		values = [entry["v_s"][s] for s in entry["v_s"]]
 		# States ordered from most to least valuable
 		ordered_states = [x for _,x in sorted(zip(values,states), reverse=True)]
-
+		# Create occurrence vector
 		count = [series.count(list(s)) for s in ordered_states]
+		# Append to our list
+		vecs.append(count)
 
-		if not vec:
-			vec = count
-		else:
-			vec = [vec[i] + count[i] for i in range(len(count))]
+	# Stats vectors
+	sum_vec = [sum([vecs[i][j] for i in range(len(vecs))]) for j in range(len(vecs[0]))]
+	avg_vec = [elem/len(vecs) for elem  in sum_vec]
+	std_vec = [np.std([vecs[i][j] for i in range(len(vecs))]) for j in range(len(vecs[0]))]
+	box_vec = [[vecs[i][j] for i in range(len(vecs))] for j in range(len(vecs[0]))]
 
-	print(vec)
+	# Define figure parameters
+	col_width = 0.7
+	left_padding = (1-col_width)/2
+	offset = 0.5
+	# Initial and final colors for the bars
+	initial_color = [0.0, 0.8, 0.0, 1.0]
+	final_color = [0.3, 0.3, 0.0, 0.5]
+	# A small lambda to calculate our intermediate colors
+	# It depends on a ton of local vars, I'm not sure that's cool
+	custom_color = lambda t: [initial_color[i] + t/len(avg_vec)*(final_color[i]-initial_color[i]) for i in range(len(initial_color))]
 
-	plt.figure()
-	plt.bar(range(len(vec)), vec)
-	
+	# And plot bars
+	plt.figure(figsize=(6.4, 3.2))
+	plt.hold(True)
+	for i,elem in enumerate(avg_vec):
+		plt.bar(i+left_padding+offset, elem, width=col_width, color=custom_color(i))
+	plt.xlabel("State Ranks")
+	plt.ylabel("Iterations")
+	plt.xticks(range(1,len(avg_vec) + 1), range(1,len(avg_vec) + 1))
+	plt.tight_layout()
+
+	# And plot boxes
+	# plt.figure()
+	# plt.hold(True)
+	# plt.boxplot(box_vec)
+
 	# Show plot of save it
 	if outfile:
 		plt.savefig(outfile)
+		plt.close()
 	else:
 		plt.show()
 
