@@ -141,11 +141,27 @@ function calculate_reward_matrix(pomdp::aPOMDP)
         sum_var = 0
         # Get P(S'|S,A)
         dist = transition(pomdp, [i,j], k)
-        for state = dist.state_space
-            sum_var += pdf(dist, state)*(pomdp.state_values[state]-pomdp.state_values[[i,j]])
+        if pomdp.reward_type == "msvr"
+            # TODO
+        else
+            for state = dist.state_space
+                sum_var += pdf(dist, state)*(pomdp.state_values[state]-pomdp.state_values[[i,j]])
+            end
+        end
+        if pomdp.reward_type == "isvr"
+            sum_var += calc_entropy(dist.dist)
         end
         pomdp.reward_matrix[key] = sum_var
     end
+end
+
+# A function for calculating the entropy of a discrete distribution
+function calc_entropy(dist)
+    h = 0
+    for val in dist
+        h += val*log(2,val)
+    end
+    return -h
 end
 
 # Define knowledge integration function
@@ -167,7 +183,7 @@ end
 # Define state space
 function POMDPs.states(pomdp::aPOMDP)
     # Simple iteration over all possible state combinations
-    # TODO: still limiter to 2 state variables
+    # TODO: still limited to 2 state variables
     state_space = []
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
         state_space = append!(state_space, [[i,j]])
@@ -226,10 +242,12 @@ end
 
 function reward_isvr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO
+    reward_svr(pomdp, state, action)
 end
 
 function reward_msvr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO
+    reward_svr(pomdp, state, action)
 end
 
 # Define observation model. Fully observed for now.
@@ -332,9 +350,7 @@ end
 
 #pomdp = aPOMDP()
 
-# Test solver
-# solver = QMDPSolver()
-#solver = SARSOPSolver()
+# Test solvers
 #policy = solve(pomdp, "despot")
 #policy = solve(pomdp, "qmdp")
 
@@ -346,6 +362,14 @@ end
 # set_state_value(pomdp, [1,2], 10)
 # set_state_value(pomdp, [1,3], 20)
 # calculate_reward_matrix(pomdp)
+
+# Test entropy function
+# dist = apomdpDistribution(pomdp)
+# println("Distribution: ", dist.dist)
+# println("Entropy of uniform: ", calc_entropy(dist.dist))
+# dist2 = apomdpDistribution(pomdp, [2,2])
+# println("Distribution: ", dist2.dist)
+# println("Entropy of non-uniform: ", calc_entropy(dist2.dist))
 
 
 # # Test whether distributions behave the way we want them to
