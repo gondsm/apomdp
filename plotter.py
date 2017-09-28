@@ -99,7 +99,7 @@ def plot_distribution_example():
 	plt.savefig("1_action.pdf")
 
 
-def plot_timeseries_data(filename, outfile=None):
+def plot_timeseries_data(filename, outfile=None, entropy=False):
 	""" Plot some nice timeseries obtained from the simulations. """
 	# Read raw data
 	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
@@ -112,24 +112,30 @@ def plot_timeseries_data(filename, outfile=None):
 					raw_data.append([float(elem) for elem in line.split()])
 	elif extension == "pkl":
 		yaml_data = pickle.load(open(filename, "rb"))
-		raw_data = [d["rewards"] for d in yaml_data]
+		if entropy:
+			raw_data = [d["entropies"] for d in yaml_data]
+		else:
+			raw_data = [d["rewards"] for d in yaml_data]
 	else:
 		print("Error: I don't know this file extension!")
 		return
 
 	# Split for iteration
 	# Data will be a vector of vectors, with data [i] corresponding to all points at iteration i.
-	data = []
-	for i in range(len(raw_data[0])):
-		data.append([elem[i] for elem in raw_data])
+	data = raw_data
+	#for i in range(len(raw_data[0])):
+	#	data.append([elem[i] for elem in raw_data])
 
 	# Calculate cumulative reward
 	cum_reward = []
-	for trial in data:
-		l_cum_reward = []
-		for i in range(len(trial)):
-			l_cum_reward.append(sum(trial[0:i]))
-		cum_reward.append(l_cum_reward)
+	if entropy:
+		cum_reward = raw_data
+	else:
+		for trial in data:
+			l_cum_reward = []
+			for i in range(len(trial)):
+				l_cum_reward.append(sum(trial[0:i]))
+			cum_reward.append(l_cum_reward)
 
 	# Calculate min, max and average
 	avg_cum_reward = []
@@ -153,22 +159,34 @@ def plot_timeseries_data(filename, outfile=None):
 	extra_border_max = avg_plus_2std
 	extra_border_min = avg_minus_2std
 
+	# Decide colors
+	if entropy:
+		std_color = "orange"
+		line_color = "red"
+	else:
+		std_color = "cyan"
+		line_color = "blue"
+
 	# Make encapsulating patch
 	points = [[i,val] for i,val in enumerate(extra_border_min)]
 	points.extend([[i,val] for i,val in reversed(list(enumerate(extra_border_max)))])
-	ply = mpatches.Polygon(points, alpha=0.1, facecolor="green")
+	ply = mpatches.Polygon(points, alpha=0.1, facecolor=std_color)
 
 	# And plot
 	plt.figure(figsize=(6.4, 3.2))
 	plt.hold(True)
-	plt.plot(avg_cum_reward, label="avg")
-	plt.plot(extra_border_max, label="max", color="green")
-	plt.plot(extra_border_min, label="min", color="green")
+	plt.plot(avg_cum_reward, label="avg", color=line_color)
+	plt.plot(extra_border_max, '--', label="max", color=std_color)
+	plt.plot(extra_border_min, '--', label="min", color=std_color)
 	ax = plt.gca()
 	ax.add_patch(ply)
 	plt.xlabel("Iterations")
-	plt.ylabel("Cumulative Reward")
-	plt.yscale('symlog')
+	if entropy:
+		plt.ylabel("Average $T$ Entropy")
+	else:
+		plt.ylabel("Cumulative Reward")
+	if not entropy:
+		plt.yscale('symlog')
 	plt.tight_layout()
 	plt.grid()
 	#plt.legend()
@@ -244,6 +262,7 @@ def plot_state_histogram(filename, outfile=None):
 		plt.bar(i+left_padding+offset, elem, width=col_width, color=custom_color(i))
 	plt.xlabel("State Ranks")
 	plt.ylabel("Iterations")
+	plt.gca().yaxis.grid()
 	plt.xticks(range(1,len(avg_vec) + 1), range(1,len(avg_vec) + 1))
 	plt.tight_layout()
 
@@ -314,8 +333,8 @@ def calculate_table_entries(filename):
 	cum_reward_std = np.round(np.std(cum_reward_vec), 3)
 	exec_time_mean = np.round(np.mean(exec_time_vec), 3)
 	exec_time_std = np.round(np.std(exec_time_vec), 3)
-	top_3_mean = np.round(np.mean(top_3_vec), 3)
-	top_3_std = np.round(np.std(top_3_vec), 3)
+	top_3_mean = np.round(np.mean(top_3_vec)*100, 3)
+	top_3_std = np.round(np.std(top_3_vec)*100, 3)
 	entropy_mean = np.round(np.mean(entropy_vec), 3)
 	entropy_std = np.round(np.std(entropy_vec), 3)
 	#print("Cumulative Reward:")
@@ -324,7 +343,7 @@ def calculate_table_entries(filename):
 	#print("Avg: {}, Std: {}".format(exec_time_mean, exec_time_std))
 	# Results table format: Final Cum Reward & Execution time & Iterations in top 3 & Final avg entropy
 	print("Copyable:")
-	print("${}\pm{}$ & ${}\pm{}$ & ${}\\%\pm{}$ & ${}\pm{}$".format(cum_reward_mean, cum_reward_std, exec_time_mean, exec_time_std, top_3_mean*100, top_3_std*100, entropy_mean, entropy_std))
+	print("${}\pm{}$ & ${}\pm{}$ & ${}\\%\pm{}$ & ${}\pm{}$".format(cum_reward_mean, cum_reward_std, exec_time_mean, exec_time_std, top_3_mean, top_3_std, entropy_mean, entropy_std))
 	print()
 
 
@@ -349,8 +368,6 @@ if __name__ == "__main__":
 	# Configure matplotlib
 	rc('text', usetex=True)
 
-	read_test_yaml("cenas.yaml")
-
 	# Plot the learning distribution example:
 	#plot_distribution_example()
 
@@ -367,7 +384,8 @@ if __name__ == "__main__":
 	# toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
 	# short_scenario_files = ["random_scenario_short_{}".format(i) for i in [0,1,5,20]]
 	# other_files = ["qmdp_random_1", "sarsop_random_1"]
-	other_files = ["cenas"]
+	#other_files = ["random_qmdp_svr_100_1_0_1000", "random_qmdp_isvr_100_1_0_1000"]
+	other_files = ["random_sarsop_svr_100_1_0_100", "random_sarsop_isvr_100_1_0_100"]
 	all_files = []
 	# all_files.extend(random_scenario_files)
 	# all_files.extend(changing_scenario_files)
@@ -385,8 +403,11 @@ if __name__ == "__main__":
 
 	# Plot stuff
 	for f in all_files:
-		plot_timeseries_data(f+".pkl", f+".pdf")
+		plot_timeseries_data(f+".pkl", f+"_reward.pdf")
 
 	for f in all_files:
-		plot_state_histogram(f+".pkl", f+".pdf")
+		plot_timeseries_data(f+".pkl", f+"_entropy.pdf", entropy=True)
+
+	for f in all_files:
+		plot_state_histogram(f+".pkl", f+"_hist.pdf")
 	
