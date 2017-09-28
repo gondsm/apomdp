@@ -85,7 +85,6 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float6
     # functions we want to have
     state_values_dict = Dict()
     for n = 1:n_v_s
-        println("Initializing V(S) function ", n)
         state_values_dict[n] = Dict()
         for i = 1:n_var_states
             for j = 1:n_var_states
@@ -116,17 +115,6 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float6
     for i = 1:n_var_states, j = 1:n_var_states, k = 1:n_actions
         key = [i,j,k]
         reward_dict[key] = 0.0
-    end
-
-    if reward_type == "svr"
-        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_svr(a,b,c)
-    elseif reward_type == "isvr"
-        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_isvr(a,b,c)
-    elseif reward_type == "msvr"
-        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_msvr(a,b,c)
-    else
-        println("Got an invalid reward type while constructing aPOMDP. Using SVR.")
-        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_svr(a,b,c)
     end
 
     # Create and return object
@@ -251,22 +239,12 @@ end
 # All possible rewarding schemes are defined as fuctions here.
 # Selection of rewarding scheme is done when constructing the aPOMDP
 # struct (see aPOMDP()).
-function reward_svr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
+function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # Get the corresponding reward from the reward matrix
     # TODO: also likely limited to 2 state vars
     key = state[:]
     append!(key, action)
     return pomdp.reward_matrix[key]
-end
-
-function reward_isvr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
-    # TODO
-    reward_svr(pomdp, state, action)
-end
-
-function reward_msvr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
-    # TODO
-    reward_svr(pomdp, state, action)
 end
 
 # Define observation model. Fully observed for now.
@@ -367,7 +345,7 @@ function solve(pomdp::aPOMDP, solver_name::String="")
     return policy
 end
 
-# pomdp = aPOMDP("msvr", 2)
+#pomdp = aPOMDP("msvr", 2)
 
 # Test solvers
 #policy = solve(pomdp, "despot")
