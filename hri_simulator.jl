@@ -61,13 +61,13 @@ function toy_example_state_values(pomdp::aPOMDP)
 end
 
 # Test cases
-function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp")
+function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp", reward_name="svr")
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
     start_time = now()
     # Initialize POMDP
-    pomdp = aPOMDP()
+    pomdp = aPOMDP(reward_name)
 
     # Define the user's profile
     if toy_example
@@ -94,6 +94,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     reward_history = []
     state_history = [] #Matrix(0, 2)
     action_history = []
+    entropy_history = []
     for i = 1:num_iter
         # Get action
         a = action(policy, apomdpDistribution(pomdp, state))
@@ -108,6 +109,9 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
         state = user_profile[[state[1], state[2], a]]
         append!(state_history, prev_state)
         #state_history = [state_history; state']
+
+        # Get current average entropy
+        append!(entropy_history, calc_average_entropy(pomdp))
 
         # Increment knowledge
         integrate_transition(pomdp, prev_state, state, a)
@@ -153,6 +157,11 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
         for a in action_history
             write(out_file, "  - $a\n")
         end
+        # The timeseries of average entropies
+        write(out_file, "  entropies:\n")
+        for h in entropy_history
+            write(out_file, "  - $h\n")
+        end
         # The timeseries of states the system was in
         write(out_file, "  states:\n")
         for i = 1:2:size(state_history)[1]
@@ -173,9 +182,11 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 end
 
 f1 = open("cenas.yaml", "a")
-for i = 1:3
-    basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp")
+for i = 1:2
+    print(".")
+    basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp", reward_name="isvr")
 end
+println()
 close(f1)
 
 # f1 = open("sarsop_random_1.yaml", "a")
