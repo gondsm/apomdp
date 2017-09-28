@@ -331,6 +331,22 @@ function calc_average_entropy(pomdp)
     return mean(entropy_vec)
 end
 
+immutable apomdpBounds end
+immutable apomdpState end
+immutable apomdpObservation end    
+
+function apomdpBounds() # DESPOT
+    1,0
+end
+
+function apomdpState() # DESPOT
+    [0,0]
+end
+
+function apomdpObservation() # DESPOT
+    [0,0]
+end
+
 
 function solve(pomdp::aPOMDP, solver_name::String="")
     # Solve the POMDP according to the solver requested
@@ -343,7 +359,7 @@ function solve(pomdp::aPOMDP, solver_name::String="")
         policy = POMDPs.solve(solver, pomdp, silent=true)
     elseif solver_name == "despot"
         # TODO: fix this stuff
-        #solver = DESPOTSolver{Array{Int64, 1}, Int64, Array, Int64, RandomStreams}()
+        #solver = DESPOTSolver{apomdpState, Int64, apomdpObservation, apomdpBounds, RandomStreams}()
         #policy = POMDPs.solve(solver, pomdp)
     elseif solver_name == "mcvi"
         # TODO: build a decent constructor call
@@ -361,7 +377,7 @@ function solve(pomdp::aPOMDP, solver_name::String="")
 end
 
 #pomdp = aPOMDP("msvr", 2)
-pomdp = aPOMDP()
+#pomdp = aPOMDP()
 
 # Test solvers
 #policy = solve(pomdp, "despot")
