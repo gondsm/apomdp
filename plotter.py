@@ -179,18 +179,7 @@ def plot_timeseries_data(filename, outfile=None):
 		plt.show()
 
 
-def plot_state_histogram(filename, outfile=None):
-	""" Plots information on what states the system spent the most time on. """
-	# Read raw data
-	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
-	data = []
-	extension = filename.split(".")[1]
-	if extension == "pkl":
-		data = pickle.load(open(filename, "rb"))
-	else:
-		print("Error: I don't know this file extension!")
-		return
-
+def calc_state_histogram(data):
 	# List of vectors containing the count according to state value for each trial
 	# vecs[i][0] contains the number of iterations on the most valuable state in
 	# trial i, and so on
@@ -215,14 +204,35 @@ def plot_state_histogram(filename, outfile=None):
 	avg_vec = [elem/len(vecs) for elem  in sum_vec]
 	std_vec = [np.std([vecs[i][j] for i in range(len(vecs))]) for j in range(len(vecs[0]))]
 	box_vec = [[vecs[i][j] for i in range(len(vecs))] for j in range(len(vecs[0]))]
+	top_3_vec = [sum([vecs[i][j] for j in range(3)])/sum(vecs[i]) for i in range(len(vecs))]
+
+	# vec[i] contains a value for rank state [i]
+	# top_3_vec contains the fraction of iterations spent in the top 3 states for each run i
+	return [sum_vec, avg_vec, std_vec, box_vec, top_3_vec]
+
+
+def plot_state_histogram(filename, outfile=None):
+	""" Plots information on what states the system spent the most time on. """
+	# Read raw data
+	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
+	data = []
+	extension = filename.split(".")[1]
+	if extension == "pkl":
+		data = pickle.load(open(filename, "rb"))
+	else:
+		print("Error: I don't know this file extension!")
+		return
+
+	# Get vectors
+	[sum_vec, avg_vec, std_vec, box_vec, _] = calc_state_histogram(data)
 
 	# Define figure parameters
 	col_width = 0.7
 	left_padding = (1-col_width)/2
 	offset = 0.5
 	# Initial and final colors for the bars
-	initial_color = [0.0, 0.8, 0.0, 1.0]
-	final_color = [0.3, 0.3, 0.0, 0.5]
+	initial_color = [26/255, 17/255, 1.0, 1.0]
+	final_color = [0.5, 0.0, 0.0, 1.0]
 	# A small lambda to calculate our intermediate colors
 	# It depends on a ton of local vars, I'm not sure that's cool
 	custom_color = lambda t: [initial_color[i] + t/len(avg_vec)*(final_color[i]-initial_color[i]) for i in range(len(initial_color))]
@@ -289,10 +299,14 @@ def calculate_table_entries(filename):
 	# Load data
 	data = pickle.load(open(filename, "rb"))
 
+	# Calculate the statistics we need from the data
+	[_, _, _, _, top_3_vec] = calc_state_histogram(data)
+
 	# Build execution time and cumulative reward vectors
 	# LIST COMPREHENSIONS RULE
 	exec_time_vec = [d["execution_time_ms"] for d in data]
 	cum_reward_vec = [sum(d["rewards"]) for d in data]
+	entropy_vec = [d["entropies"][-1] for d in data]
 
 	# Print out the good stuff
 	print("Filename:", filename)
@@ -300,12 +314,17 @@ def calculate_table_entries(filename):
 	cum_reward_std = np.round(np.std(cum_reward_vec), 3)
 	exec_time_mean = np.round(np.mean(exec_time_vec), 3)
 	exec_time_std = np.round(np.std(exec_time_vec), 3)
+	top_3_mean = np.round(np.mean(top_3_vec), 3)
+	top_3_std = np.round(np.std(top_3_vec), 3)
+	entropy_mean = np.round(np.mean(entropy_vec), 3)
+	entropy_std = np.round(np.std(entropy_vec), 3)
 	#print("Cumulative Reward:")
 	#print("Avg: {}, Std: {}".format(cum_reward_mean, cum_reward_std))
 	#print("Execution Time:")
 	#print("Avg: {}, Std: {}".format(exec_time_mean, exec_time_std))
+	# Results table format: Final Cum Reward & Execution time & Iterations in top 3 & Final avg entropy
 	print("Copyable:")
-	print("${}\pm{}$ & ${}\pm{}$".format(cum_reward_mean, cum_reward_std, exec_time_mean, exec_time_std))
+	print("${}\pm{}$ & ${}\pm{}$ & ${}\\%\pm{}$ & ${}\pm{}$".format(cum_reward_mean, cum_reward_std, exec_time_mean, exec_time_std, top_3_mean*100, top_3_std*100, entropy_mean, entropy_std))
 	print()
 
 
@@ -326,10 +345,11 @@ def read_test_yaml(filename):
 		print(data)
 
 
-
 if __name__ == "__main__":
 	# Configure matplotlib
 	rc('text', usetex=True)
+
+	read_test_yaml("cenas.yaml")
 
 	# Plot the learning distribution example:
 	#plot_distribution_example()
@@ -368,5 +388,5 @@ if __name__ == "__main__":
 		plot_timeseries_data(f+".pkl", f+".pdf")
 
 	for f in all_files:
-		plot_state_histogram(f+".pkl")
+		plot_state_histogram(f+".pkl", f+".pdf")
 	
