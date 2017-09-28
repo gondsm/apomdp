@@ -31,6 +31,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     discount_factor::Float64
     # Maintains the state indices as a dict of the form [S] (vector) -> Int
     state_indices::Dict 
+    # The kind of reward to be used. Can be one of svr, isvr or msvr
+    reward_type::String
 end
 
 # Define probability distribution type
@@ -64,7 +66,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP()
+function aPOMDP(reward_type::String="svr")
     # TODO: Only works for two state variables for now
     # TODO: constants on matrix definitions
     # (fors are repeated along n_var_states twice only, will have to
@@ -106,6 +108,17 @@ function aPOMDP()
         reward_dict[key] = 0.0
     end
 
+    if reward_type == "svr"
+        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_svr(a,b,c)
+    elseif reward_type == "isvr"
+        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_isvr(a,b,c)
+    elseif reward_type == "msvr"
+        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_msvr(a,b,c)
+    else
+        println("Got an invalid reward type while constructing aPOMDP. Using SVR.")
+        POMDPs.reward(a::aPOMDP, b::Array{Int64, 1}, c::Int64) = reward_svr(a,b,c)
+    end
+
     # Create and return object
     return aPOMDP(n_state_vars, 
                   n_var_states,
@@ -114,7 +127,8 @@ function aPOMDP()
                   transition_dict, 
                   reward_dict,
                   0.95,
-                  state_indices)
+                  state_indices,
+                  reward_type)
 end
 
 # Define reward calculation function
@@ -199,12 +213,23 @@ function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
 end
 
 # Define reward model
-function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
+# All possible rewarding schemes are defined as fuctions here.
+# Selection of rewarding scheme is done when constructing the aPOMDP
+# struct (see aPOMDP()).
+function reward_svr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # Get the corresponding reward from the reward matrix
     # TODO: also likely limited to 2 state vars
     key = state[:]
     append!(key, action)
     return pomdp.reward_matrix[key]
+end
+
+function reward_isvr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
+    # TODO
+end
+
+function reward_msvr(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
+    # TODO
 end
 
 # Define observation model. Fully observed for now.
@@ -288,13 +313,13 @@ function solve(pomdp::aPOMDP, solver_name::String="")
         policy = POMDPs.solve(solver, pomdp, silent=true)
     elseif solver_name == "despot"
         # TODO: fix this stuff
-        solver = DESPOTSolver{Array{Int64, 1}, Int64, Array, Int64, RandomStreams}()
-        policy = POMDPs.solve(solver, pomdp)
+        #solver = DESPOTSolver{Array{Int64, 1}, Int64, Array, Int64, RandomStreams}()
+        #policy = POMDPs.solve(solver, pomdp)
     elseif solver_name == "mcvi"
         # TODO: build a decent constructor call
         #solver = MCVISolver(sim, nothing, 1, 10, 8, 50, 100, 500, 10, 1, 10)
         #solver = MCVISolver()
-        policy = POMDPs.solve(solver, pomdp)
+        #policy = POMDPs.solve(solver, pomdp)
     else
         println("aPOMDPs solve function received a request for an unknown solver: $solver_name")
         throw(ArgumentError)
@@ -311,7 +336,7 @@ end
 # solver = QMDPSolver()
 #solver = SARSOPSolver()
 #policy = solve(pomdp, "despot")
-#policy = solve(pomdp, "despot")
+#policy = solve(pomdp, "qmdp")
 
 # Test integrating transitions, rewards, etc
 #integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
