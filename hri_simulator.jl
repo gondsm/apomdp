@@ -183,21 +183,78 @@ end
 
 # New naming scheme for test results:
 # condition_solver_reward_<n_iterations>_<T_c>_<T_V(S)>_<n_trials>.yaml
-f1 = open("random_sarsop_svr_1000_1_0_100.yaml", "a")
+f1 = open("results/random_sarsop_svr_100_1_0_1000.yaml", "a")
+println("random_sarsop_svr_100_1_0_1000.yaml")
 for i = 1:1000
     print(".")
     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="svr")
 end
 close(f1)
 println()
-f2 = open("random_sarsop_isvr_1000_1_0_100.yaml", "a")
+
+f1 = open("results/random_sarsop_isvr_100_1_0_1000.yaml", "a")
+println("random_sarsop_isvr_100_1_0_1000.yaml")
 for i = 1:1000
     print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f2, solver_name="sarsop", reward_name="isvr")
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="isvr")
 end
-close(f2)
+close(f1)
 println()
 
+f1 = open("results/random_qmdp_svr_100_1_0_1000.yaml", "a")
+println("random_qmdp_svr_100_1_0_1000.yaml")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
+end
+close(f1)
+println()
+
+f1 = open("results/random_qmdp_isvr_100_1_0_1000.yaml", "a")
+println("random_qmdp_isvr_100_1_0_1000.yaml")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr")
+end
+close(f1)
+println()
+
+
+f1 = open("results/random_sarsop_svr_100_20_0_1000.yaml", "a")
+println("random_sarsop_svr_100_20_0_1000.yaml")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="svr")
+end
+close(f1)
+println()
+
+f1 = open("results/random_sarsop_isvr_100_20_0_1000.yaml", "a")
+println("random_sarsop_isvr_100_20_0_1000.yaml")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="isvr")
+end
+close(f1)
+println()
+
+f1 = open("results/random_qmdp_svr_100_20_0_1000.yaml", "a")
+println("random_qmdp_svr_100_20_0_1000.yaml")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
+end
+close(f1)
+println()
+
+f1 = open("results/random_qmdp_isvr_100_20_0_1000.yaml", "a")
+println("random_qmdp_isvr_100_20_0_1000.yaml")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr")
+end
+close(f1)
+println()
 
 # f1 = open("cenas.yaml", "a")
 # for i = 1:2
