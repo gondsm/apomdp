@@ -20,7 +20,9 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # Actions will be 1 through n_action
     n_actions::Int64 
     # Maintains the value of each state according to the goal. A dict of the form [S] (vector) -> V (float)
-    state_values 
+    state_values::Dict
+    # Maintains the number of V(S) (state value) functions we will have in this problem
+    n_v_s::Int64
     # Maintains the transition history in a dict of the form [S,A] (vector) -> P(S') (n-d matrix).
     # It is not normalized and acts as a history of occurrences. Normalization into a proper distribution
     # happens when it is queried via the transition() function
@@ -66,7 +68,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr")
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1)
     # TODO: Only works for two state variables for now
     # TODO: constants on matrix definitions
     # (fors are repeated along n_var_states twice only, will have to
@@ -77,11 +79,17 @@ function aPOMDP(reward_type::String="svr")
     n_actions = 3
 
     # Initialize V-function attributing values to states
+    # The inner cycle initializes V(S) as 0 for all V(S)
+    # functions we want to have
     state_values_dict = Dict()
-    for i = 1:n_var_states
-        for j = 1:n_var_states
-            key = [i,j]
-            state_values_dict[key] = 0
+    for n = 0:n_v_s-1
+        println("Initializing V(S) function ", n)
+        state_values_dict[n] = Dict()
+        for i = 1:n_var_states
+            for j = 1:n_var_states
+                key = [i,j]
+                state_values_dict[n][key] = 0
+            end
         end
     end
 
@@ -124,6 +132,7 @@ function aPOMDP(reward_type::String="svr")
                   n_var_states,
                   n_actions,
                   state_values_dict,
+                  n_v_s,
                   transition_dict, 
                   reward_dict,
                   0.95,
@@ -134,7 +143,6 @@ end
 # Define reward calculation function
 function calculate_reward_matrix(pomdp::aPOMDP)
     # TODO: Only works for two state variables
-    # TODO: Integrate information metric
     # Re-calculate the whole reward matrix according to the current transition matrix and state values
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
         key = [i,j,k]
@@ -145,7 +153,7 @@ function calculate_reward_matrix(pomdp::aPOMDP)
             # TODO
         else
             for state = dist.state_space
-                sum_var += pdf(dist, state)*(pomdp.state_values[state]-pomdp.state_values[[i,j]])
+                sum_var += pdf(dist, state)*(pomdp.state_values[0][state]-pomdp.state_values[0][[i,j]])
             end
         end
         if pomdp.reward_type == "isvr"
@@ -175,9 +183,10 @@ function integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Arr
 end
 
 # Set a state's value
-function set_state_value(pomdp::aPOMDP, state::Array, value::Int64)
+function set_state_value(pomdp::aPOMDP, state::Array, value::Int64, index::Int64=0)
     # Set the value of a certain state to the given value
-    pomdp.state_values[state[:]] = value
+    # Index selects which V(S) function we're using when using MSVR
+    pomdp.state_values[index][state[:]] = value
 end
 
 # Define state space
@@ -348,7 +357,7 @@ function solve(pomdp::aPOMDP, solver_name::String="")
     return policy
 end
 
-#pomdp = aPOMDP()
+# pomdp = aPOMDP("msvr", 2)
 
 # Test solvers
 #policy = solve(pomdp, "despot")
@@ -361,7 +370,10 @@ end
 # println(transition(pomdp, [1,1], 1))
 # set_state_value(pomdp, [1,2], 10)
 # set_state_value(pomdp, [1,3], 20)
+# set_state_value(pomdp, [1,3], 20, 1)
 # calculate_reward_matrix(pomdp)
+# println(pomdp.state_values[0])
+# println(pomdp.state_values[1])
 
 # Test entropy function
 # dist = apomdpDistribution(pomdp)
