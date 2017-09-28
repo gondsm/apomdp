@@ -387,14 +387,14 @@ if __name__ == "__main__":
 	#other_files = ["random_qmdp_svr_100_1_0_1000", "random_qmdp_isvr_100_1_0_1000"]
 	#other_files = ["random_sarsop_svr_100_1_0_100", "random_sarsop_isvr_100_1_0_100"]
 	other_files = [
-	                 "results/random_sarsop_svr_100_1_0_1000.yaml",
-	                 "results/random_sarsop_isvr_100_1_0_1000.yaml",
-	                 "results/random_sarsop_svr_100_20_0_1000.yaml",
-	                 "results/random_sarsop_isvr_100_20_0_1000.yaml",
-	                 "results/random_qmdp_svr_100_1_0_1000.yaml",
-	                 "results/random_qmdp_isvr_100_20_0_1000.yaml",
-	                 "results/random_qmdp_svr_100_1_0_1000.yaml",
-	                 "results/random_qmdp_isvr_100_20_0_1000.yaml"
+	                 "results/random_sarsop_svr_100_1_0_1000",
+	                 "results/random_sarsop_isvr_100_1_0_1000",
+	                 "results/random_sarsop_svr_100_20_0_1000",
+	                 "results/random_sarsop_isvr_100_20_0_1000",
+	                 "results/random_qmdp_svr_100_1_0_1000",
+	                 "results/random_qmdp_svr_100_20_0_1000",
+	                 "results/random_qmdp_isvr_100_1_0_1000",
+	                 "results/random_qmdp_isvr_100_20_0_1000"
 	              ]
 	all_files = []
 	# all_files.extend(random_scenario_files)
