@@ -317,6 +317,21 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     return dist.state_space[idx]
 end
 
+# Function for calculating the average entropy of the transition matrix
+function calc_average_entropy(pomdp)
+    # Initialize an empty vector
+    entropy_vec = []
+    # Iterate over state-action combinations and calculate entropies
+    for state in states(pomdp)
+        for action = 1:n_actions(pomdp)
+            append!(entropy_vec, calc_entropy(transition(pomdp, state, action).dist))
+        end
+    end
+    # And get the mean
+    return mean(entropy_vec)
+end
+
+
 function solve(pomdp::aPOMDP, solver_name::String="")
     # Solve the POMDP according to the solver requested
     # So, apparently Julia doesn't have switch statements. Nice.
@@ -346,15 +361,17 @@ function solve(pomdp::aPOMDP, solver_name::String="")
 end
 
 #pomdp = aPOMDP("msvr", 2)
+pomdp = aPOMDP()
 
 # Test solvers
 #policy = solve(pomdp, "despot")
 #policy = solve(pomdp, "qmdp")
 
 # Test integrating transitions, rewards, etc
-#integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Array, action::Int64)
+# println(calc_average_entropy(pomdp))
 # integrate_transition(pomdp, [1,1], [1,2], 1)
 # integrate_transition(pomdp, [1,1], [1,3], 2)
+# println(calc_average_entropy(pomdp))
 # println(transition(pomdp, [1,1], 1))
 # set_state_value(pomdp, [1,2], 10)
 # set_state_value(pomdp, [1,3], 20)
