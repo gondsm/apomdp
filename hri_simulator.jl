@@ -181,13 +181,31 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     return reward_history
 end
 
-f1 = open("cenas.yaml", "a")
-for i = 1:2
+# New naming scheme for test results:
+# solver_reward_<n_iterations>_<T_c>_<T_V(S)>_<n_trials>.yaml
+f1 = open("qmdp_svr_100_1_0_1000.yaml", "a")
+for i = 1:1000
     print(".")
-    basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp", reward_name="isvr")
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
 end
-println()
 close(f1)
+println()
+f2 = open("qmdp_isvr_100_1_0_1000.yaml", "a")
+for i = 1:1000
+    print(".")
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f2, solver_name="qmdp", reward_name="isvr")
+end
+close(f2)
+println()
+
+
+# f1 = open("cenas.yaml", "a")
+# for i = 1:2
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp", reward_name="isvr")
+# end
+# println()
+# close(f1)
 
 # f1 = open("sarsop_random_1.yaml", "a")
 # for i = 1:1000
