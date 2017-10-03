@@ -70,7 +70,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float64,1}=normalize(ones(Float64, n_v_s), 1))
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
     # TODO: Only works for two state variables for now
     # TODO: constants on matrix definitions
     # (fors are repeated along n_var_states twice only, will have to
@@ -154,7 +154,7 @@ function calculate_reward_matrix(pomdp::aPOMDP)
                 sum_var += pdf(dist, state)*(pomdp.state_values[1][state]-pomdp.state_values[1][[i,j]])
             end
         end
-        if pomdp.reward_type == "isvr"
+        if pomdp.reward_type == "isvr" || pomdp.reward_type == "msvr"
             sum_var += calc_entropy(dist.dist)
         end
         pomdp.reward_matrix[key] = sum_var
@@ -377,7 +377,7 @@ function solve(pomdp::aPOMDP, solver_name::String="")
 end
 
 #pomdp = aPOMDP("msvr", 2)
-#pomdp = aPOMDP()
+#pomdp = aPOMDP("msvr", 3)
 
 # Test solvers
 #policy = solve(pomdp, "despot")
