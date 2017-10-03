@@ -394,7 +394,11 @@ if __name__ == "__main__":
 	                 "results/random_qmdp_svr_100_1_0_1000",
 	                 "results/random_qmdp_svr_100_20_0_1000",
 	                 "results/random_qmdp_isvr_100_1_0_1000",
-	                 "results/random_qmdp_isvr_100_20_0_1000"
+	                 "results/random_qmdp_isvr_100_20_0_1000",
+	                 "results/random_qmdp_msvr_100_1_0_1000",
+	                 "results/random_qmdp_msvr_100_20_0_1000",
+	                 "results/random_sarsop_msvr_100_1_0_1000",
+	                 "results/random_sarsop_msvr_100_20_0_1000"
 	              ]
 	all_files = []
 	# all_files.extend(random_scenario_files)
