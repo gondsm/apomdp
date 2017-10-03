@@ -16,17 +16,24 @@ function random_user_profile(pomdp::aPOMDP)
     return user_profile
 end
 
-function random_valuable_states(pomdp::aPOMDP)
+function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
     # Generates random state values for simulation purposes and returns the value function used
     # TODO: limited to two state vars
     v_s = Dict()
-    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
-        v = rand(1:100)
-        set_state_value(pomdp, [i,j], v)
-        v_s[[i,j]] = v
+    for j = 1:n_v_s
+        for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
+            v = rand(1:100)
+            set_state_value(pomdp, [i,j], v, j)
+            if haskey(v_s, [[i,j]])
+                v_s[[i,j]] += v
+            else
+                v_s[[i,j]] = v
+            end
+        end
+        calculate_reward_matrix(pomdp)
+        # TODO: How to return several V(S)?
+        return v_s
     end
-    calculate_reward_matrix(pomdp)
-    return v_s
 end
 
 function toy_example_user_profile(pomdp::aPOMDP)
@@ -61,13 +68,17 @@ function toy_example_state_values(pomdp::aPOMDP)
 end
 
 # Test cases
-function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp", reward_name="svr")
+function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp", reward_name="svr", n_rewards=1)
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
     start_time = now()
     # Initialize POMDP
-    pomdp = aPOMDP(reward_name)
+    if reward_name == "msvr"
+        pomdp = aPOMDP(reward_name, n_rewards)
+    else
+        pomdp = aPOMDP(reward_name)
+    end
 
     # Define the user's profile
     if toy_example
@@ -80,7 +91,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     if toy_example
         v_s = toy_example_state_values(pomdp)
     else
-        v_s = random_valuable_states(pomdp)
+        v_s = random_valuable_states(pomdp, n_rewards)
     end
 
     # Decide initial state
@@ -183,78 +194,116 @@ end
 
 # New naming scheme for test results:
 # condition_solver_reward_<n_iterations>_<T_c>_<T_V(S)>_<n_trials>.yaml
-f1 = open("results/random_sarsop_svr_100_1_0_1000.yaml", "a")
-println("random_sarsop_svr_100_1_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="svr")
-end
-close(f1)
-println()
+# f1 = open("results/random_sarsop_svr_100_1_0_1000.yaml", "a")
+# println("random_sarsop_svr_100_1_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="svr")
+# end
+# close(f1)
+# println()
 
-f1 = open("results/random_sarsop_isvr_100_1_0_1000.yaml", "a")
-println("random_sarsop_isvr_100_1_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="isvr")
-end
-close(f1)
-println()
+# f1 = open("results/random_sarsop_isvr_100_1_0_1000.yaml", "a")
+# println("random_sarsop_isvr_100_1_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="isvr")
+# end
+# close(f1)
+# println()
 
-f1 = open("results/random_qmdp_svr_100_1_0_1000.yaml", "a")
-println("random_qmdp_svr_100_1_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
-end
-close(f1)
-println()
+# f1 = open("results/random_qmdp_svr_100_1_0_1000.yaml", "a")
+# println("random_qmdp_svr_100_1_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
+# end
+# close(f1)
+# println()
 
-f1 = open("results/random_qmdp_isvr_100_1_0_1000.yaml", "a")
-println("random_qmdp_isvr_100_1_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr")
-end
-close(f1)
-println()
+# f1 = open("results/random_qmdp_isvr_100_1_0_1000.yaml", "a")
+# println("random_qmdp_isvr_100_1_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr")
+# end
+# close(f1)
+# println()
 
 
-f1 = open("results/random_sarsop_svr_100_20_0_1000.yaml", "a")
-println("random_sarsop_svr_100_20_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="svr")
-end
-close(f1)
-println()
+# f1 = open("results/random_sarsop_svr_100_20_0_1000.yaml", "a")
+# println("random_sarsop_svr_100_20_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="svr")
+# end
+# close(f1)
+# println()
 
-f1 = open("results/random_sarsop_isvr_100_20_0_1000.yaml", "a")
-println("random_sarsop_isvr_100_20_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="isvr")
-end
-close(f1)
-println()
+# f1 = open("results/random_sarsop_isvr_100_20_0_1000.yaml", "a")
+# println("random_sarsop_isvr_100_20_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="isvr")
+# end
+# close(f1)
+# println()
 
-f1 = open("results/random_qmdp_svr_100_20_0_1000.yaml", "a")
-println("random_qmdp_svr_100_20_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
-end
-close(f1)
-println()
+# f1 = open("results/random_qmdp_svr_100_20_0_1000.yaml", "a")
+# println("random_qmdp_svr_100_20_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
+# end
+# close(f1)
+# println()
 
-f1 = open("results/random_qmdp_isvr_100_20_0_1000.yaml", "a")
-println("random_qmdp_isvr_100_20_0_1000.yaml")
-for i = 1:1000
-    print(".")
-    basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr")
-end
-close(f1)
-println()
+# f1 = open("results/random_qmdp_isvr_100_20_0_1000.yaml", "a")
+# println("random_qmdp_isvr_100_20_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr")
+# end
+# close(f1)
+# println()
+
+
+# f1 = open("results/random_sarsop_msvr_100_20_0_1000.yaml", "a")
+# println("random_sarsop_msvr_100_20_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="msvr", n_rewards=3)
+# end
+# close(f1)
+# println()
+
+# f1 = open("results/random_sarsop_msvr_100_1_0_1000.yaml", "a")
+# println("random_sarsop_msvr_100_1_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="sarsop", reward_name="msvr", n_rewards=3)
+# end
+# close(f1)
+# println()
+
+# f1 = open("results/random_qmdp_msvr_100_20_0_1000.yaml", "a")
+# println("random_qmdp_msvr_100_20_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=20, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="msvr", n_rewards=3)
+# end
+# close(f1)
+# println()
+
+# f1 = open("results/random_qmdp_msvr_100_1_0_1000.yaml", "a")
+# println("random_qmdp_msvr_100_1_0_1000.yaml")
+# for i = 1:1000
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="msvr", n_rewards=3)
+# end
+# close(f1)
+# println()
+
 
 # f1 = open("cenas.yaml", "a")
 # for i = 1:2
