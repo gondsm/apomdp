@@ -20,10 +20,10 @@ function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
     # Generates random state values for simulation purposes and returns the value function used
     # TODO: limited to two state vars
     v_s = Dict()
-    for j = 1:n_v_s
+    for k = 1:n_v_s
         for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
             v = rand(1:100)
-            set_state_value(pomdp, [i,j], v, j)
+            set_state_value(pomdp, [i,j], v, k)
             if haskey(v_s, [[i,j]])
                 v_s[[i,j]] += v
             else
@@ -191,6 +191,13 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     # Return the reward history, for compatibility with previous testing code
     return reward_history
 end
+
+# Run a quick test
+# f1 = open("results/cenas.yaml", "a")
+# for i = 1:100
+#     print(".")
+#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
+# end
 
 # New naming scheme for test results:
 # condition_solver_reward_<n_iterations>_<T_c>_<T_V(S)>_<n_trials>.yaml
