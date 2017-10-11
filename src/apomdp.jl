@@ -6,7 +6,10 @@
 using POMDPs, POMDPModels, POMDPToolbox
 
 # Solvers
-using QMDP, SARSOP, DESPOT, MCVI # (MCVI is failing on load)
+using QMDP, SARSOP#, DESPOT, MCVI # (MCVI is failing on load)
+
+# Other stuff
+using IterTools
 
 # Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
@@ -33,8 +36,12 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     reward_matrix::Dict 
     # The good old discount factor
     discount_factor::Float64
+    # An array of all possible states
+    states::Array
     # Maintains the state indices as a dict of the form [S] (vector) -> Int
     state_indices::Dict 
+    # An array with the current state structure
+    state_structure::Array
     # The kind of reward to be used. Can be one of svr, isvr or msvr
     reward_type::String
 end
@@ -45,23 +52,20 @@ type apomdpDistribution
     state_space::Array
     # A distribution over the next state
     # This distribution is bi-dimensional, for both state dimensions
-    # TODO: still limited to 2 state variables
-    dist::Array{Float64, 2}
+    dist::Array
 end
 
 # Define a deterministic distribution from a simple state
 function apomdpDistribution(pomdp::aPOMDP, state::Array)
-    # TODO: constans on matrix definition
-    dist = ones(Float64, 3, 3)/1000
-    dist[state[1], state[2]] = 1000
+    dist = ones(Float64, pomdp.state_structure...)/1000
+    dist[state] = 1000
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
 
 # Define a uniform distribution
 function apomdpDistribution(pomdp::aPOMDP)
-    # TODO: constans on matrix definition
-    dist = ones(Float64, 3, 3)/1000
+    dist = ones(Float64, pomdp.state_structure...)/1000
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
@@ -70,50 +74,52 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), state_structure::Array{Int64,1}=[3,3], n_actions=3)
     # TODO: Only works for two state variables for now
     # TODO: constants on matrix definitions
     # (fors are repeated along n_var_states twice only, will have to
     # be expanded to work on n variables with iterators or something)
     # Initialize problem dimensions
-    n_state_vars = 2
+    n_state_vars = size(state_structure)[1]
     n_var_states = 3
-    n_actions = 3
+
+    # Generate an array with all possible states:
+    vecs = [collect(1:n) for n in state_structure]
+    states = collect(IterTools.product(vecs...))
+    states = [[i for i in s] for s in states]
 
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
     # functions we want to have
     state_values_dict = Dict()
+
     for n = 1:n_v_s
         state_values_dict[n] = Dict()
-        for i = 1:n_var_states
-            for j = 1:n_var_states
-                key = [i,j]
-                state_values_dict[n][key] = 0
-            end
+        for state in states
+            state_values_dict[n][state] = 0
         end
     end
 
     # Initialize state-index matrix
     curr_index = 1
     state_indices = Dict()
-    for i = 1:n_var_states, j = 1:n_var_states
-        state_indices[[i,j]] = curr_index
+    for state in states
+        state_indices[state] = curr_index
         curr_index += 1
     end
 
     # Initialize uniform transition matrix
     transition_dict = Dict()
-    for i = 1:n_var_states, j = 1:n_var_states, k = 1:n_actions
+    for state in states, k = 1:n_actions
         # For every S, A combination, we have a probability distribution indexed by 
-        key = [i,j,k]
-        transition_dict[key] = ones(Float64, 3, 3)/1000
-    end 
+        key = vcat(state,[k])
+        transition_dict[key] = ones(Float64, state_structure...)/1000
+    end
 
     # Initialize uniform reward matrix
     reward_dict = Dict()
-    for i = 1:n_var_states, j = 1:n_var_states, k = 1:n_actions
-        key = [i,j,k]
+    for state in states, k = 1:n_actions
+        key = vcat(state,[k])
         reward_dict[key] = 0.0
     end
 
@@ -127,31 +133,32 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float6
                   transition_dict, 
                   reward_dict,
                   0.95,
+                  states,
                   state_indices,
+                  state_structure,
                   reward_type)
 end
 
 # Define reward calculation function
 function calculate_reward_matrix(pomdp::aPOMDP)
-    # TODO: Only works for two state variables
     # Re-calculate the whole reward matrix according to the current transition matrix and state values
-    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
-        key = [i,j,k]
+    for s in pomdp.states, k = 1:pomdp.n_actions
+        key = vcat(s,[k])
         sum_var = 0
         # Get P(S'|S,A)
-        dist = transition(pomdp, [i,j], k)
+        dist = transition(pomdp, s, k)
         if pomdp.reward_type == "msvr"
             for f = 1:pomdp.n_v_s
                 #println("Calculating MSVR for f = ", f)
                 inner_sum = 0
                 for state = dist.state_space
-                    inner_sum += pdf(dist, state)*(pomdp.state_values[f][state]-pomdp.state_values[f][[i,j]])
+                    inner_sum += pdf(dist, state)*(pomdp.state_values[f][state]-pomdp.state_values[f][s])
                 end
                 sum_var += pomdp.weights[f]*inner_sum
             end
         else
             for state = dist.state_space
-                sum_var += pdf(dist, state)*(pomdp.state_values[1][state]-pomdp.state_values[1][[i,j]])
+                sum_var += pdf(dist, state)*(pomdp.state_values[1][state]-pomdp.state_values[1][s])
             end
         end
         if pomdp.reward_type == "isvr" || pomdp.reward_type == "msvr"
@@ -190,12 +197,7 @@ end
 # Define state space
 function POMDPs.states(pomdp::aPOMDP)
     # Simple iteration over all possible state combinations
-    # TODO: still limited to 2 state variables
-    state_space = []
-    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
-        state_space = append!(state_space, [[i,j]])
-    end
-    return state_space
+    return pomdp.states
 end
 
 # Define action space
@@ -251,10 +253,8 @@ end
 function POMDPs.observation(pomdp::aPOMDP, state::Array{Int64, 1})
     # Return a distribution over possible states given the observation
     # TODO: make partially observed
-    # TODO: also likely limited to 2 state vars
-    # TODO: constants on distribution definition
-    dist = zeros(Float64, 3, 3)
-    dist[state[1], state[2]] = 100
+    dist = zeros(Float64, pomdp.state_structure...)
+    dist[state...] = 100
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
@@ -378,6 +378,7 @@ end
 
 #pomdp = aPOMDP("msvr", 2)
 #pomdp = aPOMDP("msvr", 3)
+#pomdp = aPOMDP("isvr")
 
 # Test solvers
 #policy = solve(pomdp, "despot")
@@ -385,7 +386,7 @@ end
 
 # Test integrating transitions, rewards, etc
 # println(calc_average_entropy(pomdp))
-# integrate_transition(pomdp, [1,1], [1,2], 1)
+# integrate_transition(pomdp, pomdp.states[1], pomdp.states[2], 1)
 # integrate_transition(pomdp, [1,1], [1,3], 2)
 # println(calc_average_entropy(pomdp))
 # println(transition(pomdp, [1,1], 1))
@@ -404,7 +405,7 @@ end
 # dist = apomdpDistribution(pomdp)
 # println("Distribution: ", dist.dist)
 # println("Entropy of uniform: ", calc_entropy(dist.dist))
-# dist2 = apomdpDistribution(pomdp, [2,2])
+# dist2 = apomdpDistribution(pomdp, pomdp.states[1])
 # println("Distribution: ", dist2.dist)
 # println("Entropy of non-uniform: ", calc_entropy(dist2.dist))
 
