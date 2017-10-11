@@ -65,6 +65,7 @@ end
 # Simple function for updating the system's policy
 function update_policy()
     print("Solving aPOMDP... ")
+    calculate_reward_matrix(pomdp)
     global policy = solve(pomdp, "qmdp")
     global solve_flag = false
     println("done!")
