@@ -16,6 +16,15 @@ using RobotOS
 rostypegen()
 using apomdp.srv
 
+# Global vars: given that we're using a ROS service, there's some need
+# for global state. This could be solved with a singleton in an OOP,  but
+# alas, this is not the case.
+# In essence, we maintain the pomdp object, the current policy and a flag
+# to indicate it's solving time, allowing the service callback to add data 
+# to the pomdp object and not have to solve it immediatelly
+pomdp = aPOMDP("isvr")  # The aPOMDP object that we'll be using throughout execution
+policy = nothing        # The most up-to-date policy
+solve_flag = true       # A global flag that indicates whether we want to solve the POMDP
 
 # Callback for serving the service. It gets the action from the policy, given
 # the current observation, and returns it.
@@ -27,11 +36,21 @@ function srv_cb(req::GetActionRequest)
         println(s)
     end
     resp.action = 1
+    global solve_flag = true
     return resp
+end
+
+# Simple function for updating the system's policy
+function update_policy()
+    print("Solving aPOMDP... ")
+    global policy = solve(pomdp, "qmdp")
+    global solve_flag = false
+    println("done!")
 end
 
 function main()
     # Initialize ROS node
+    println("Initializing aPOMDP")
     init_node("policy_calculator")
 
     # Create the service server object
@@ -40,6 +59,11 @@ function main()
     # "spin" while waiting for requests
     println("Going into spin!")
     while ! is_shutdown()
+        # Should we re-calculate the policy?
+        # If so, we update the global policy and solve flag
+        if solve_flag update_policy() end
+
+        # Take a short break from all this
         rossleep(Duration(0.1))
     end
 end
