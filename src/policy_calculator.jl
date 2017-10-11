@@ -26,6 +26,8 @@ using apomdp.srv
 pomdp = aPOMDP("isvr")  # The aPOMDP object that we'll be using throughout execution
 policy = nothing        # The most up-to-date policy
 solve_flag = true       # A global flag that indicates whether we want to solve the POMDP
+prev_state = nothing    # The previous state the user was in
+prev_action = nothing   # The previous action taken by the system
 
 
 # Callback for serving the service. It gets the action from the policy, given
@@ -43,9 +45,16 @@ function srv_cb(req::GetActionRequest)
     # Pack into response
     resp = GetActionResponse()
     resp.action = a
-    
-    # Add data to the POMDP
-    # TODO
+
+    # Add data to the POMDP and update globals
+    # Integrate transition
+    if prev_state != nothing && prev_action != nothing
+        println("Integrating transition!")
+        integrate_transition(pomdp, prev_state, state, prev_action)
+    end
+    # Update globals
+    global prev_state = state
+    global prev_action = a
     global solve_flag = true
 
     # Return the response
