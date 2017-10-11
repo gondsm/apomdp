@@ -33,12 +33,12 @@ prev_action = nothing   # The previous action taken by the system
 # Callback for serving the service. It gets the action from the policy, given
 # the current observation, and returns it.
 function srv_cb(req::GetActionRequest)
-    # Get correct action for this observation
     # Pack state into Julia array (could probably be better optimized)
     state = []
     for s in req.observation
         append!(state, convert(Int64, s))
     end
+
     # Get action
     a = action(policy, apomdpDistribution(pomdp, state))
 
@@ -46,12 +46,12 @@ function srv_cb(req::GetActionRequest)
     resp = GetActionResponse()
     resp.action = a
 
-    # Add data to the POMDP and update globals
     # Integrate transition
     if prev_state != nothing && prev_action != nothing
         println("Integrating transition!")
         integrate_transition(pomdp, prev_state, state, prev_action)
     end
+
     # Update globals
     global prev_state = state
     global prev_action = a
@@ -85,7 +85,6 @@ function main()
     println("Going into spin!")
     while ! is_shutdown()
         # Should we re-calculate the policy?
-        # If so, we update the global policy and solve flag
         if solve_flag update_policy() end
 
         # Take a short break from all this
@@ -93,4 +92,6 @@ function main()
     end
 end
 
+
+# Run stuff
 main()
