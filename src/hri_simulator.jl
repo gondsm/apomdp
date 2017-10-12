@@ -25,10 +25,8 @@ function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
             v = rand(1:100)
             set_state_value(pomdp, state, v, k)
             if haskey(v_s, state)
-                println("has key!")
                 v_s[state] += v
             else
-                println("no key!")
                 v_s[state] = v
             end
         end
