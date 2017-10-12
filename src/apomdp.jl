@@ -72,7 +72,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), state_structure::Array{Int64,1}=[3,3], n_actions=3)
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions=3, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
     # Initialize problem dimensions
     n_state_vars = size(state_structure)[1]
     n_var_states = 3

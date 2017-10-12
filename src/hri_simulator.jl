@@ -195,7 +195,7 @@ end
 f1 = open("results/cenas.yaml", "a")
 for i = 1:100
     print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[2,2])
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[3,3], n_actions=3)
 end
 
 # New naming scheme for test results:
