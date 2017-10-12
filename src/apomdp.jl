@@ -178,7 +178,7 @@ function integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Arr
     # with simply summing 1 to the counter.
     key = prev_state[:]
     append!(key, action)
-    pomdp.transition_matrix[key][final_state[1], final_state[2]] += 1
+    pomdp.transition_matrix[key][final_state...] += 1
 end
 
 # Set a state's value
