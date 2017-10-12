@@ -8,9 +8,9 @@ function random_user_profile(pomdp::aPOMDP)
     # Generates a random user profile for simulation purposes
     # TODO: limited to two state vars
     user_profile = Dict()
-    for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
+    for state in pomdp.states, k = 1:pomdp.n_actions
         # For every S, A combination, we have a probability distribution indexed by 
-        key = [i,j,k]
+        key = vcat(state,[k])
         user_profile[key] = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
     end
     return user_profile
@@ -21,19 +21,21 @@ function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
     # TODO: limited to two state vars
     v_s = Dict()
     for k = 1:n_v_s
-        for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
+        for state in pomdp.states
             v = rand(1:100)
-            set_state_value(pomdp, [i,j], v, k)
-            if haskey(v_s, [[i,j]])
-                v_s[[i,j]] += v
+            set_state_value(pomdp, state, v, k)
+            if haskey(v_s, state)
+                println("has key!")
+                v_s[state] += v
             else
-                v_s[[i,j]] = v
+                println("no key!")
+                v_s[state] = v
             end
         end
         calculate_reward_matrix(pomdp)
-        # TODO: How to return several V(S)?
-        return v_s
     end
+    # TODO: How to return several V(S)?
+    return v_s
 end
 
 function toy_example_user_profile(pomdp::aPOMDP)
@@ -193,11 +195,11 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 end
 
 # Run a quick test
-# f1 = open("results/cenas.yaml", "a")
-# for i = 1:100
-#     print(".")
-#     basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="svr")
-# end
+f1 = open("results/cenas.yaml", "a")
+for i = 1:100
+    print(".")
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="msvr", n_rewards=3)
+end
 
 # New naming scheme for test results:
 # condition_solver_reward_<n_iterations>_<T_c>_<T_V(S)>_<n_trials>.yaml
