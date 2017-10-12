@@ -6,7 +6,7 @@
 using POMDPs, POMDPModels, POMDPToolbox
 
 # Solvers
-using QMDP, SARSOP, DESPOT, MCVI # (MCVI is failing on load)
+using QMDP, SARSOP#, DESPOT, MCVI # (MCVI is failing on load)
 
 # Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
