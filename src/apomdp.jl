@@ -56,7 +56,7 @@ end
 # Define a deterministic distribution from a simple state
 function apomdpDistribution(pomdp::aPOMDP, state::Array)
     dist = ones(Float64, pomdp.state_structure...)/1000
-    dist[state] = 1000
+    dist[state...] = 1000
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
