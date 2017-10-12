@@ -65,16 +65,16 @@ function toy_example_state_values(pomdp::aPOMDP)
 end
 
 # Test cases
-function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp", reward_name="svr", n_rewards=1)
+function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false, solver_name="qmdp", reward_name="svr", n_rewards=1, state_structure=[3,3], n_actions=3)
     # This function instantiates a random user profile and state value function in order to test the basic cases where
     # the system is allowed or not to re-calculate its policy during execution.
     # If out_file is an IOStream, this function will write its own logs to that file.
     start_time = now()
     # Initialize POMDP
     if reward_name == "msvr"
-        pomdp = aPOMDP(reward_name, n_rewards)
+        pomdp = aPOMDP(reward_name, n_rewards, state_structure, n_actions)
     else
-        pomdp = aPOMDP(reward_name)
+        pomdp = aPOMDP(reward_name, 1, state_structure, n_actions)
     end
 
     # Define the user's profile
@@ -193,9 +193,9 @@ end
 
 # Run a quick test
 f1 = open("results/cenas.yaml", "a")
-for i = 1:1
+for i = 1:100
     print(".")
-    basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp", reward_name="msvr", n_rewards=3)
+    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[2,2])
 end
 
 # New naming scheme for test results:
