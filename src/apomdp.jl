@@ -14,10 +14,6 @@ using IterTools
 
 # Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
-    # Number of state variables
-    n_state_vars::Int64
-    # Number of variable states
-    n_var_states::Int64 
     # Number of possible actions
     # Actions will be 1 through n_action
     n_actions::Int64 
@@ -40,6 +36,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # Maintains the state indices as a dict of the form [S] (vector) -> Int
     state_indices::Dict 
     # An array with the current state structure
+    # The state structure is of the form [i, j, k, ...]
+    # i.e. first var has i states, second has j states, and so on
     state_structure::Array
     # The kind of reward to be used. Can be one of svr, isvr or msvr
     reward_type::String
@@ -74,10 +72,6 @@ POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions=3, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
-    # Initialize problem dimensions
-    n_state_vars = size(state_structure)[1]
-    n_var_states = 3
-
     # Generate an array with all possible states:
     vecs = [collect(1:n) for n in state_structure]
     states = collect(IterTools.product(vecs...))
@@ -119,9 +113,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     end
 
     # Create and return object
-    return aPOMDP(n_state_vars, 
-                  n_var_states,
-                  n_actions,
+    return aPOMDP(n_actions,
                   state_values_dict,
                   n_v_s,
                   weights,

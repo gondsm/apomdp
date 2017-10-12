@@ -36,6 +36,7 @@ end
 function toy_example_user_profile(pomdp::aPOMDP)
     # Generates a user profile according to the toy example and returns the value function used
     # TODO: limited to two state vars
+    # TODO: toy example is currently completely broken (since the new state structure was introduced)
     user_profile = Dict()
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states, k = 1:pomdp.n_actions
         # For every S, A combination, we have a probability distribution indexed by 
@@ -55,6 +56,8 @@ end
 
 function toy_example_state_values(pomdp::aPOMDP)
     # Generates a reward function that is consonant with the toy example
+    # TODO: limited to two state vars
+    # TODO: toy example is currently completely broken (since the new state structure was introduced)
     v_s = Dict()
     for i = 1:pomdp.n_var_states, j = 1:pomdp.n_var_states
         set_state_value(pomdp, [i,j], 10*i)
@@ -172,10 +175,10 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
         end
         # The timeseries of states the system was in
         write(out_file, "  states:\n")
-        for i = 1:pomdp.n_state_vars:size(state_history)[1]
+        for i = 1:size(pomdp.state_structure)[1]:size(state_history)[1]
             s1 = state_history[i]
             write(out_file, "  - - $s1\n")
-            for j in 1:pomdp.n_state_vars-1
+            for j in 1:size(pomdp.state_structure)[1]-1
                 sj = state_history[i+j]
                 write(out_file, "    - $sj\n")
             end
