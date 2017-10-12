@@ -6,19 +6,17 @@ include("./apomdp.jl")
 # Auxiliary Functions
 function random_user_profile(pomdp::aPOMDP)
     # Generates a random user profile for simulation purposes
-    # TODO: limited to two state vars
     user_profile = Dict()
     for state in pomdp.states, k = 1:pomdp.n_actions
         # For every S, A combination, we have a probability distribution indexed by 
         key = vcat(state,[k])
-        user_profile[key] = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
+        user_profile[key] = rand(pomdp.states)
     end
     return user_profile
 end
 
 function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
     # Generates random state values for simulation purposes and returns the value function used
-    # TODO: limited to two state vars
     v_s = Dict()
     for k = 1:n_v_s
         for state in pomdp.states
@@ -32,7 +30,6 @@ function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
         end
         calculate_reward_matrix(pomdp)
     end
-    # TODO: How to return several V(S)?
     return v_s
 end
 
@@ -95,7 +92,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     end
 
     # Decide initial state
-    state = [rand(1:pomdp.n_var_states), rand(1:pomdp.n_var_states)]
+    state = rand(pomdp.states)
 
     # Get an initial policy
     policy = solve(pomdp, solver_name)
@@ -117,7 +114,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 
         # Transition state
         prev_state = copy(state)
-        state = user_profile[[state[1], state[2], a]]
+        state = user_profile[[state..., a]]
         append!(state_history, prev_state)
         #state_history = [state_history; state']
 
@@ -175,11 +172,13 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
         end
         # The timeseries of states the system was in
         write(out_file, "  states:\n")
-        for i = 1:2:size(state_history)[1]
+        for i = 1:pomdp.n_state_vars:size(state_history)[1]
             s1 = state_history[i]
-            s2 = state_history[i+1]
             write(out_file, "  - - $s1\n")
-            write(out_file, "    - $s2\n")
+            for j in 1:pomdp.n_state_vars-1
+                sj = state_history[i+j]
+                write(out_file, "    - $sj\n")
+            end
         end
         # The timeseries of the rewards obtained by the system
         write(out_file, "  rewards:\n")
@@ -194,9 +193,9 @@ end
 
 # Run a quick test
 f1 = open("results/cenas.yaml", "a")
-for i = 1:100
+for i = 1:1
     print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="msvr", n_rewards=3)
+    basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp", reward_name="msvr", n_rewards=3)
 end
 
 # New naming scheme for test results:
