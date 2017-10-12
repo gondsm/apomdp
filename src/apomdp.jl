@@ -14,10 +14,8 @@ using IterTools
 # Define main type
 type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Observation}
     # Number of state variables
-    # TODO: This is still fixed at 2
     n_state_vars::Int64
     # Number of variable states
-    # TODO: for now, all variables have the same number of states
     n_var_states::Int64 
     # Number of possible actions
     # Actions will be 1 through n_action
@@ -75,10 +73,6 @@ POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), state_structure::Array{Int64,1}=[3,3], n_actions=3)
-    # TODO: Only works for two state variables for now
-    # TODO: constants on matrix definitions
-    # (fors are repeated along n_var_states twice only, will have to
-    # be expanded to work on n variables with iterators or something)
     # Initialize problem dimensions
     n_state_vars = size(state_structure)[1]
     n_var_states = 3
@@ -272,7 +266,7 @@ POMDPs.action_index(::aPOMDP, action::Int64) = action;
 POMDPs.obs_index(pomdp::aPOMDP, state::Array{Int64,1}) = POMDPs.state_index(pomdp, state);
 
 # Define distribution calculation
-POMDPs.pdf(dist::apomdpDistribution, state::Array) = dist.dist[state[1], state[2]]
+POMDPs.pdf(dist::apomdpDistribution, state::Array) = dist.dist[state...]
 
 # Discrete Belief constructor from apomdpDistribution (SARSOP)
 function POMDPToolbox.DiscreteBelief(dist::apomdpDistribution)
