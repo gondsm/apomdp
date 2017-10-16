@@ -103,7 +103,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     # Simulation loop:
     cumulative_reward = 0.0
     reward_history = []
-    state_history = [] #Matrix(0, 2)
+    state_history = []
     action_history = []
     entropy_history = []
     for i = 1:num_iter
@@ -142,6 +142,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     # Append results to a yaml log file
     if typeof(out_file) == IOStream
         exec_time = now() - start_time
+        scenario = toy_example ? "toy_example" : "random"
         log_execution(out_file, num_iter, reward_change_interval, 
                        re_calc_interval, 
                        exec_time,
@@ -150,6 +151,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
                        entropy_history,
                        state_history,
                        reward_history,
+                       scenario,
                        pomdp)
     end
 

@@ -374,14 +374,13 @@ function log_execution(out_file,
                        entropy_history,
                        state_history,
                        reward_history,
-                       pomdp,
-                       toy_example=false,)
+                       scenario,
+                       pomdp,)
     # Number of iterations used
     write(out_file, "- iterations: $num_iter\n")
     # Interval of reward change
     write(out_file, "  reward_change_interval: $reward_change_interval\n")
     # Whether the toy example was run
-    scenario = toy_example ? "toy_example" : "random"
     write(out_file, "  scenario: $scenario\n")
     # Policy re-calculation inteval
     write(out_file, "  re_calc_interval: $re_calc_interval\n")
