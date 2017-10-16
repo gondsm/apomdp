@@ -141,53 +141,16 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 
     # Append results to a yaml log file
     if typeof(out_file) == IOStream
-        # Number of iterations used
-        write(out_file, "- iterations: $num_iter\n")
-        # Interval of reward change
-        write(out_file, "  reward_change_interval: $reward_change_interval\n")
-        # Whether the toy example was run
-        scenario = toy_example ? "toy_example" : "random"
-        write(out_file, "  scenario: $scenario\n")
-        # Policy re-calculation inteval
-        write(out_file, "  re_calc_interval: $re_calc_interval\n")
-        # Time it took to execute the whole scenario
         exec_time = now() - start_time
-        exec_time = exec_time.value
-        write(out_file, "  execution_time_ms: $exec_time\n")
-        # The V(S) function used for this scenario
-        write(out_file, "  v_s:\n")
-        for state in keys(v_s)
-            write(out_file, "    ? !!python/tuple\n")
-            for i in state
-                write(out_file, "    - $i\n")
-            end
-            write(out_file, "    : $(v_s[state])\n")
-        end
-        # The timeseries of action the system took
-        write(out_file, "  actions:\n")
-        for a in action_history
-            write(out_file, "  - $a\n")
-        end
-        # The timeseries of average entropies
-        write(out_file, "  entropies:\n")
-        for h in entropy_history
-            write(out_file, "  - $h\n")
-        end
-        # The timeseries of states the system was in
-        write(out_file, "  states:\n")
-        for i = 1:size(pomdp.state_structure)[1]:size(state_history)[1]
-            s1 = state_history[i]
-            write(out_file, "  - - $s1\n")
-            for j in 1:size(pomdp.state_structure)[1]-1
-                sj = state_history[i+j]
-                write(out_file, "    - $sj\n")
-            end
-        end
-        # The timeseries of the rewards obtained by the system
-        write(out_file, "  rewards:\n")
-        for r in reward_history
-            write(out_file, "  - $r\n")
-        end
+        log_execution(out_file, num_iter, reward_change_interval, 
+                       re_calc_interval, 
+                       exec_time,
+                       v_s,
+                       action_history,
+                       entropy_history,
+                       state_history,
+                       reward_history,
+                       pomdp)
     end
 
     # Return the reward history, for compatibility with previous testing code
