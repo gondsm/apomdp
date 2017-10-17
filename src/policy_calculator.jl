@@ -23,7 +23,7 @@ using apomdp.srv
 # In essence, we maintain the pomdp object, the current policy and a flag
 # to indicate it's solving time, allowing the service callback to add data 
 # to the pomdp object and not have to solve it immediatelly
-pomdp = aPOMDP("isvr")  # The aPOMDP object that we'll be using throughout execution
+pomdp = aPOMDP("isvr", 1, [3, 3, 3], 5)  # The aPOMDP object that we'll be using throughout execution
 policy = nothing        # The most up-to-date policy
 solve_flag = true       # A global flag that indicates whether we want to solve the POMDP
 prev_state = nothing    # The previous state the user was in
@@ -66,6 +66,22 @@ end
 function srv_cb(req::GetActionRequest)
     # Pack state into Julia array (could probably be better optimized)
     state = [convert(Int64, s) for s in req.observation]
+
+    # Check that the input conforms to our current structure
+    if size(state)[1] != size(pomdp.state_structure)[1]
+        println("Got a wrong-size state! State: $state")
+        println("Current state structure is $(pomdp.state_structure)")
+        return false
+    else
+        invalid = [state[i] > pomdp.state_structure[i] || state[i] < 1 for i in 1:size(state)[1]]
+        for v in invalid
+            if v == true
+                println("Got an out of bounds value! State: $state")
+                println("Current state structure is $(pomdp.state_structure)")
+                return false
+            end
+        end
+    end
 
     # Get action
     a = action(policy, apomdpDistribution(pomdp, state))
