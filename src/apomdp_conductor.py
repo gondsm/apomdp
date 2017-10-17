@@ -9,6 +9,7 @@ from __future__ import print_function
 # STD
 import random
 import itertools
+import re
 
 # ROS
 import rospy
@@ -19,6 +20,7 @@ from conductor import gmu_functions as robot
 
 # The list of questions to be used in this test
 # (partly re-used from the bum_conductor)
+txt_intro = "My name is ghida and we will now be having a short conversation. When I ask you, please let me know if you are satisfied with my closeness and speaking volume by saying yes or no. Is this okay?"
 questions = ["What can you tell me about your day?",
              "What are your favourite hobbies?",
              "How is your research going? Are you getting good results?",
@@ -28,7 +30,7 @@ questions = ["What can you tell me about your day?",
              "I hate repeating myself. Have you ever had to repeat any experiments, or do your experiments go well on the first try?",
              "Are you a researcher? What is your field of research?",
              "Being a robot, I feel thunderstorms very personally. How do you feel about the weather we have been having lately?"]
-questions_satisfaction = ["Are you enjoying this interaction?"]
+questions_satisfaction = ["Are you satisfied with my speaking volume and distance?", "Do you think I am speaking at the correct volume and distance?", "Are you okay with my current volume and distance?"]
 
 # Regexes for answer processing
 # (also partly re-used)
@@ -43,8 +45,9 @@ current_satisfaction = 1
 
 # A dictionary that maps the possible actions into functions that the system
 # can execute.
+# It is only ever read, and kept global for readability.
 actions = {
-           1: lambda: robot.ask_question(questions, replace=False, speech_time=False, keyboard_mode=false), # Ask the user a question
+           1: lambda: robot.ask_question(questions, replace=False, speech_time=False, keyboard_mode=False), # Ask the user a question
            2: lambda: robot.step_forward(False),	# Take a step forward
            3: lambda: robot.step_forward(True),		# Take a step back
            4: lambda: increase_volume(False),		# Increase speaking volume
@@ -56,34 +59,44 @@ def increase_volume(reverse=False):
 	""" Increases or decreases the current volume. No input checks for now. 
 	Updates the global state variable. 
 	"""
+	# Declare globals
+	global current_volume
+	global current_volume
+
 	# Volume percentages we go through
 	volume_steps = [50, 70, 80]
 
 	# Increase
 	if not reverse:
-		robot.change_volume(volume_steps[int(current_volume)])
-		global current_volume
+		robot.change_volume(volume_steps[int(current_volume)])	
 		current_volume += 1
 
 	# Decrease
 	else:
-		global current_volume
 		current_volume -= 1
 		robot.change_volume(volume_steps[int(current_volume)])
 
 
 def estimate_state():
 	""" Estimates the current satisfaction level of the user. """
+	# Declare the globals we'll use
+	global current_satisfaction
+
 	# Ask the question
-	words = robot.ask_question(questions_satisfaction, replace=True, speech_time=True, keyboard_mode=false)
+	words = robot.ask_question(questions_satisfaction, replace=True, speech_time=False, keyboard_mode=False)
+	rospy.loginfo("Got response: {}.".format(words))
 
 	# Check if it was a negative answer
-	if re.search(re_no, words):
+	if re.search(re_yes, words):
 		rospy.loginfo("User is more satisfied!")
+		if current_satisfaction < 3:
+			current_satisfaction += 1
 
 	# Check if it was a posivite answer
 	elif re.search(re_no, words):
 		rospy.loginfo("User is not satisfied!")
+		if current_satisfaction > 1:
+			current_satisfaction -= 1
 
 	# And what if it's not recognized?
 	else:
@@ -95,19 +108,41 @@ def estimate_state():
 
 def execute_action(action):
 	""" Executes an action, updating the robot's current state """
+	# TODO: Improve the decoupling. At this point, the action dictionary is completely unnecessary.
+	# Declare our globals
+	global current_distance
+	global current_volume
+
 	# If action is to move forward or back, we need to check with the current state
 	if action == 2:		# Step forward
-		return
+		if current_distance > 2:
+			rospy.logwarn("Already at maximum distance!")
+			rospy.loginfo("Taking a step forward.")
+			return False
+		else:
+			current_distance += 1
+
 	elif action == 3:	# Step back
-		return
+		if current_distance < 2:
+			rospy.logwarn("Already at minimum distance!")
+			return False
+		else:
+			rospy.loginfo("Taking a step back.")
+			current_distance -= 1
 
 	# If action is to mess with the volume, the same
 	elif action == 4:	# Increase volume
-		return
+		if current_volume > 2:
+			rospy.logwarn("Already at maximum volume!")
+			return False
 	elif action == 5:	# Lower volume
-		return
+		if current_volume < 2:
+			rospy.logwarn("Already at minimum volume!")
+			return False
 
+	# Execute action
 	actions[action]()
+	return True
 
 
 def main():
@@ -117,17 +152,23 @@ def main():
 	get_action = rospy.ServiceProxy('apomdp/get_action', GetAction)
 	robot.init_functions()
 
+	# Introduction
+	robot.ask_question("Hello, "+txt_intro, kw_repeat=["repeat", "no"], txt_repeat="I was saying that "+txt_intro)
+
 	# Main loop
 	state = [1, current_volume, current_distance]
 	while not rospy.is_shutdown():
 		# Get an action
-		a = get_action(state)
+		rospy.loginfo("Getting action from service.")
+		a = get_action(state).action
 
 		# Execute action
+		rospy.loginfo("Executing action {}.".format(a))
 		execute_action(a)
 
 		# Update state
 		state = estimate_state()
+		rospy.loginfo("New estimated state: {}.".format(state))
 
 
 if __name__ == "__main__":
