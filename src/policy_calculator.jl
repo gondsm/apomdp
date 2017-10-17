@@ -42,21 +42,16 @@ entropy_history = []
 
 # Temporary function to attribute value to states
 # TODO: Replace and remove
-function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
+function set_valuable_states(pomdp::aPOMDP, n_v_s=1)
     # Generates random state values for simulation purposes and returns the value function used
     v_s = Dict()
-    for k = 1:n_v_s
-        for state in pomdp.states
-            v = rand(1:100)
-            set_state_value(pomdp, state, v, k)
-            if haskey(v_s, state)
-                v_s[state] += v
-            else
-                v_s[state] = v
-            end
-        end
-        calculate_reward_matrix(pomdp)
+    for state in pomdp.states
+        v = 10*state[1]
+        set_state_value(pomdp, state, v, 1)
+        v_s[state] = v
     end
+    calculate_reward_matrix(pomdp)
+    println(v_s)
     return v_s
 end
 
@@ -134,7 +129,7 @@ function main()
     const srv_action = Service("apomdp/get_action", GetAction, srv_cb)
 
     # Initialize valuable states
-    global v_s = random_valuable_states(pomdp)
+    global v_s = set_valuable_states(pomdp)
 
     # "spin" while waiting for requests
     println("Going into spin!")
