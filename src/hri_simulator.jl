@@ -1,6 +1,24 @@
 # This script contains the code necessary to run our simulated experiments.
 # It is based on a simple representation of the user wherein they react to
 # an action by changing their state. This change is sent to the system
+
+# Copyright (C) 2017 University of Coimbra
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Original author and maintainer: Gonçalo S. Martins (gondsm@gmail.com)
+
 include("./apomdp.jl")
 
 # Auxiliary Functions
@@ -177,6 +195,8 @@ end
 # close(f1)
 # println()
 
+# Below this line, there are the test cases used for the paper:
+
 # f1 = open("results/random_sarsop_isvr_100_1_0_1000.yaml", "a")
 # println("random_sarsop_isvr_100_1_0_1000.yaml")
 # for i = 1:1000
@@ -277,215 +297,3 @@ end
 # end
 # close(f1)
 # println()
-
-
-# f1 = open("cenas.yaml", "a")
-# for i = 1:2
-#     print(".")
-#     basic_test(re_calc_interval=1, num_iter=10, out_file=f1, solver_name="qmdp", reward_name="isvr")
-# end
-# println()
-# close(f1)
-
-# f1 = open("sarsop_random_1.yaml", "a")
-# for i = 1:1000
-#     print(".")
-#     basic_test(re_calc_interval=1, num_iter=1000, out_file=f1, solver_name="sarsop")
-# end
-# close(f1)
-# f1 = open("qmdp_random_1.yaml", "a")
-# for i = 1:1000
-#     print(".")
-#     basic_test(re_calc_interval=1, num_iter=1000, out_file=f1, solver_name="qmdp")
-# end
-# close(f1)
-
-# Third Batch of Test Cases
-# Tests with random scenario
-# f1 = open("random_scenario_short_0.yaml", "a")
-# println("Starting short random scenario with re_calc = 0")
-# for i = 1:1000
-#     print(".")
-#     basic_test(0, 100, f1, 0, false)
-# end
-# close(f1)
-# f1 = open("random_scenario_short_1.yaml", "a")
-# println()
-# println("Starting short random scenario with re_calc = 1")
-# for i = 1:1000
-#     print(".")
-#     basic_test(1, 100, f1, 0, false)
-# end
-# close(f1)
-# f1 = open("random_scenario_short_5.yaml", "a")
-# println()
-# println("Starting short random scenario with re_calc = 5")
-# for i = 1:1000
-#     print(".")
-#     basic_test(5, 100, f1, 0, false)
-# end
-# close(f1)
-# f1 = open("random_scenario_short_20.yaml", "a")
-# println()
-# println("Starting short random scenario with re_calc = 20")
-# for i = 1:1000
-#     print(".")
-#     basic_test(20, 100, f1, 0, false)
-# end
-# println()
-# close(f1)
-
-
-# Second Batch of Test Cases
-# basic_test(re_calc_interval=0, num_iter=1000, out_file=-1, reward_change_interval=0, toy_example=false)
-
-# # Tests with random scenario
-# f1 = open("random_scenario.yaml", "a")
-# println("Starting random scenario with re_calc = 0")
-# for i = 1:1000
-#     print(".")
-#     basic_test(0, 1000, f1, 0, false)
-# end
-# println()
-# println("Starting random scenario with re_calc = 1")
-# for i = 1:1000
-#     print(".")
-#     basic_test(1, 1000, f1, 0, false)
-# end
-# println()
-# println("Starting random scenario with re_calc = 5")
-# for i = 1:1000
-#     print(".")
-#     basic_test(5, 1000, f1, 0, false)
-# end
-# println()
-# println("Starting random scenario with re_calc = 20")
-# for i = 1:1000
-#     print(".")
-#     basic_test(20, 1000, f1, 0, false)
-# end
-# println()
-# close(f1)
-
-
-# # Tests with changing values
-# f2 = open("random_scenario_changing.yaml", "a")
-# println("Starting random scenario with changing value with re_calc = 0")
-# for i = 1:1000
-#     print(".")
-#     basic_test(0, 1000, f2, 200, false)
-# end
-# println()
-# println("Starting random scenario with changing value with re_calc = 1")
-# for i = 1:1000
-#     print(".")
-#     basic_test(1, 1000, f2, 200, false)
-# end
-# println()
-# println("Starting random scenario with changing value with re_calc = 5")
-# for i = 1:1000
-#     print(".")
-#     basic_test(5, 1000, f2, 200, false)
-# end
-# println()
-# println("Starting random scenario with changing value with re_calc = 20")
-# for i = 1:1000
-#     print(".")
-#     basic_test(20, 1000, f2, 200, false)
-# end
-# println()
-# close(f2)
-
-# # Tests with toy example
-# f3 = open("toy_example.yaml", "a")
-# println("Starting toy example with re_calc = 0")
-# for i = 1:1000
-#     print(".")
-#     basic_test(0, 1000, f3, 0, true)
-# end
-# println()
-# println("Starting toy example with re_calc = 1")
-# for i = 1:1000
-#     print(".")
-#     basic_test(1, 1000, f3, 0, true)
-# end
-# println()
-# println("Starting toy example with re_calc = 5")
-# for i = 1:1000
-#     print(".")
-#     basic_test(5, 1000, f3, 0, true)
-# end
-# println()
-# println("Starting toy example with re_calc = 20")
-# for i = 1:1000
-#     print(".")
-#     basic_test(20, 1000, f3, 0, true)
-# end
-# println()
-# close(f3)
-
-
-# # First batch of tests
-# f = open("timeseries_data.txt", "a")
-
-# println("Starting period 0")
-# write(f, "# Period 0, 1000 iterations\n")
-# for i = 1:1000
-#     data = basic_test(0, 1000)
-#     writedlm(f, data', " ")
-# end
-
-# println("Starting period 1")
-# write(f, "# Period 1, 1000 iterations\n")
-# for i = 1:1000
-#     data = basic_test(1, 1000)
-#     writedlm(f, data', " ")
-# end
-
-# println("Starting period 5")
-# write(f, "# Period 5, 1000 iterations\n")
-# for i = 1:1000
-#     data = basic_test(5, 1000)
-#     writedlm(f, data', " ")
-# end
-
-# println("Starting period 20")
-# write(f, "# Period 20, 1000 iterations\n")
-# for i = 1:1000
-#     data = basic_test(20, 1000)
-#     writedlm(f, data', " ")
-# end
-
-# close(f)
-
-
-
-# println("Starting tests with re-calc every 10 iterations")
-# with_recalc_10 = []
-# for i = 1:1000
-#     append!(with_recalc_10, basic_test(10))
-# end
-# println()
-# println("Starting tests with re-calc every 100 iterations")
-# with_recalc_100 = []
-# for i = 1:1000
-#     append!(with_recalc_100, basic_test(100))
-# end
-# println()
-# println("Starting tests with re-calc every 5 iterations")
-# with_recalc_5 = []
-# for i = 1:1000
-#     append!(with_recalc_5, basic_test(5))
-# end
-# println()
-# println("Starting tests with no re-calc")
-# no_recalc = []
-# for i = 1:1000
-#     append!(no_recalc, basic_test())
-# end
-# println()
-
-# println("Mean results WITH re-calc every 100 iters: ", mean(with_recalc_100))
-# println("Mean results WITH re-calc every 10 iters: ", mean(with_recalc_10))
-# println("Mean results WITH re-calc every 5 iters: ", mean(with_recalc_5))
-# println("Mean results WITHOUT re-calc: ", mean(no_recalc))
