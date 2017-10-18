@@ -47,7 +47,7 @@ current_satisfaction = 1
 # can execute.
 # It is only ever read, and kept global for readability.
 actions = {
-           1: lambda: robot.ask_question(questions, replace=False, speech_time=False, keyboard_mode=False), # Ask the user a question
+           1: lambda: robot.ask_question(questions, replace=False, speech_time=False), # Ask the user a question
            2: lambda: robot.step_forward(False),	# Take a step forward
            3: lambda: robot.step_forward(True),		# Take a step back
            4: lambda: increase_volume(False),		# Increase speaking volume
@@ -83,7 +83,7 @@ def estimate_state():
 	global current_satisfaction
 
 	# Ask the question
-	words = robot.ask_question(questions_satisfaction, replace=True, speech_time=False, keyboard_mode=False)
+	words = robot.ask_question(questions_satisfaction, replace=True, speech_time=False)
 	rospy.loginfo("Got response: {}.".format(words))
 
 	# Check if it was a negative answer
@@ -157,7 +157,8 @@ def main():
 
 	# Main loop
 	state = [1, current_volume, current_distance]
-	while not rospy.is_shutdown():
+	#while not rospy.is_shutdown():
+	for i in range(10):
 		# Get an action
 		rospy.loginfo("Getting action from service.")
 		a = get_action(state).action
@@ -169,6 +170,10 @@ def main():
 		# Update state
 		state = estimate_state()
 		rospy.loginfo("New estimated state: {}.".format(state))
+
+		# Check whether we're shutting down
+		if rospy.is_shutdown():
+			break
 
 
 if __name__ == "__main__":
