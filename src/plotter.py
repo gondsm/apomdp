@@ -1,4 +1,24 @@
 #!/usr/bin/env python3
+# A script for plotting the results obtained in the various experiments.
+# Check the main function to define which files it will look for results in.
+
+# Copyright (C) 2017 University of Coimbra
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Original author and maintainer: Gonçalo S. Martins (gondsm@gmail.com)
+
 import matplotlib.pyplot as plt
 import matplotlib as mp
 from matplotlib import rc
@@ -11,11 +31,14 @@ import pickle
 import time
 import sys
 
+
 def normalize(lst):
+	""" Normalizes a list of numbers """
 	return [float(i)/sum(lst) for i in lst]
 
 
 def calc_reward(states, v_s, transition_dist):
+	""" Calculate the SVR reward for illustrative purposes """
 	reward = 0.0
 	for i,state in enumerate(states):
 		reward += transition_dist[i]*v_s[state]
@@ -23,6 +46,9 @@ def calc_reward(states, v_s, transition_dist):
 
 
 def plot_distribution_example():
+	""" Generate a few figures that exemplify the usage of SVR and our
+	learning mechanism.
+	""" 
 	# Define list of possible states
 	it = list(itertools.product([1,2], [1,2]))
 	dist = [1]*len(it)
@@ -198,6 +224,7 @@ def plot_timeseries_data(filename, outfile=None, entropy=False):
 
 
 def calc_state_histogram(data):
+	""" Calculates the statistical data needed to plot the state histogram """
 	# List of vectors containing the count according to state value for each trial
 	# vecs[i][0] contains the number of iterations on the most valuable state in
 	# trial i, and so on
@@ -284,7 +311,8 @@ def plot_state_histogram(filename, outfile=None):
 
 def convert_log_to_pickle(filename):
 	""" Convert a yaml log built during a simulation to a pickle file that can be read and written much faster. 
-	This was not able to be performed with log files over 4008000 lines in length. Beware.
+	This was not able to be performed with log files over 4008000 lines in length, since they basically exploded
+	in memory. Beware. (or use the C++ implementation of the parser)
 	"""
 	# Inform
 	proper_name = filename.split(".")[0]
@@ -348,6 +376,7 @@ def calculate_table_entries(filename):
 
 
 def write_test_yaml():
+	""" Utility function to illustrate a YAML, for designing the julia YAML writer. """
 	with open("test.yaml", "w") as yaml_file:
 		data = dict()
 		data["states"] = [[1,2], [2,3], [1,2]]
@@ -359,6 +388,7 @@ def write_test_yaml():
 
 
 def read_test_yaml(filename):
+	""" Utility function to read a YAML, for testing the julia YAML writer. """
 	with open(filename, "r") as yaml_file:
 		data = yaml.load(yaml_file)
 		print(data)
@@ -371,40 +401,26 @@ if __name__ == "__main__":
 	# Plot the learning distribution example:
 	#plot_distribution_example()
 
-	# Plot timeseries data
-	#plot_timeseries_data("p0i1000.txt", "p0i1000_2std.pdf")
-	#plot_timeseries_data("p1i1000.txt", "p1i1000_2std.pdf")
-	#plot_timeseries_data("p5i1000.txt", "p5i1000_2std.pdf")
-	#plot_timeseries_data("random_scenario_changing_1.pkl", "p1i1000c200.pdf")
-	#plot_timeseries_data("toy_example_5.pkl", "p5i1000toy.pdf")
-
 	# Define relevant files
-	# random_scenario_files = ["random_scenario_0", "random_scenario_1", "random_scenario_5", "random_scenario_20"]
-	# changing_scenario_files = ["random_scenario_changing_0", "random_scenario_changing_1", "random_scenario_changing_5", "random_scenario_changing_20"]
-	# toy_example_files = ["toy_example_0", "toy_example_1", "toy_example_5", "toy_example_20"]
-	# short_scenario_files = ["random_scenario_short_{}".format(i) for i in [0,1,5,20]]
-	# other_files = ["qmdp_random_1", "sarsop_random_1"]
-	#other_files = ["random_qmdp_svr_100_1_0_1000", "random_qmdp_isvr_100_1_0_1000"]
-	#other_files = ["random_sarsop_svr_100_1_0_100", "random_sarsop_isvr_100_1_0_100"]
+	# Final test cases start here
+	# File names are defined with no extension on purpose.
 	other_files = [
-	                 "results/random_sarsop_svr_100_1_0_1000",
-	                 "results/random_sarsop_isvr_100_1_0_1000",
-	                 "results/random_sarsop_svr_100_20_0_1000",
-	                 "results/random_sarsop_isvr_100_20_0_1000",
-	                 "results/random_qmdp_svr_100_1_0_1000",
-	                 "results/random_qmdp_svr_100_20_0_1000",
-	                 "results/random_qmdp_isvr_100_1_0_1000",
-	                 "results/random_qmdp_isvr_100_20_0_1000",
-	                 "results/random_qmdp_msvr_100_1_0_1000",
-	                 "results/random_qmdp_msvr_100_20_0_1000",
-	                 "results/random_sarsop_msvr_100_1_0_1000",
-	                 "results/random_sarsop_msvr_100_20_0_1000"
+	                 # "results/random_sarsop_svr_100_1_0_1000",
+	                 # "results/random_sarsop_isvr_100_1_0_1000",
+	                 # "results/random_sarsop_svr_100_20_0_1000",
+	                 # "results/random_sarsop_isvr_100_20_0_1000",
+	                 # "results/random_qmdp_svr_100_1_0_1000",
+	                 # "results/random_qmdp_svr_100_20_0_1000",
+	                 # "results/random_qmdp_isvr_100_1_0_1000",
+	                 # "results/random_qmdp_isvr_100_20_0_1000",
+	                 # "results/random_qmdp_msvr_100_1_0_1000",
+	                 # "results/random_qmdp_msvr_100_20_0_1000",
+	                 # "results/random_sarsop_msvr_100_1_0_1000",
+	                 # "results/random_sarsop_msvr_100_20_0_1000"
+	                 "results/hri_results",
 	              ]
 	all_files = []
-	# all_files.extend(random_scenario_files)
-	# all_files.extend(changing_scenario_files)
-	# all_files.extend(toy_example_files)
-	# all_files.extend(short_scenario_files)
+	# Feel free to add more stuff here
 	all_files.extend(other_files)
 
 	# Convert files to pickle:
