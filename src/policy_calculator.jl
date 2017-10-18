@@ -51,7 +51,6 @@ function set_valuable_states(pomdp::aPOMDP, n_v_s=1)
         v_s[state] = v
     end
     calculate_reward_matrix(pomdp)
-    println(v_s)
     return v_s
 end
 
