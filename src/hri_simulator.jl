@@ -51,6 +51,19 @@ function random_valuable_states(pomdp::aPOMDP, n_v_s=1)
     return v_s
 end
 
+function health_valuable_states(pomdp::aPOMDP)
+    # Generates random state values for simulation purposes and returns the value function used
+    # This function cannot be used with MSVR
+    v_s = Dict()
+    for state in pomdp.states
+        v = 10*state[1] + 5*state[2]
+        set_state_value(pomdp, state, v, 1)
+        v_s[state] = v
+    end
+    calculate_reward_matrix(pomdp)
+    return v_s
+end
+
 function toy_example_user_profile(pomdp::aPOMDP)
     # Generates a user profile according to the toy example and returns the value function used
     # TODO: limited to two state vars
@@ -111,6 +124,14 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     else
         v_s = random_valuable_states(pomdp, n_rewards)
     end
+    # Get valuable states from the example (workshop paper)
+    #v_s = health_valuable_states(pomdp)
+
+    # Determine if we'll use dynamic recalculation
+    dynamic_re_calc = false
+    if re_calc_interval == -1
+        dynamic_re_calc = true
+    end
 
     # Decide initial state
     state = rand(pomdp.states)
@@ -125,6 +146,11 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     action_history = []
     entropy_history = []
     for i = 1:num_iter
+        if dynamic_re_calc == true
+            re_calc_interval = ceil(i/10)
+            #println(re_calc_interval)
+        end
+        
         # Get action
         a = action(policy, apomdpDistribution(pomdp, state))
         append!(action_history, a)
@@ -178,11 +204,12 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 end
 
 # Run a quick test
-f1 = open("results/cenas.yaml", "a")
+f1 = open("results/random_qmdp_svr_100_-1_0_100_new_struct.yaml", "a")
 for i = 1:100
     print(".")
-    basic_test(re_calc_interval=1, num_iter=100, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[3,3], n_actions=3)
+    basic_test(re_calc_interval=-1, num_iter=200, out_file=f1, solver_name="qmdp", reward_name="svr", state_structure=[4,4], n_actions=3)
 end
+println()
 
 # New naming scheme for test results:
 # condition_solver_reward_<n_iterations>_<T_c>_<T_V(S)>_<n_trials>.yaml
