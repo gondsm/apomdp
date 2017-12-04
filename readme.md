@@ -1,4 +1,4 @@
-# The aPOMDP ($\alpha$POMDP) framework for User-Adaptive Decision Making
+# The αPOMDP framework for User-Adaptive Decision Making
 
 ## Contents
 This package contains two main elements:
