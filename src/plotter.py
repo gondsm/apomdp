@@ -30,6 +30,8 @@ from yaml import CLoader as Loader, CDumper as Dumper
 import pickle
 import time
 import sys
+from pprint import pprint
+import random
 
 
 def normalize(lst):
@@ -394,7 +396,64 @@ def read_test_yaml(filename):
 		print(data)
 
 
+def plot_connection_graph(connection_matrix, state):
+	""" Draw the connectivity graph for all agents.
+
+	It takes the position of each agent, and draw a circle.
+	Then, it connects the circles with lines depending on the connection
+	strength.
+	"""
+	# A small lambda function to calculate our intermediate colors
+	bad_conn_color = [1.0, 0.0, 0.0, 1.0]
+	good_conn_color = [0.0, 1.0, 0.0, 1.0]
+	custom_color = lambda t: [bad_conn_color[i] + t*(good_conn_color[i]-bad_conn_color[i]) for i in range(len(bad_conn_color))]
+
+	# TODO: get connection matrix and positions from input args
+
+	# Define bogus data
+	num_agents = 10
+	positions = []
+	for i in range(num_agents):
+		positions.append([10*random.random(), 10*random.random()])
+
+	connection_matrix = []
+	for i in range(num_agents):
+		connection_matrix.append([])
+		for j in range(num_agents):
+			connection_matrix[i].append(random.random())
+
+	# Draw circles
+	# https://stackoverflow.com/questions/9215658/plot-a-circle-with-pyplot
+	# https://stackoverflow.com/questions/2176424/hiding-axis-text-in-matplotlib-plots
+	fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+	for i in range(len(positions)):
+		ax.add_artist(plt.Circle(positions[i], 0.1, color='k', zorder=10))
+		
+	# Draw lines
+	# TODO: Lines somehow appear on top
+	conn_thresh = 0.3
+	for i in range(len(connection_matrix)):
+		for j in range(len(connection_matrix[0])):
+			if i != j:
+				if connection_matrix[i][j] > conn_thresh:
+					plt.plot([positions[i][0], positions[j][0]], [positions[i][1], positions[j][1]], color=custom_color(connection_matrix[i][j]))
+
+	# Set axes
+	ax.axis("equal")
+	# TODO: Set according to positions
+	ax.axis([-2, 12, -2, 12])
+	ax.get_xaxis().set_visible(False)
+	ax.get_yaxis().set_visible(False)
+
+	# Show/save the figure
+	plt.show()
+
+
 if __name__ == "__main__":
+
+	plot_connection_graph(None, None)
+	exit()
+
 	# Configure matplotlib
 	rc('text', usetex=True)
 
