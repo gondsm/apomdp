@@ -438,10 +438,8 @@ def plot_connection_graph(connection_matrix, state):
 				if connection_matrix[i][j] > conn_thresh:
 					plt.plot([positions[i][0], positions[j][0]], [positions[i][1], positions[j][1]], color=custom_color(connection_matrix[i][j]))
 
-	# Set axes
-	ax.axis("equal")
-	# TODO: Set according to positions
-	ax.axis([-2, 12, -2, 12])
+	# Set axes limits and hide them
+	ax.set_aspect('equal', 'box')
 	ax.get_xaxis().set_visible(False)
 	ax.get_yaxis().set_visible(False)
 
