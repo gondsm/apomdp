@@ -478,6 +478,8 @@ def plot_task_assignments(task_history):
 	]
 	end_time = 25
 
+	# TODO: Get data matrix from input data
+
 	# Convert data to bars
 	bars = []
 	agents = set([a[0] for a in data])
