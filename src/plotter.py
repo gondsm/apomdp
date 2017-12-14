@@ -411,23 +411,29 @@ def plot_connection_graph(connection_matrix, state):
 	# TODO: get connection matrix and positions from input args
 
 	# Define bogus data
-	num_agents = 10
-	positions = []
-	for i in range(num_agents):
-		positions.append([10*random.random(), 10*random.random()])
+	#num_agents = 10
+	positions = [[1,1],[2,3],[3,1],[4,3],[5,2]]
+	# for i in range(num_agents):
+	# 	positions.append([10*random.random(), 10*random.random()])
 
-	connection_matrix = []
-	for i in range(num_agents):
-		connection_matrix.append([])
-		for j in range(num_agents):
-			connection_matrix[i].append(random.random())
+	connection_matrix = [[1, 1, 0.31, 0,0],
+	                     [1 ,0.1 ,1, 0.31, 0],
+	                     [0.31, 1, 0.4, 0, 0],
+	                     [0, 0.31, 0, 1, 1],
+	                     [0, 0, 0, 1, 0.8]]
+	
+	# for i in range(num_agents):
+	# 	connection_matrix.append([])
+	# 	for j in range(num_agents):
+	# 		connection_matrix[i].append(random.random())
 
 	# Draw circles
 	# https://stackoverflow.com/questions/9215658/plot-a-circle-with-pyplot
 	# https://stackoverflow.com/questions/2176424/hiding-axis-text-in-matplotlib-plots
 	fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
 	for i in range(len(positions)):
-		ax.add_artist(plt.Circle(positions[i], 0.1, color='k', zorder=10))
+		ax.add_artist(plt.Circle(positions[i], 0.1, edgecolor='k', facecolor='w',  zorder=10))
+		plt.text(positions[i][0],positions[i][1], str(i), zorder=11, horizontalalignment='center', verticalalignment='center')
 		
 	# Draw lines
 	# TODO: Lines somehow appear on top
@@ -440,11 +446,13 @@ def plot_connection_graph(connection_matrix, state):
 
 	# Set axes limits and hide them
 	ax.set_aspect('equal', 'box')
+	ax.margins(.1)
 	ax.get_xaxis().set_visible(False)
 	ax.get_yaxis().set_visible(False)
 
 	# Show/save the figure
-	plt.show()
+	#plt.show()
+	plt.savefig('graph.pdf')
 
 
 def plot_task_assignments(task_history):
@@ -594,10 +602,10 @@ def plot_state_values(state_history,v_s):
 
 if __name__ == "__main__":
 
-	#plot_connection_graph(None, None)
+	plot_connection_graph(None, None)
 	#plot_task_assignments(None)
 	#plot_reward(None)
-	plot_state_values(None, None)
+	#plot_state_values(None, None)
 	exit()
 
 	# Configure matplotlib
