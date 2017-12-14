@@ -447,9 +447,86 @@ def plot_connection_graph(connection_matrix, state):
 	plt.show()
 
 
+def plot_task_assignments(task_history):
+	""" This function receives a task_history of the form
+	[
+		[agent, task, timestamp],
+		[agent, task, timestamp],
+		...
+	]
+
+	which is then plotted. All values are ints, and time is in
+	seconds.
+
+	TODO: Deal with out-of-order tasks
+	TODO: Deal with overlap
+	"""
+	# Constants
+	bar_h = 0.8
+	bar_s = 1-bar_h
+	agent_colors = ['b', 'r', 'g', 'k']
+
+	# Define bogus data
+	data = [
+		[1, 1, 10],
+		[3, 2, 5],
+		[2, 3, 11],
+		[1, 2, 15],
+		[3, 1, 15],
+		[2, 1, 23],
+		[3, 3, 23],
+	]
+	end_time = 25
+
+	# Convert data to bars
+	bars = []
+	agents = set([a[0] for a in data])
+	# Populate the list of bars agent-by-agent for simplicity
+	for agent in agents:
+		agent_actions = [a for a in data if a[0] == agent]
+		# For all elements except the last
+		for i in range(len(agent_actions)-1):
+			bar = [agent_actions[i][0],
+			       agent_actions[i][1],
+			       agent_actions[i][2],
+			       agent_actions[i+1][2] - agent_actions[i][2],
+			       ]
+			bars.append(bar)
+		# Last element needs exception case
+		# Use end-time to calculate the duration of the last element
+		bar = [agent_actions[-1][0],
+		       agent_actions[-1][1],
+		       agent_actions[-1][2],
+		       end_time - agent_actions[-1][2],
+		       ]
+		bars.append(bar)
+
+
+	# Start new fig
+	fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+	plt.hold(True)
+
+	# Plot
+	#ax.barh(y, width, height, left
+	temp = list(agents)
+	for bar in bars:
+		ax.barh(bar[1]-bar_h/2, bar[3], bar_h, bar[2], color=agent_colors[bar[0]-1], label="Agent {}".format(bar[0]) if bar[0] in temp else "")
+		try:
+			temp.remove(bar[0])
+		except ValueError:
+			pass
+
+	# Create a Legend
+	plt.legend()
+
+	# Show plot
+	plt.show()
+
+
 if __name__ == "__main__":
 
-	plot_connection_graph(None, None)
+	#plot_connection_graph(None, None)
+	plot_task_assignments(None)
 	exit()
 
 	# Configure matplotlib
