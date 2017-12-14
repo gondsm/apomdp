@@ -566,11 +566,38 @@ def plot_reward(rewards_history):
 	plt.show()
 
 
+def plot_state_values(state_history,v_s):
+	"""
+	This function is to plot the history of state values
+	"""
+
+	#TODO: get values from the arguments instead of using bogus data
+	#bogus data
+	#history is here 3, each contains [s1,s2,T]
+	state_history =[(0,1,1),(1,2,2),(3,4,3)]
+	
+	#create a dictionary of state values 
+	v_s = dict()
+	for i in range(len(state_history)):
+		v_s[state_history[i][0:-1]]=10*i
+
+	#plotting the values for every time
+	plt.plot([v[-1] for v in state_history],[v_s[s[0:-1]] for s in state_history])
+
+	plt.xlabel("Time(s)")
+	plt.ylabel("V(s)")
+
+	plt.show()
+
+
+
+
 if __name__ == "__main__":
 
 	#plot_connection_graph(None, None)
 	#plot_task_assignments(None)
-	plot_reward(None)
+	#plot_reward(None)
+	plot_state_values(None, None)
 	exit()
 
 	# Configure matplotlib
