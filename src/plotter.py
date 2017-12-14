@@ -524,11 +524,53 @@ def plot_task_assignments(task_history):
 	# Show plot
 	plt.show()
 
+def plot_reward(rewards_history):
+	"""
+	This action recieves rewards_hisotry 
+	
+
+	and plot the rewards 
+	"""
+
+	#TODO: get data from input
+	# Define bogus data
+	rewards = [[[1,2,2,4,1],[6,7,5,9,2],[2,3,1,5,3]],
+				[[4,4,4,4,4],[5,5,5,5,5],[6,6,6,6,6]]
+			   	
+	]
+	thetas= [0.1,0.2,0.3,0.4]
+	
+	#plot the first component of the first agent
+	r_agent_1=rewards[0] 
+	for i in range(len(r_agent_1[0])-1):
+		plt.plot([r[-1] for r in r_agent_1], [r[i] for r in r_agent_1],label=" R_ {}".format(i+1))
+	
+	#Build cumulative reward
+	cumulative_R = []
+	
+	#Calculate and plot the cumulative reward for one agent following the equation: 
+	#R(s,a)= theta_1*R1 + theta_2*R2 + theta_3*R3 +theta_4*R4  
+	for n in r_agent_1:
+		x=0
+		for m in range(len(n)-1):
+			x+= n[m]*thetas[m]
+		cumulative_R.append(x)
+
+	plt.plot([r[-1] for r in r_agent_1],cumulative_R, label="Reward")
+
+	# create a legend
+	plt.legend()
+
+	plt.xlabel("Time(s)")
+	plt.ylabel("Rewards")
+	plt.show()
+
 
 if __name__ == "__main__":
 
 	#plot_connection_graph(None, None)
-	plot_task_assignments(None)
+	#plot_task_assignments(None)
+	plot_reward(None)
 	exit()
 
 	# Configure matplotlib
