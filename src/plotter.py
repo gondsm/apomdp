@@ -472,19 +472,31 @@ def plot_task_assignments(task_history):
 	# Constants
 	bar_h = 0.8
 	bar_s = 1-bar_h
-	agent_colors = ['b', 'r', 'g', 'k']
+	agent_colors = ['b', 'r', 'g', 'k', 'pink']
 
 	# Define bogus data
 	data = [
 		[1, 1, 10],
-		[3, 2, 5],
-		[2, 3, 11],
 		[1, 2, 15],
-		[3, 1, 15],
+		[1, 7, 26],
+
+		[2, 3, 11],
 		[2, 1, 23],
+		[2, 4, 30],
+		[2, 6, 33],
+		[2, 9, 40],
+
+		[3, 2, 5],
+		[3, 1, 15],
 		[3, 3, 23],
+		[3, 1, 35],
+
+		[4, 5, 9],
+		[4, 3, 35],
+
+		[5, 8, 20],
 	]
-	end_time = 25
+	end_time = 50
 
 	# TODO: Get data matrix from input data
 
@@ -513,7 +525,8 @@ def plot_task_assignments(task_history):
 
 
 	# Start new fig
-	fig, ax = plt.subplots() # note we must use plt.subplots, not plt.subplot
+	#plt.figure()
+	fig, ax = plt.subplots(figsize=(10,5)) # note we must use plt.subplots, not plt.subplot
 	plt.hold(True)
 
 	# Plot
@@ -527,10 +540,19 @@ def plot_task_assignments(task_history):
 			pass
 
 	# Create a Legend
-	plt.legend()
+	plt.legend(loc="best")
+
+	# Label axes
+	plt.xlabel("Time(s)")
+	plt.ylabel("Tasks")
+	plt.yticks(range(10))
+
+	plt.tight_layout()
 
 	# Show plot
-	plt.show()
+	#plt.show()
+	plt.savefig("tasks.pdf")
+
 
 def plot_reward(rewards_history):
 	"""
@@ -602,8 +624,8 @@ def plot_state_values(state_history,v_s):
 
 if __name__ == "__main__":
 
-	plot_connection_graph(None, None)
-	#plot_task_assignments(None)
+	#plot_connection_graph(None, None)
+	plot_task_assignments(None)
 	#plot_reward(None)
 	#plot_state_values(None, None)
 	exit()
