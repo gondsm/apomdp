@@ -1,1 +1,2 @@
 # This message contains the information that each agent wants to broadcast
+uint8 agent_id
