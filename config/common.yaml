@@ -1,0 +1,15 @@
+# Configuration file for specifying the structure of the POMDP problem we're solving
+# state_space:
+#   - S_0_0:
+#     - 0 # Occupancy: 0 -> Free, 1 -> Occupied (wall)
+#     - 0 # -> Fire
+#     - 0 # -> Person 
+#     - 0 # -> Debris
+#   - S_A:
+#     0:
+#       - 0 # X
+#       - 0 # Y
+
+world_geometry:
+  X: 3 # Width of the world
+  Y: 3 # Height of the world
