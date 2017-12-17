@@ -18,14 +18,15 @@ import pickle
 import yaml
 from threading import Lock
 import math
+import random
 
 
 # Global Variables
-state = [] # Maintains the state of the simulated world
-connection_matrix = [] # Maintains the connectivity of the agents
-connectivity_constant = 0
-
-global_lock = []
+state = [] 					# Maintains the state of the simulated world
+connection_matrix = [] 		# Maintains the connectivity of the agents
+connectivity_constant = 0	# Connectivity constant (see problem.yaml)
+shared_data_pubs = [] 		# Maintains publishers for each individual agent
+global_lock = [] 			# Mutex for controlling critical sections
 
 def initialize_system(common_data_filename, team_config_filename, problem_config_file):
 	""" Receives a file name and initializes the global variables according to
@@ -119,12 +120,18 @@ def broadcast(msg):
 	""" Callback fuction for the /broadcast topic which propagates messages
 	among agents according to connectivity.
 	"""
-	# TODO: Implement based on connectivity
 	rospy.loginfo("I'm broadcasting data from agent {}!".format(msg.agent_id))
 
 	# For each other agent in the team
-		# Randomly check if message will be delivered
-		# If so, publish the message in the topic
+	n_agents = len(state["Agents"])
+	for a in range(n_agents):
+		# Agents won't broadcast to themselves
+		if msg.agent_id != a:
+			# Get probability of delivery
+			prob = connection_matrix[msg.agent_id][a]
+			# If so, publish the message in the topic
+			if random.random() < prob:
+				shared_data_pubs[a].publish(msg)
 
 
 def receive_action(req):
@@ -175,6 +182,11 @@ if __name__ == "__main__":
 	# Launch servers etc
 	rospy.Subscriber("broadcast", shared_data, broadcast)
 	rospy.Service('act', Act, receive_action)
+
+	# Start the publishers for each agent
+	n_agents = len(state["Agents"])
+	for a in range(n_agents):
+		shared_data_pubs.append(rospy.Publisher('shared_data/{}'.format(a), shared_data, queue_size=10))
 
 	# Initialize mutexes
 	global_lock = Lock()
