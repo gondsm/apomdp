@@ -6,6 +6,7 @@ from __future__ import division
 
 # ROS Imports
 import rospy
+import rospkg
 from apomdp.msg import action
 from apomdp.msg import obs
 from apomdp.msg import shared_data
@@ -13,11 +14,44 @@ from apomdp.srv import Act
 import apomdp.srv
 
 # STD Imports
+import yaml
 
 
 # Global Variables
 state = [] # Maintains the state of the simulated world
-connection_matrix # Maintains the connectivity of the agents
+connection_matrix = [] # Maintains the connectivity of the agents
+
+def initialize_system(filename):
+	""" Receives a file name and initializes the global variables according to
+	the information contained therein.
+
+	The function assumes the file is YAML
+	"""
+	# TODO: Implement
+	# Inform
+	rospy.loginfo("Initializing system. File loaded: {}".format(filename))
+
+	# Read data from file
+	data = []
+	with open(filename) as data_file:
+		data = yaml.load(data_file)
+
+	# Build state vector
+	global state
+	# TODO
+
+	# Select first state
+	# TODO
+
+
+	# Create first connection matrix
+	global connection_matrix
+	connection_matrix = calc_connection_matrix(state)
+
+	# TODO: think of other stuff to have here
+
+	print(data)
+
 
 def calc_connection_matrix(state):
 	""" Given the current state of the system, this function generates the
@@ -50,8 +84,7 @@ def broadcast(msg):
 	among agents according to connectivity.
 	"""
 	# TODO: Implement based on connectivity
-	print("I'm broadcasting!")
-	print(msg)
+	rospy.loginfo("I'm broadcasting data from agent {}!".format(msg.agent_id))
 
 
 def receive_action(req):
@@ -87,6 +120,11 @@ if __name__ == "__main__":
 	rospy.init_node("sr_simulator")
 	rospy.Subscriber("broadcast", shared_data, broadcast)
 	rospy.Service('act', Act, receive_action)
+
+	# Initialize state
+	rospack = rospkg.RosPack()
+	path = rospack.get_path('apomdp')
+	initialize_system(path+"/config/common.yaml")
 
 	# Wait for stuff to happen
 	rospy.spin()
