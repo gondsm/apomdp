@@ -1,0 +1,5 @@
+# This service is called by individual agents when they want to act on the environment
+# The action is received by the simulator who then generates and replies with an observation
+action a
+---
+obs o
