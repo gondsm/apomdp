@@ -21,7 +21,7 @@ import yaml
 state = [] # Maintains the state of the simulated world
 connection_matrix = [] # Maintains the connectivity of the agents
 
-def initialize_system(filename):
+def initialize_system(common_data_filename, team_config_filename):
 	""" Receives a file name and initializes the global variables according to
 	the information contained therein.
 
@@ -29,12 +29,19 @@ def initialize_system(filename):
 	"""
 	# TODO: Implement
 	# Inform
-	rospy.loginfo("Initializing system. File loaded: {}".format(filename))
+	rospy.loginfo("Initializing system. Files loaded:\n{}\n{}".format(common_data_filename, team_config_filename))
 
-	# Read data from file
-	data = []
-	with open(filename) as data_file:
-		data = yaml.load(data_file)
+	# Read data from files
+	common_data = []
+	team_config = []
+	with open(common_data_filename) as data_file:
+		common_data = yaml.load(data_file)
+	with open(team_config_filename) as data_file:
+		team_config = yaml.load(data_file)
+
+	# Inform
+	rospy.loginfo("Common information: {}".format(common_data))
+	rospy.loginfo("Team configuration: {}".format(team_config))
 
 	# Build state vector
 	global state
@@ -49,8 +56,6 @@ def initialize_system(filename):
 	connection_matrix = calc_connection_matrix(state)
 
 	# TODO: think of other stuff to have here
-
-	print(data)
 
 
 def calc_connection_matrix(state):
@@ -123,8 +128,9 @@ if __name__ == "__main__":
 
 	# Initialize state
 	rospack = rospkg.RosPack()
-	path = rospack.get_path('apomdp')
-	initialize_system(path+"/config/common.yaml")
+	common_filename = rospack.get_path('apomdp') + "/config/common.yaml"
+	team_filename = rospack.get_path('apomdp') + "/config/team.yaml"
+	initialize_system(common_filename, team_filename)
 
 	# Wait for stuff to happen
 	rospy.spin()
