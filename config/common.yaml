@@ -11,5 +11,5 @@
 #       - 0 # Y
 
 world_geometry:
-  X: 3 # Width of the world
-  Y: 3 # Height of the world
+  X: 4 # Width of the world
+  Y: 4 # Height of the world
