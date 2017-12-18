@@ -19,6 +19,8 @@ import yaml
 from threading import Lock
 import math
 import random
+import copy
+import time
 
 
 # Global Variables
@@ -108,12 +110,47 @@ def generate_observation(state, action, agent):
 	pass
 
 
-def update_state(state, action):
+def transition(state, action, agent_id):
 	""" Updates the state of the world according to the action that
 	was received. Returns the updated state of the world.
 	"""
-	# TODO: implement
-	pass
+	# Get the position of the agent
+	x,y = state["Agents"][agent_id]
+
+	# Copy state to output variable
+	new_state = copy.deepcopy(state)
+
+	# Process each possible action
+	# If action is put out fire
+	if action == 0:
+		# If there is fire in the current position, it gets put out
+		if state["World"][x][y][1] == 1:
+			new_state["World"][x][y][1] = 0
+	# If action is remove debris
+	elif action == 1:
+		# If there is debris in the current position, it gets removed
+		if state["World"][x][y][2] == 1:
+			new_state["World"][x][y][2] = 0
+	# If action is extract person
+	elif action == 2:
+		# If there is a victim in the current position, they get extracted
+		if state["World"][x][y][3] == 1:
+			new_state["World"][x][y][3] = 0
+	# If action is move
+	elif action > 2:
+		# Determine where the agent wants to move
+		a = action - 3 # "Pull" the action value to index the map correctly
+		target_x = a // len(state["World"])
+		target_y = a - target_x*len(state["World"])
+		# Move them there if possible
+		if state["World"][target_x][target_y][0] == 0:
+			new_state["Agents"][agent_id][0] = target_x
+			new_state["Agents"][agent_id][0] = target_y
+		# Drop them on the way if not
+		# TODO
+
+	# Return the newly-constructed state
+	return new_state
 
 
 def broadcast(msg):
@@ -147,7 +184,7 @@ def receive_action(req):
 	# Update the state of the world
 	rospy.loginfo("Updating world state!")
 	global state
-	state = update_state(state, req.a.action)
+	state = transition(state, req.a.action, req.a.agent_id)
 
 	# Update the connectivity
 	global connection_matrix
