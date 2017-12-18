@@ -140,13 +140,44 @@ def calc_connection_matrix(state, c):
 	return connection_matrix
 
 
-def generate_observation(state, action, agent):
+def generate_observation(state, action, agent, noisy=True):
 	""" Given an end state and the action that got us there, this function
 	generates the observation corresponding to the agent specified.
+
+	If noisy is True, then the observation is corrupted with noise for cells
+	that are far away from the agent. The farther the cell, the higher the
+	noise in the cells.
 	"""
-	# TODO: Implement
+	# Inform
 	rospy.loginfo("Generating an observation for new state for action {} of agent {}.".format(action, agent))
-	pass
+	
+	# Copy the current state to the observation
+	obs = copy.deepcopy(state)
+
+	# Corrupt observation with noise
+	# For each of the cells, we get the distance of the agent to the cell.
+	# The larger the cell, the higher the probability of noise.
+	# Then, for each bit in the cell, we sample a uniform distribution.
+	# If the result in lower than the probability of noise, then we randomly
+	# attribute a value to the bit.
+	x,y = state["Agents"][agent] # Get location of the agent
+	for i in range(len(state["World"])):
+		for j in range(len(state["World"][i])):
+			# Calculate distance/probability of noise for the cell
+			d = math.sqrt((i-x)**2 + (j-y)**2) # Euclidean distance
+			p = d / len(state["World"]) # Normalized distance = probability of noise
+			# DEBUG: Print the current values
+			#print("Agent", x, y)
+			#print("Cell", i,j)
+			#print("D", d)
+			#print("P", p)
+			# Corrupt bits one by one
+			for k in range(len(state["World"][i][j])):
+				if random.random() < p:
+					obs["World"][i][j][k] = random.randint(0,1)
+
+	# Return the observation
+	return obs
 
 
 def transition(state, action, agent_id):
@@ -252,8 +283,9 @@ def receive_action(req):
 	global_lock.release()
 
 	# Pack it into a response message
-	# TODO
+	obs_string = yaml.dump(observation)
 	res = apomdp.srv.ActResponse()
+	res.o.obs = obs_string
 
 	# Return the response
 	rospy.loginfo("Returning observation to agent.")
