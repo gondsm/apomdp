@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TODO: Write module docstring
+
 # Futures
 from __future__ import print_function
 from __future__ import division
@@ -35,6 +37,8 @@ shared_data_pubs = [] 		# Maintains publishers for each individual agent
 global_lock = [] 			# Mutex for controlling critical sections
 log_dict = dict()			# A dictionary containing the full logs of the execution
 
+
+# Logging functions
 def log_initial_state(log_dict, initial_state, initial_comm_matrix):
 	""" Logs the initial state to the logging dictionary provided. """
 	log_dict["initial_state"] = initial_state
@@ -69,6 +73,7 @@ def dump_log(filename, log):
 		yaml.dump(log, out_file, default_flow_style=False)
 
 
+# Simulation functions
 def initialize_system(common_data_filename, team_config_filename, problem_config_file):
 	""" Receives a file name and initializes the global variables according to
 	the information contained therein.
@@ -223,6 +228,7 @@ def transition(state, action, agent_id):
 	return new_state
 
 
+# ROS Message/Service Handlers
 def broadcast(msg):
 	""" Callback fuction for the /broadcast topic which propagates messages
 	among agents according to connectivity.
