@@ -620,14 +620,81 @@ def plot_state_values(state_history,v_s):
 	plt.show()
 
 
+def plot_state(state, filename=None):
+	""" Plots a betaPOMDP search-and-rescue state.
+	"""
+	# Set axes limits
+	map_w = len(state["World"])
+	map_h = len(state["World"][0])
+
+	# Initialize plot
+	# https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
+	# https://stackoverflow.com/questions/2051744/reverse-y-axis-in-pyplot
+	# Create fig
+	plt.figure()
+	# Get axes
+	ax = plt.gca()
+	# Set limits
+	ax.axis([0, map_w, 0 ,map_h])
+	# Create grid with correct ticks
+	plt.grid(ls="-")
+	ax.set_xticks(range(map_w))
+	ax.set_yticks(range(map_h))
+	#ax.invert_yaxis()
+	#ax.xaxis.tick_top()
+	ax.set_aspect('equal', 'box')
+	# TODO: offset ticks to be in middle of grid cells
+
+	# Plot agents
+	for key, a_pos in state["Agents"].items():
+		# Plot a circle with a number to illustrate the agent
+		ax.add_artist(plt.Circle([a + 0.5 for a in a_pos], 0.1, edgecolor='k', facecolor='w',  zorder=10))
+		plt.text(a_pos[0]+0.5,a_pos[1]+0.5, str(key), zorder=11, horizontalalignment='center', verticalalignment='center')
+
+	# Plot state of cells
+	for i in range(map_w):
+		for j in range(map_h):
+			# Get cell to local var
+			cell = state["World"][i][j]
+			# Default color is white
+			color = "w"
+			# Occupancy
+			if cell[0] == 1:
+				color = "k"
+			# Fire
+			if cell[1] == 1:
+				color = "r"
+			# Debris
+			if cell[2] == 1:
+				color = "brown"
+			# Debris
+			if cell[3] == 1:
+				color = "pink"
+
+			# If there's more than one thing on the square, we give it another color
+			# TODO
+
+			# Draw rectangle
+			ax.add_patch(mp.patches.Rectangle((i, j), 1, 1, color=color))
+
+	# Show/save plot
+	if filename:
+		plt.savefig(filename)
+	else:
+		plt.show()
 
 
 if __name__ == "__main__":
 
 	#plot_connection_graph(None, None)
-	plot_task_assignments(None)
+	#plot_task_assignments(None)
 	#plot_reward(None)
 	#plot_state_values(None, None)
+	# Bogus: read state from yaml file
+	# TODO: Remove
+	with open("/home/vsantos/catkin_ws/src/apomdp/config/problem.yaml") as data_file:
+		state = yaml.load(data_file)["initial_state"]
+	plot_state(state)
 	exit()
 
 	# Configure matplotlib
