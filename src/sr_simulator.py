@@ -64,7 +64,7 @@ def log_transition(log_dict, action, agent, final_connection_matrix, final_state
 
 def log_communication(log_dict, sender, deliveries):
 	""" Logs """
-	log_dict["communications"].append({"sender": sender, "delivered_to": deliveries})
+	log_dict["communications"].append({"sender": sender, "delivered_to": deliveries, "time": time.time()})
 
 
 def dump_log(filename, log):
