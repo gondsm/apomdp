@@ -637,13 +637,18 @@ def plot_state(state, filename=None):
 	# Set limits
 	ax.axis([0, map_w, 0 ,map_h])
 	# Create grid with correct ticks
-	plt.grid(ls="-")
-	ax.set_xticks(range(map_w))
-	ax.set_yticks(range(map_h))
+	plt.grid(ls="-", which="minor")
+	ax.set_xticks(range(map_w), minor=True)
+	ax.set_yticks(range(map_h), minor=True)
+	ax.set_xticks(np.arange(0.5, map_w, 1))
+	ax.set_yticks(np.arange(0.5, map_w, 1))
+	ax.set_xticklabels([str(a) for a in range(map_w)])
+	ax.set_yticklabels([str(a) for a in range(map_h)])
+	plt.xlabel("i")
+	plt.ylabel("j")
 	#ax.invert_yaxis()
 	#ax.xaxis.tick_top()
 	ax.set_aspect('equal', 'box')
-	# TODO: offset ticks to be in middle of grid cells
 
 	# Plot agents
 	for key, a_pos in state["Agents"].items():
