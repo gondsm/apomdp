@@ -153,6 +153,8 @@ def generate_observation(state, action, agent, noisy=True):
 	that are far away from the agent. The farther the cell, the higher the
 	noise in the cells.
 	"""
+	# TODO: Re-think the probability of noise to be lower near the agent and higher
+	# farther away. (As it stands it's completely linear)
 	# Inform
 	rospy.loginfo("Generating an observation for new state for action {} of agent {}.".format(action, agent))
 	
