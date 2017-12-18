@@ -5,12 +5,12 @@ initial_state:
     1: [1,3]
 # The "World" state is a matrix of lists, with each inner list corresponding to one cell
 # of the world. Variables are defined as follows:
-# [occupancy, fire, victim, debris]
+# [occupancy, fire, debris, victim]
   World:
     - [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]] 
     - [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
     - [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]] 
     - [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]] 
-# This constant si multiplied by the probability of message delivery to modulate the
+# This constant is multiplied by the probability of message delivery to modulate the
 # inverse-square law to fit our needs.  
 connectivity_constant: 1.0
