@@ -24,11 +24,50 @@ import time
 
 
 # Global Variables
+# The only functions that touch these variables are the ROS callbacks and the
+# initialization function.
+# The ROS callbacks use a mutext to ensure that there is no simultaneous
+# access to the variables.
 state = [] 					# Maintains the state of the simulated world
 connection_matrix = [] 		# Maintains the connectivity of the agents
 connectivity_constant = 0	# Connectivity constant (see problem.yaml)
 shared_data_pubs = [] 		# Maintains publishers for each individual agent
 global_lock = [] 			# Mutex for controlling critical sections
+log_dict = dict()			# A dictionary containing the full logs of the execution
+
+def log_initial_state(log_dict, initial_state, initial_comm_matrix):
+	""" Logs the initial state to the logging dictionary provided. """
+	log_dict["initial_state"] = initial_state
+	log_dict["initial_connection_matrix"] = initial_comm_matrix
+	log_dict["transitions"] = []
+	log_dict["communications"] = []
+
+
+def log_transition(log_dict, action, agent, final_connection_matrix, final_state, observation):
+	""" Logs a transition to the logging dict provided. 
+	Since the initial state is logged elsewhere, this function logs which
+	agent took which action and the *impact* of the action, meaning it logs the
+	final connection matrix and the final state *only*. The previous values for
+	both of these can always be determined from the previous entry in the log.
+	"""
+	log_dict["transitions"].append({"action": action, 
+		                            "agent": agent,
+		                            "observation": observation,
+		                            "time": time.time(),
+		                            "final_connection_matrix": final_connection_matrix, 
+		                            "final_state": final_state,})
+
+
+def log_communication(log_dict, sender, deliveries):
+	""" Logs """
+	log_dict["communications"].append({"sender": sender, "delivered_to": deliveries})
+
+
+def dump_log(filename, log):
+	""" Dumps the logs to the yaml file. """
+	with open(filename, "w") as out_file:
+		yaml.dump(log, out_file, default_flow_style=False)
+
 
 def initialize_system(common_data_filename, team_config_filename, problem_config_file):
 	""" Receives a file name and initializes the global variables according to
@@ -36,7 +75,6 @@ def initialize_system(common_data_filename, team_config_filename, problem_config
 
 	The function assumes the file is YAML
 	"""
-	# TODO: Implement
 	# Inform
 	rospy.loginfo("Initializing system. Files loaded:\n{}\n{}".format(common_data_filename, team_config_filename))
 
@@ -70,7 +108,8 @@ def initialize_system(common_data_filename, team_config_filename, problem_config
 	connection_matrix = calc_connection_matrix(state, connectivity_constant)
 	print(connection_matrix)
 
-	# TODO: think of other stuff to have here
+	# Log first state
+	log_initial_state(log_dict, state, connection_matrix)
 
 
 def calc_connection_matrix(state, c):
@@ -159,6 +198,12 @@ def broadcast(msg):
 	"""
 	rospy.loginfo("I'm broadcasting data from agent {}!".format(msg.agent_id))
 
+	# Lock the global var mutex
+	global_lock.acquire()
+
+	# A list of the agents that the communication was delivered to
+	deliveries = []
+
 	# For each other agent in the team
 	n_agents = len(state["Agents"])
 	for a in range(n_agents):
@@ -169,6 +214,13 @@ def broadcast(msg):
 			# If so, publish the message in the topic
 			if random.random() < prob:
 				shared_data_pubs[a].publish(msg)
+				deliveries.append(a)
+
+	# Log this communication
+	log_communication(log_dict, msg.agent_id, deliveries)
+
+	# Release the global var mutex
+	global_lock.release()
 
 
 def receive_action(req):
@@ -190,11 +242,14 @@ def receive_action(req):
 	global connection_matrix
 	connection_matrix = calc_connection_matrix(state, connectivity_constant)
 
-	# Release the global var mutex
-	global_lock.release()
-
 	# Generate an observation of the new state
 	observation = generate_observation(state, req.a.action, req.a.agent_id)
+
+	# Log the transition
+	log_transition(log_dict, req.a.action, req.a.agent_id, connection_matrix, state, observation)
+
+	# Release the global var mutex
+	global_lock.release()
 
 	# Pack it into a response message
 	# TODO
@@ -216,6 +271,10 @@ if __name__ == "__main__":
 	problem_filename = rospack.get_path('apomdp') + "/config/problem.yaml"
 	initialize_system(common_filename, team_filename, problem_filename)
 
+	# Define log file location
+	log_filename = rospack.get_path('apomdp') + "/config/sim_log_{}.yaml".format(int(time.time()))
+	rospy.loginfo("Logs will be saved in {}.".format(log_filename))
+
 	# Launch servers etc
 	rospy.Subscriber("broadcast", shared_data, broadcast)
 	rospy.Service('act', Act, receive_action)
@@ -230,3 +289,7 @@ if __name__ == "__main__":
 
 	# Wait for stuff to happen
 	rospy.spin()
+
+	# Dump logs to file
+	rospy.loginfo("Dumping logs!")
+	dump_log(log_filename, log_dict)
