@@ -87,7 +87,7 @@ function get_policy(fused_T, c_vector)
 end
 
 # this function is called for decision_making and it will return an action 
-function get_action(policy,fused_b)
+function get_action(policy, fused_b)
     # Get action
     #a = action(policy, apomdpDistribution(pomdp, state))
 
@@ -96,7 +96,7 @@ function get_action(policy,fused_b)
 end 
 
 # will update the belief and it will return beliefs_vector
-function update_belief(observation,action,belief, transistion)
+function update_belief(observation, action, belief, transistion)
     # Steps: 
     # Will pass observation, action, belief and transition to a function in apomdp.update_belief
     # It will return the updated belief 
@@ -147,6 +147,8 @@ function main()
 
     # Create the service client object
     service_client = ServiceProxy{Act}("act")
+
+    # TODO: Should we have a pomdp object to pass around?
 
     # Subscribe to the agent's shared_data topic
     # Create publisher, and a subscriber 

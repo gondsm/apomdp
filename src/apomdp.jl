@@ -351,7 +351,6 @@ function apomdpObservation() # DESPOT
     [0,0]
 end
 
-
 function solve(pomdp::aPOMDP, solver_name::String="")
     # Solve the POMDP according to the solver requested
     # So, apparently Julia doesn't have switch statements. Nice.
@@ -381,6 +380,55 @@ function solve(pomdp::aPOMDP, solver_name::String="")
 end
 
 
+# betapomdp
+function fuse_beliefs(belief_vector)
+    # Fuse the vector of beliefs that is received as input
+    # Each element of the vector is itself a vector in floats that encode
+    # a probability distributions.
+    # Fusion takes place via:
+    # bf = b1*b2*...*bn
+    # TODO: look up the theory on this
+end
+
+
+function fuse_transitions(transition_vector)
+    # Fuse the vector of transition matrices
+    # Each element of the vector is a full transition matrix
+    # for the whole state space (both s and s') and action space
+    # Fusion is done in the same principle as beliefs, but iterating
+    # over all possible combinations of s', s and a.
+    # Use state indices to iterate?
+end
+
+function set_transition_matrix(transition_matrix)
+    # Set the transition matrix of the current system as the one received
+end
+
+function set_c_vector(c_vector)
+    # Set the current c vector as the one received
+    # TODO: 
+    # extend the apomdp to have a c_vector (all ones by default)
+    # extend the reward (MSVR by defaul, uniform thetas by default).
+    # SVR corresponds to having theta 1 just for that term, and so on
+end
+
+function get_action(policy, belief)
+    # Get the best action according to policy for the received belief
+    # The belief is assumed as a vector of floars over the state space,
+    # which will have to be converted into a apomdpDistribution to
+    # plug into the policy using: 
+    # a = action(policy, apomdpDistribution(pomdp, belief))
+end
+
+function update_belief(observation, action, belief, transition)
+    # Use the apomdp machinery and the classical formulation to determine the
+    # belief over the next state.
+    # Observation is a dict, action is an int, belief is a vector over state
+    # indices as usual, transition is a transition matrix as defined before.
+end
+
+
+# Logging
 function log_execution(out_file, 
                        num_iter, 
                        reward_change_interval, 
