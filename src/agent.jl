@@ -116,42 +116,58 @@ end
 #     return resp
 # end
 
-# Simple function for updating the system's policy
-function update_policy()
-
-end
 
 # fuse belief function
-function fuse_beliefs()
+function fuse_beliefs(beliefs_vector)
 
 end
 
 # fuse transistions function 
-function fuse_transitions()
+function fuse_transitions(transistions_vector)
 
 end
 
 # call simulation (function ?? or just from the main)
-function act()
+function act(action)
 
 end
 
 # publish to broadcast topic (function ?? or just from the main) 
-function share_data()
+function share_data(beliefs_vector, transistions_vector)
 
 end
 
 # subscribe to shared_data topic (function ?? or just from the main)
 #call back function for shared data (belief, transistion..etc)
-function share_data_cb()
+function share_data_cb(msg)
 
 end
 
+# function used to solve pomdp and return policy 
+function get_policy(fused_T)
+
+end
+
+# this function is called for decision_making and it will return an action 
+function get_action(policy,fused_b)
+
+end 
+
+# will update the belief and it will return beliefs_vector
+function update_belief(observation,action,belief, transistion)
+
+end 
+
+# this function will return the transistions_vector
+function learn(belief, action, previous_b) 
+
+end 
 
 # And a main function
 function main()
     #TODO: get the agent_id from somewhere
     agent_id = 0
+    agent_index = agent_id + 1
     # Initialize ROS node
     println("Initializing bPOMDP")
     init_node("agent_$(agent_id)")
@@ -168,19 +184,49 @@ function main()
     # Initialize valuable states
     #TODO
 
+    #Initialize variables 
+    #TODO: do it proberly 
+    fused_T = nothing
+    beliefs_vector = [nothing, nothing, nothing, nothing] #TODO: should be global because it will be updated by the callback
+    transistions_vector = [nothing, nothing, nothing, nothing] #TODO: should be global because it will be updated by the callback
+
     # "spin" while waiting for requests
     println("Going into spin!")
     while ! is_shutdown()
-        # Should we re-calculate the policy?
-        if solve_flag update_policy() end
+
+        policy = get_policy(fused_T)# solve
 
         # Call fuse belief function
+        fused_b = fuse_beliefs(beliefs_vector)
+        #TODO: make beliefs_vector global variable 
 
-        # Call fuse transistions function 
+        # decision_making
+        action = get_action(policy,fused_b)
 
-        # Call simulation whenever want (call the act service)
+        #observation 
+        observation = act(action)
 
-        # publish to "broadcast" topic  
+        #to save the prvious belief 
+        previous_b = beliefs_vector[agent_index]
+
+        # update belief - on the local 
+        beliefs_vector[agent_index]= update_belief(observation,action,beliefs_vector[agent_index], transistions_vector[agent_index])
+        #TODO: rethink of we should use the local transition or the fused one
+
+        # update_belief
+        fused_b = fuse_beliefs(beliefs_vector)
+
+        # learn - based on the local 
+        transistions_vector[agent_index] = learn(beliefs_vector[agent_index], action, previous_b)
+        #TODO: decide whether to use the fused_b or local belief 
+
+        fused_T = fuse_transitions(transistions_vector)
+
+        # publish something to "broadcast" topic
+        share_data(beliefs_vector, transistions_vector)
+        # TODO: decide when to do this  
+        # TODO: find a way to avoid fusing repeated information - depends on the time and the type of info to fuse (local or fused)
+        # TODO: useing of time stamp of when every agent updated 
 
         # Take a short break from all this
         rossleep(Duration(0.1))
