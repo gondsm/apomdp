@@ -28,6 +28,10 @@ using apomdp.msg
 
 
 # Global vars
+# These need to be global in order to be written to by the callback
+# TODO: Figure our inter-thread communication
+beliefs_vector = [nothing, nothing, nothing, nothing]
+transitions_vector = [nothing, nothing, nothing, nothing]
 
 
 # Agent-specific actions
@@ -120,8 +124,6 @@ function main()
     # Initialize variables 
     # TODO: do it properly 
     fused_T = nothing
-    beliefs_vector = [nothing, nothing, nothing, nothing] #TODO: should be global because it will be updated by the callback
-    transitions_vector = [nothing, nothing, nothing, nothing] #TODO: should be global because it will be updated by the callback
     ability_vector = [nothing, nothing, nothing, nothing] #TODO: read this from configuration (agent.yaml) 
 
     # "spin" while waiting for requests
@@ -164,10 +166,10 @@ function main()
         # TODO: find a way to avoid fusing repeated information - depends on the time and the type of info to fuse (local or fused)
         # TODO: useing of time stamp of when every agent updated 
 
-        # Take a short break from all this
-        rossleep(Duration(0.1))
+        # TODO: Limit rate if necessary
     end
 
+    # Inform
     println("Agent exiting!")
 
     # TODO: Write logs
