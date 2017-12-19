@@ -59,12 +59,20 @@ end
 # APOMDP-dependent functions (maths)
 # fuse belief function
 function fuse_beliefs(beliefs_vector)
-
+    # Steps
+    # First we check if there is a need to fuse beliefs 
+    # Create the vector of fusion from the beliefs_vector which will only contains belief for fusion --> the clean vector
+    # Pass a clean vector(a vector without nothing, a vector that can be used)
+    # We should have the fused_b to be returned
 end
 
 # fuse transistions function 
 function fuse_transitions(transitions_vector)
-
+    # Steps
+    # First we check if there is a need to fuse transistions 
+    # Create the vector of fusion from the transitions_vector which will only contains transitions for fusion --> the clean vector
+    # Pass a clean vector(a vector without nothing, a vector that can be used)
+    # We should have the fused_T to be returned
 end
 
 # function used to solve pomdp and return policy 
@@ -72,41 +80,56 @@ function get_policy(fused_T, c_vector)
     #get the v_s
     #v = get_v_s(state)
     #TODO: this function will return the value of state v(s) 
+
+    # Steps
+    # Iterate over all possible states to -construct (set) the V(S) in apomdp
+    # Call apomdp and passing fused_T and the cost vector, apomdp will then used these to create rewards and solve the problem 
 end
 
 # this function is called for decision_making and it will return an action 
 function get_action(policy,fused_b)
     # Get action
     #a = action(policy, apomdpDistribution(pomdp, state))
+
+    # Steps: 
+    # plug policy and belief in action (apomdp function) and it will decode the policy and returns an action 
 end 
 
 # will update the belief and it will return beliefs_vector
 function update_belief(observation,action,belief, transistion)
-
+    # Steps: 
+    # Will pass observation, action, belief and transition to a function in apomdp.update_belief
+    # It will return the updated belief 
 end 
 
 # this function will return the transitions_vector
 function learn(belief, action, previous_b) 
-    # integrate_transition(pomdp, prev_state, state, prev_action)
+    # integrate_transition(pomdp, prev_state, state, prev_action) 
 end 
 ######
 
 
 # ROS-related functions
 # call simulation (function ?? or just from the main)
-function act(action)
-
+function act(action, service_client)
+    return service_client(action)# call ROS service and that call will return the observation
 end
 
 # publish to broadcast topic (function ?? or just from the main) 
-function share_data(beliefs_vector, transitions_vector)
-
+function share_data(beliefs_vector, transitions_vector, publisher)
+    # Steps: 
+    # create ROS message 
+    msg = shared_data()
+    # Pack the belief and transistions in one ROS message 
+    #TODO: 
+    #publish message 
+    publisher.publish(msg)
 end
 
 # subscribe to shared_data topic (function ?? or just from the main)
 #call back function for shared data (belief, transistion..etc)
 function share_data_cb(msg)
-
+    #TODO: every time we recieve new msg we need to update the vectors only with latest information (no repetition) 
 end
 
 
@@ -151,7 +174,7 @@ function main()
         action = get_action(policy,fused_b)
 
         # Act and receive an observation 
-        observation = act(action)
+        observation = act(action, service_client)
 
         # Update belief - on the local 
         previous_b = beliefs_vector[agent_index] # save the previous belief 
