@@ -143,9 +143,16 @@ function share_data_cb(msg)
 
 end
 
+#this function will return the v(s)
+function get_v_s(state)
+    #TODO: v(s) = -2n_victim * -n_depries * n_fire
+end 
+
 # function used to solve pomdp and return policy 
 function get_policy(fused_T)
-
+    #get the v_s
+    #v = get_v_s(state)
+    #TODO: this function will return the value of state v(s) 
 end
 
 # this function is called for decision_making and it will return an action 
@@ -160,6 +167,12 @@ end
 
 # this function will return the transistions_vector
 function learn(belief, action, previous_b) 
+
+end 
+
+# this function will retun cost vector for all actions for this agent
+#
+function calc_cost_vector(belief, ability_vector) 
 
 end 
 
@@ -189,12 +202,17 @@ function main()
     fused_T = nothing
     beliefs_vector = [nothing, nothing, nothing, nothing] #TODO: should be global because it will be updated by the callback
     transistions_vector = [nothing, nothing, nothing, nothing] #TODO: should be global because it will be updated by the callback
-
+    ability_vector = [nothing, nothing, nothing, nothing] #TODO: read this from configuration (agent.yaml) 
     # "spin" while waiting for requests
     println("Going into spin!")
     while ! is_shutdown()
 
-        policy = get_policy(fused_T)# solve
+
+        # get the cost 
+        c_vector = calc_cost_vector(beliefs_vector[agent_index], ability_vector)
+
+        # solve
+        policy = get_policy(fused_T, c_vector)
 
         # Call fuse belief function
         fused_b = fuse_beliefs(beliefs_vector)
