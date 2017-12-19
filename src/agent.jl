@@ -112,18 +112,19 @@ end
 # ROS-related functions
 # call simulation (function ?? or just from the main)
 function act(action, service_client)
-    return service_client(action)# call ROS service and that call will return the observation
+    #return service_client(action)# call ROS service and that call will return the observation
 end
 
 # publish to broadcast topic (function ?? or just from the main) 
-function share_data(beliefs_vector, transitions_vector, publisher)
+function share_data(beliefs_vector, transitions_vector, publisher, agent_id)
     # Steps: 
     # create ROS message 
     msg = shared_data()
+    msg.agent_id = agent_id
     # Pack the belief and transistions in one ROS message 
     #TODO: 
     #publish message 
-    publisher.publish(msg)
+    publish(publisher, msg)
 end
 
 # subscribe to shared_data topic (function ?? or just from the main)
@@ -192,7 +193,7 @@ function main()
         fused_T = fuse_transitions(transitions_vector)
 
         # Publish something to "broadcast" topic
-        share_data(beliefs_vector, transitions_vector)
+        share_data(beliefs_vector, transitions_vector, pub, agent_id)
         # TODO: decide when to do this  
         # TODO: find a way to avoid fusing repeated information - depends on the time and the type of info to fuse (local or fused)
         # TODO: useing of time stamp of when every agent updated 
