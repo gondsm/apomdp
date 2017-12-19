@@ -43,7 +43,15 @@ end
 # this function will retun cost vector for all actions for this agent
 #
 function calc_cost_vector(belief, ability_vector) 
+    # C_i(a,s) = Ab(a) * Cc(a,s)
+    # The final cost of each action in each state is the product of the fixed
+    # action cost (abilities or Ab) times the current cost (Cc) of the action
+    # in the current state
 
+    # Steps
+    # Get abilites vector (from global var?)
+    # Calculate the current cost for each individual action
+    # Get the final vector as the vector product of the previous two
 end 
 ######
 
