@@ -1,4 +1,4 @@
-# julia version used 
+#!/usr/bin/env julia
 
 # The main goal of this script is to : 
 # 1) Serves as an aPOMDP interface through: 
@@ -111,8 +111,15 @@ end
 
 # ROS-related functions
 # call simulation (function ?? or just from the main)
-function act(action, service_client)
-    #return service_client(action)# call ROS service and that call will return the observation
+function act(action, agent_id, service_client)
+    # Build ROS message
+    ros_action = ActRequest()
+    ros_action.a.action = action
+    ros_action.a.agent_id = agent_id
+    fieldnames(ros_action)
+
+    # Call ROS service
+    return service_client(ros_action)# call ROS service and that call will return the observation
 end
 
 # publish to broadcast topic (function ?? or just from the main) 
@@ -177,7 +184,8 @@ function main()
         action = get_action(policy,fused_b)
 
         # Act and receive an observation 
-        observation = act(action, service_client)
+        action = 1 # TODO: remove when get_action is working
+        observation = act(action, agent_id, service_client)
 
         # Update belief - on the local 
         previous_b = beliefs_vector[agent_index] # save the previous belief 
