@@ -4,3 +4,4 @@ uint8 agent_id
 float32[] b_s
 # Transition
 #TODO: list of list
+float32[] T # This is a bogus data type
