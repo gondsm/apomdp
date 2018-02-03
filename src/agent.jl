@@ -84,18 +84,18 @@ end
 # subscribe to shared_data topic (function ?? or just from the main)
 #call back function for shared data (belief, transistion..etc)
 function share_data_cb(msg)
+    println("I got a message from agent_$(msg.agent_id)")
     #TODO: every time we recieve new msg we need to update the vectors only with latest information (no repetition) 
 end
 
 
 # And a main function
-function main()
-    #TODO: get the agent_id from somewhere
-    agent_id = 0
+function main(agent_id)
+
     agent_index = agent_id + 1
 
     # Initialize ROS node
-    println("Initializing bPOMDP")
+    println("Initializing bPOMDP - agent_$(agent_id)")
     init_node("agent_$(agent_id)")
     start_time = now()
 
@@ -116,6 +116,7 @@ function main()
 
     # "spin" while waiting for requests
     println("Going into spin!")
+
     while ! is_shutdown()
         # Get the cost 
         c_vector = calc_cost_vector(beliefs_vector[agent_index], ability_vector)
@@ -155,6 +156,8 @@ function main()
         # TODO: useing of time stamp of when every agent updated 
 
         # TODO: Limit rate if necessary
+        # TODO: wait for this to be avaiable 
+        #spinOnce()
     end
 
     # Inform
@@ -165,4 +168,5 @@ end
 
 
 # Run stuff
-main()
+
+main(parse(Int64,ARGS[1]))
