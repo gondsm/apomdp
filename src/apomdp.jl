@@ -453,6 +453,9 @@ function update_belief(observation, action, belief, transition)
     # belief over the next state.
     # Observation is a dict, action is an int, belief is a vector over state
     # indices as usual, transition is a transition matrix as defined before.
+
+    # Return empty bogus array. Final type must match shared_data.msg
+    return Float32[]
 end
 
 
@@ -470,6 +473,9 @@ end
 
 function learn(belief, action, previous_b) 
     # integrate_transition(pomdp, prev_state, state, prev_action) 
+
+    # Return empty bogus array. Final type must match shared_data.msg
+    return Float32[]
 end 
 
 
