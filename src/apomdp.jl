@@ -382,6 +382,14 @@ end
 
 # betapomdp
 function fuse_beliefs(belief_vector)
+    # Steps
+    # First we check if there is a need to fuse beliefs 
+    # Create the vector of fusion from the beliefs_vector which will only contains belief for fusion --> the clean vector
+    # Pass a clean vector(a vector without nothing, a vector that can be used)
+    # We should have the fused_b to be returned
+
+    # Warning: the belief_vector may contain "nothings"
+
     # Fuse the vector of beliefs that is received as input
     # Each element of the vector is itself a vector in floats that encode
     # a probability distributions.
@@ -392,6 +400,14 @@ end
 
 
 function fuse_transitions(transition_vector)
+    # Steps
+    # First we check if there is a need to fuse transistions 
+    # Create the vector of fusion from the transitions_vector which will only contains transitions for fusion --> the clean vector
+    # Pass a clean vector(a vector without nothing, a vector that can be used)
+    # We should have the fused_T to be returned
+
+    # Warning: the vector may contain "nothings"
+
     # Fuse the vector of transition matrices
     # Each element of the vector is a full transition matrix
     # for the whole state space (both s and s') and action space
@@ -400,9 +416,11 @@ function fuse_transitions(transition_vector)
     # Use state indices to iterate?
 end
 
+
 function set_transition_matrix(transition_matrix)
     # Set the transition matrix of the current system as the one received
 end
+
 
 function set_c_vector(c_vector)
     # Set the current c vector as the one received
@@ -412,20 +430,47 @@ function set_c_vector(c_vector)
     # SVR corresponds to having theta 1 just for that term, and so on
 end
 
+
 function get_action(policy, belief)
     # Get the best action according to policy for the received belief
     # The belief is assumed as a vector of floars over the state space,
     # which will have to be converted into a apomdpDistribution to
     # plug into the policy using: 
     # a = action(policy, apomdpDistribution(pomdp, belief))
+
+    # TODO: actually get from policy!
+    # The return value should be integer
+    return 1
 end
 
+
 function update_belief(observation, action, belief, transition)
+    # Steps: 
+    # Will pass observation, action, belief and transition to a function in apomdp.update_belief
+    # It will return the updated belief 
+
     # Use the apomdp machinery and the classical formulation to determine the
     # belief over the next state.
     # Observation is a dict, action is an int, belief is a vector over state
     # indices as usual, transition is a transition matrix as defined before.
 end
+
+
+function get_policy(fused_T, c_vector)
+    #get the v_s
+    #v = get_v_s(state)
+    #TODO: this function will return the value of state v(s) 
+
+    # Steps
+    # Iterate over all possible states to -construct (set) the V(S) in apomdp
+    # call the solve function to obtain policy
+    # Call apomdp and passing fused_T and the cost vector, apomdp will then used these to create rewards and solve the problem 
+end
+
+
+function learn(belief, action, previous_b) 
+    # integrate_transition(pomdp, prev_state, state, prev_action) 
+end 
 
 
 # Logging
