@@ -30,8 +30,9 @@ using apomdp.msg
 # Global vars
 # These need to be global in order to be written to by the callback
 # TODO: Figure our inter-thread communication
-beliefs_vector = [nothing, nothing, nothing, nothing]
-transitions_vector = [nothing, nothing, nothing, nothing]
+# TODO: allocate the number of agents to be passed as number of elements of the array 
+beliefs_vector = Any[nothing, nothing, nothing, nothing]
+transitions_vector = Any[nothing, nothing, nothing, nothing]
 
 
 # Agent-specific actions
@@ -76,7 +77,8 @@ function share_data(beliefs_vector, transitions_vector, publisher, agent_id)
     msg = shared_data()
     msg.agent_id = agent_id
     # Pack the belief and transistions in one ROS message 
-    #TODO: 
+    msg.b_s = beliefs_vector[agent_id+1]
+    msg.T=transitions_vector[agent_id+1]
     #publish message 
     publish(publisher, msg)
 end
@@ -84,8 +86,10 @@ end
 # subscribe to shared_data topic (function ?? or just from the main)
 #call back function for shared data (belief, transistion..etc)
 function share_data_cb(msg)
+    # every time we recieve new msg we need to update the vectors only with latest information (no repetition)
     println("I got a message from agent_$(msg.agent_id)")
-    #TODO: every time we recieve new msg we need to update the vectors only with latest information (no repetition) 
+    beliefs_vector[msg.agent_id+1]=msg.b_s
+    transitions_vector[msg.agent_id+1]=msg.T
 end
 
 
@@ -155,9 +159,8 @@ function main(agent_id)
         # TODO: find a way to avoid fusing repeated information - depends on the time and the type of info to fuse (local or fused)
         # TODO: useing of time stamp of when every agent updated 
 
-        # TODO: Limit rate if necessary
-        # TODO: wait for this to be avaiable 
-        #spinOnce()
+        # allow callback to be executed 
+        sleep(1)
     end
 
     # Inform
