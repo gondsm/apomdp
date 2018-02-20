@@ -146,6 +146,7 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
     action_history = []
     entropy_history = []
     for i = 1:num_iter
+        print("o")
         if dynamic_re_calc == true
             re_calc_interval = ceil(i/10)
             #println(re_calc_interval)
@@ -204,10 +205,13 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 end
 
 # Run a quick test
-f1 = open("results/random_qmdp_svr_100_-1_0_100_new_struct.yaml", "a")
-for i = 1:100
-    print(".")
-    basic_test(re_calc_interval=-1, num_iter=200, out_file=f1, solver_name="qmdp", reward_name="svr", state_structure=[4,4], n_actions=3)
+f1 = open("results/random_qmdp_isvr_100_-1_0_100_new_struct_space_cenas.yaml", "a")
+for i = 1:3
+    println(i)
+    tic()
+    basic_test(re_calc_interval=200, num_iter=1000, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[3,3,3,3,3], n_actions=7)
+    print("\n")
+    toc()
 end
 println()
 

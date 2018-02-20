@@ -419,9 +419,12 @@ if __name__ == "__main__":
 	                 # "results/random_sarsop_msvr_100_20_0_1000"
 	                 #"results/hri_results",
 	                 #"results/random_qmdp_svr_100_1_0_100_new_struct"
-	                 "results/random_qmdp_svr_100_5_0_100_new_struct",
-	                 "results/random_qmdp_svr_100_20_0_100_new_struct",
-	                 "results/random_qmdp_svr_100_-1_0_100_new_struct"
+	                 #"results/random_qmdp_svr_100_5_0_100_new_struct",
+	                 #"results/random_qmdp_svr_100_20_0_100_new_struct",
+	                 #"results/random_qmdp_svr_100_-1_0_100_new_struct"
+	                 #"results/random_qmdp_svr_100_-1_0_100_new_struct_space_cenas"
+	                 #"results/random_qmdp_svr_1000_-1_0_100_new_struct_space_cenas"
+	                 "results/random_qmdp_isvr_100_-1_0_100_new_struct_space_cenas"
 	              ]
 	all_files = []
 	# Feel free to add more stuff here
