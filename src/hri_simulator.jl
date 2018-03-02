@@ -205,11 +205,11 @@ function basic_test(;re_calc_interval=0, num_iter=1000, out_file=-1, reward_chan
 end
 
 # Run a quick test
-f1 = open("results/random_qmdp_isvr_100_-1_0_100_new_struct_space_cenas.yaml", "a")
-for i = 1:3
+f1 = open("results/random_qmdp_isvr_200_-1_0_10000_new_struct_space_cenas.yaml", "a")
+for i = 1:10
     println(i)
     tic()
-    basic_test(re_calc_interval=200, num_iter=1000, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[3,3,3,3,3], n_actions=7)
+    basic_test(re_calc_interval=200, num_iter=10000, out_file=f1, solver_name="qmdp", reward_name="isvr", state_structure=[3,3,3,3,3], n_actions=7)
     print("\n")
     toc()
 end

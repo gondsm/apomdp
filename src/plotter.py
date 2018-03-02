@@ -309,6 +309,60 @@ def plot_state_histogram(filename, outfile=None):
 	#print(data[0]["v_s"][tuple(data[0]["states"][0])])
 
 
+def plot_state_distribution(filename, outfile=None):
+	""" Plots information on what states the system spent the most time on as
+	a continuous plot.
+	 """
+	# Read raw data
+	# raw_data is a vector of vectors, each vector contains a full run of the algorithm
+	data = []
+	extension = filename.split(".")[1]
+	if extension == "pkl":
+		data = pickle.load(open(filename, "rb"))
+	else:
+		print("Error: I don't know this file extension!")
+		return
+
+	# Get vectors
+	[sum_vec, avg_vec, std_vec, box_vec, _] = calc_state_histogram(data)
+
+	# Define figure parameters
+	col_width = 0.7
+	left_padding = (1-col_width)/2
+	offset = 0.5
+	# Initial and final colors for the bars
+	initial_color = [26/255, 17/255, 1.0, 1.0]
+	final_color = [0.5, 0.0, 0.0, 1.0]
+	# A small lambda to calculate our intermediate colors
+	# It depends on a ton of local vars, I'm not sure that's cool
+	custom_color = lambda t: [initial_color[i] + t/len(avg_vec)*(final_color[i]-initial_color[i]) for i in range(len(initial_color))]
+
+	# And plot stuff
+	plt.figure(figsize=(6.4, 3.2))
+	plt.hold(True)
+	plt.plot(avg_vec)
+	plt.xlabel("State Ranks")
+	plt.ylabel("Iterations")
+	plt.gca().yaxis.grid()
+	#plt.xticks(range(1,len(avg_vec) + 1), range(1,len(avg_vec) + 1))
+	plt.tight_layout()
+
+	# And plot boxes
+	# plt.figure()
+	# plt.hold(True)
+	# plt.boxplot(box_vec)
+
+	# Show plot of save it
+	if outfile:
+		plt.savefig(outfile)
+		plt.close()
+	else:
+		plt.show()
+
+	#print(data[0]["states"])
+	#print(data[0]["v_s"][tuple(data[0]["states"][0])])
+
+
 def convert_log_to_pickle(filename):
 	""" Convert a yaml log built during a simulation to a pickle file that can be read and written much faster. 
 	This was not able to be performed with log files over 4008000 lines in length, since they basically exploded
@@ -424,7 +478,8 @@ if __name__ == "__main__":
 	                 #"results/random_qmdp_svr_100_-1_0_100_new_struct"
 	                 #"results/random_qmdp_svr_100_-1_0_100_new_struct_space_cenas"
 	                 #"results/random_qmdp_svr_1000_-1_0_100_new_struct_space_cenas"
-	                 "results/random_qmdp_isvr_100_-1_0_100_new_struct_space_cenas"
+	                 #"results/random_qmdp_isvr_100_-1_0_100_new_struct_space_cenas"
+	                 "results/random_qmdp_isvr_200_-1_0_10000_new_struct_space_cenas"
 	              ]
 	all_files = []
 	# Feel free to add more stuff here
@@ -447,4 +502,7 @@ if __name__ == "__main__":
 
 	for f in all_files:
 		plot_state_histogram(f+".pkl", f+"_hist.pdf")
+
+	for f in all_files:
+		plot_state_distribution(f+".pkl", f+"_dist.pdf")
 	
