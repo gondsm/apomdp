@@ -18,6 +18,7 @@
 # Imports, includes et al
 include("./apomdp.jl")
 using RobotOS
+import YAML
 
 # Create our ROS types
 @rosimport apomdp.srv: Act 
@@ -106,7 +107,44 @@ function main(agent_id)
     # Create the service client object
     service_client = ServiceProxy{Act}("act")
 
-    # TODO: Should we have a pomdp object to pass around?
+    # Read configuration
+    # TODO: make path dynamic
+    config = YAML.load(open("/home/vsantos/catkin_ws/src/apomdp/config/common.yaml"))
+    n_actions = config["n_actions"]
+    n_agents = config["n_agents"]
+    dim_x = config["world_geometry"]["X"]
+    dim_y = config["world_geometry"]["Y"]
+    println("Read a configuration file:")
+    println("World Geometry: $(dim_x) by $(dim_y)")
+    println("Working with $(n_agents) agents and $(n_actions) actions.")
+
+    # Calculate state structure
+    state_structure = Array{Int64, 1}([])
+    for i = 1:n_agents
+        # For each agent, we have two variables that go from
+        # 1 to dim_x and 1 to dim_y that encode the agent's location
+        append!(state_structure, dim_x)
+        append!(state_structure, dim_y)
+    end
+    for i = 1:(dim_x*dim_y)
+        # For each cell, we have four binary variables that encode
+        # the contents of each cell, whatever they may be.
+        append!(state_structure, [2,2,2,2])
+    end
+    println("This corresponds to aPOMDP state structure $state_structure.")
+
+
+    # Create a pomdp object. This contains the structure of the problem,
+    # and has to be used in almost all calls to apomdp.jl in order to
+    # inform the functions of the problem structure
+    # All agents need to build aPOMDP structs that are the same, so that
+    # they inform the aPOMDP primitives in the same way and ensure
+    # consistency.
+    # TODO: build state_structure from config
+    print("Creating aPOMDP object... ")
+    #pomdp = aPOMDP("isvr", 1, state_structure, n_actions)
+    pomdp = aPOMDP("isvr", 1, [2,2,2], n_actions)
+    println("Done!")
 
     # Subscribe to the agent's shared_data topic
     # Create publisher, and a subscriber 
@@ -119,47 +157,68 @@ function main(agent_id)
     ability_vector = [nothing, nothing, nothing, nothing] #TODO: read this from configuration (agent.yaml) 
 
     # "spin" while waiting for requests
-    println("Going into spin!")
+    println("Going into execution loop!")
+
+    # Counter for iterations
+    iter = 0
 
     while ! is_shutdown()
+        # Inform
+        println("Iteration $iter")
+
         # Get the cost 
+        println("Calculating cost vector")
         c_vector = calc_cost_vector(beliefs_vector[agent_index], ability_vector)
 
         # Solve
-        policy = get_policy(fused_T, c_vector)
+        println("Calculating new policy")
+        policy = get_policy(pomdp, fused_T, c_vector)
 
         # Call fuse belief function
-        fused_b = fuse_beliefs(beliefs_vector)
-        #TODO: make beliefs_vector global variable 
+        println("Fusing beliefs")
+        fused_b = fuse_beliefs(pomdp, beliefs_vector)
 
         # Decision_making (action selection)
-        action = get_action(policy,fused_b)
+        action = get_action(pomdp, policy,fused_b)
 
         # Act and receive an observation 
+        println("Applying action $action")
         observation = act(action, agent_id, service_client)
+        println("Got an observation:")
+        println(observation)
+        println("Which corresponds to aPOMDP state:")
+        temp_s = state_b_to_a(pomdp, observation)
+        println(temp_s)
+        println("Which has index $(POMDPs.state_index(pomdp, temp_s))")
 
         # Update belief - on the local 
         previous_b = beliefs_vector[agent_index] # save the previous belief 
-        beliefs_vector[agent_index]= update_belief(observation,action,beliefs_vector[agent_index], transitions_vector[agent_index])
-        #TODO: rethink of we should use the local transition or the fused one
+        beliefs_vector[agent_index]= update_belief(pomdp, observation, action, beliefs_vector[agent_index], transitions_vector[agent_index])
+        #TODO: rethink if we should use the local transition or the fused one
 
         # Fuse beliefs
-        fused_b = fuse_beliefs(beliefs_vector)
+        fused_b = fuse_beliefs(pomdp, beliefs_vector)
 
         # Learn - based on the local 
-        transitions_vector[agent_index] = learn(beliefs_vector[agent_index], action, previous_b)
+        transitions_vector[agent_index] = learn(pomdp, beliefs_vector[agent_index], action, previous_b)
         # TODO: decide whether to use the fused_b or local belief 
 
         # Fuse new transition with everyone else's
-        fused_T = fuse_transitions(transitions_vector)
+        fused_T = fuse_transitions(pomdp, transitions_vector)
 
         # Publish something to "broadcast" topic
+        println("Sharing data with other agents")
         share_data(beliefs_vector, transitions_vector, pub, agent_id)
         # TODO: decide when to do this  
         # TODO: find a way to avoid fusing repeated information - depends on the time and the type of info to fuse (local or fused)
         # TODO: useing of time stamp of when every agent updated 
 
-        # allow callback to be executed 
+        # allow callback to be executed
+        println("Sleeping for 1 sec for callback execution")
+
+        # Delimiter
+        iter += 1
+        println("================================================")
         sleep(1)
     end
 
@@ -172,4 +231,9 @@ end
 
 # Run stuff
 
-main(parse(Int64,ARGS[1]))
+if size(ARGS)[1] == 0
+    println("For now, I need to receive an int on the command line to use as agent ID.")
+    exit(-1)
+else
+    main(parse(Int64,ARGS[1]))
+end

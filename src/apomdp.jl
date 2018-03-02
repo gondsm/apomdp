@@ -119,6 +119,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     for state in states, k = 1:n_actions
         # For every S, A combination, we have a probability distribution indexed by 
         key = vcat(state,[k])
+        # TODO: this line is taking an inordinate amount of time and rendering
+        # the whole thing unfeasible
         transition_dict[key] = ones(Float64, state_structure...)/1000
     end
 
@@ -381,7 +383,7 @@ end
 
 
 # betapomdp
-function fuse_beliefs(belief_vector)
+function fuse_beliefs(pomdp::aPOMDP, belief_vector)
     # Steps
     # First we check if there is a need to fuse beliefs 
     # Create the vector of fusion from the beliefs_vector which will only contains belief for fusion --> the clean vector
@@ -399,7 +401,7 @@ function fuse_beliefs(belief_vector)
 end
 
 
-function fuse_transitions(transition_vector)
+function fuse_transitions(pomdp::aPOMDP, transition_vector)
     # Steps
     # First we check if there is a need to fuse transistions 
     # Create the vector of fusion from the transitions_vector which will only contains transitions for fusion --> the clean vector
@@ -417,12 +419,12 @@ function fuse_transitions(transition_vector)
 end
 
 
-function set_transition_matrix(transition_matrix)
+function set_transition_matrix(pomdp::aPOMDP, transition_matrix)
     # Set the transition matrix of the current system as the one received
 end
 
 
-function set_c_vector(c_vector)
+function set_c_vector(pomdp::aPOMDP, c_vector)
     # Set the current c vector as the one received
     # TODO: 
     # extend the apomdp to have a c_vector (all ones by default)
@@ -431,7 +433,7 @@ function set_c_vector(c_vector)
 end
 
 
-function get_action(policy, belief)
+function get_action(pomdp::aPOMDP, policy, belief)
     # Get the best action according to policy for the received belief
     # The belief is assumed as a vector of floars over the state space,
     # which will have to be converted into a apomdpDistribution to
@@ -444,7 +446,7 @@ function get_action(policy, belief)
 end
 
 
-function update_belief(observation, action, belief, transition)
+function update_belief(pomdp::aPOMDP, observation, action, belief, transition)
     # Steps: 
     # Will pass observation, action, belief and transition to a function in apomdp.update_belief
     # It will return the updated belief 
@@ -459,7 +461,7 @@ function update_belief(observation, action, belief, transition)
 end
 
 
-function get_policy(fused_T, c_vector)
+function get_policy(pomdp::aPOMDP, fused_T, c_vector)
     #get the v_s
     #v = get_v_s(state)
     #TODO: this function will return the value of state v(s) 
@@ -471,13 +473,22 @@ function get_policy(fused_T, c_vector)
 end
 
 
-function learn(belief, action, previous_b) 
+function learn(pomdp::aPOMDP, belief, action, previous_b) 
     # integrate_transition(pomdp, prev_state, state, prev_action) 
 
     # Return empty bogus array. Final type must match shared_data.msg
     return Float32[]
 end 
 
+function state_b_to_a(pomdp, bpomdp_state)
+    # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
+    # correspondence between the two
+end
+
+function state_a_to_b(pomdp, apomdp_state)
+    # Converts an aPOMDP state to a bPOMDP state, allowing for plug-and-play
+    # correspondence between the two
+end
 
 # Logging
 function log_execution(out_file, 

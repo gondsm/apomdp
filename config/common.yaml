@@ -1,7 +1,35 @@
 # Configuration file for specifying the structure of the POMDP problem we're solving
+# Ambitious:
+# world_geometry:
+#   X: 8 # Width of the world
+#   Y: 8 # Height of the world
+# # action_space:
+# #   - 0 # Put out fire
+# #   - 1 # Remove debris
+# #   - 2 # Extract person
+# #   - 3 # Move to cell [0,0]
+# #   - 4 # Move to cell [0,1]
+# #   - 5 # Move to cell [0,2]
+# #   - 6
+# #   - 7 # Move to cell [1,0]
+# #   - 8 
+# #   - 9
+# #   - 10
+# #   - 11 # Move to cell [2,0]
+# #   - 12
+# #   - 13
+# #   - 14
+# #   - 15 # Move to cell [3,0]
+# #   - 16
+# #   - 17
+# #   - 18
+# n_actions: 67 # 3 for problem-solving, the remainder for movement
+
+# Conservative:
+n_agents: 2
 world_geometry:
-  X: 8 # Width of the world
-  Y: 8 # Height of the world
+  X: 2 # Width of the world
+  Y: 2 # Height of the world
 # action_space:
 #   - 0 # Put out fire
 #   - 1 # Remove debris
@@ -22,4 +50,4 @@ world_geometry:
 #   - 16
 #   - 17
 #   - 18
-n_actions: 67 # 3 for problem-solving, the remainder for movement
+n_actions: 7 # 3 for problem-solving, the remainder for movement
