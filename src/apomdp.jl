@@ -48,7 +48,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     reward_matrix::Dict 
     # The good old discount factor
     discount_factor::Float64
-    # An array of all possible states
+    # An array of all possible states---- this is the bPOMDP_states 
     states::Array
     # Maintains the state indices as a dict of the form [S] (vector) -> Int
     state_indices::Dict 
@@ -58,6 +58,17 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     state_structure::Array
     # The kind of reward to be used. Can be one of svr, isvr or msvr
     reward_type::String
+    # to define agents state we need 1) number of agents 
+    agents_size::Int64
+    # to define agents state we need 2) specification of agents which is for now their location node 
+    agents_specfi::Int64
+    # this array has the states of apomdp 
+    apomdp_states::Array
+    # for search and rescue scenario we have topological map and it has nodes
+    # this to defines how many nodes we have  
+    nodes_num::Int64
+    # for search and rescue scenario - in order to define the world what in it, we need to know how many specifications are there  
+    world_specfi::Int64
 end
 
 # Define probability distribution type
@@ -88,7 +99,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions=3, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions=3, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size=2, agents_specfi=2, nodes_num=2,world_specfi=3)
     # Generate an array with all possible states:
     vecs = [collect(1:n) for n in state_structure]
     states = collect(IterTools.product(vecs...))
@@ -142,7 +153,11 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   states,
                   state_indices,
                   state_structure,
-                  reward_type)
+                  reward_type,
+                  agents_size,
+                  agents_specfi,
+                  nodes_num,
+                  world_specfi)
 end
 
 # Define reward calculation function
@@ -480,15 +495,48 @@ function learn(pomdp::aPOMDP, belief, action, previous_b)
     return Float32[]
 end 
 
-function state_b_to_a(pomdp, bpomdp_state)
+function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Array) #it should be return type ?
     # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
     # correspondence between the two
+    index = (pomdp.agents_size*pomdp.agents_specfi)+1 #index where i to continou the loop of alpha states 
+    alpha_states=zeros(pomdp.nodes_num,pomdp.world_specfi)
+    q=0
+    #construct world_states 
+    for x in 1:pomdp.world_specfi
+        c = zeros(pomdp.nodes_num)
+        for y in 1:pomdp.nodes_num
+            #create vector 
+            c[y]=bpomdp_states[index]
+            index=index+1
+        end 
+        println(c)
+        #append vectors 
+        alpha_states[x+q:x+x]=c
+        q=x
+    end
+    alpha_states#to print the result 
 end
 
-function state_a_to_b(pomdp, apomdp_state)
+function state_a_to_b(pomdp::aPOMDP, apomdp_states::Array) ##it should be return type ?
     # Converts an aPOMDP state to a bPOMDP state, allowing for plug-and-play
     # correspondence between the two
-end
+    i=1
+    #construct agents_states
+    p=0
+    beta_states = zeros(pomdp.agents_size,pomdp.agents_specfi)
+    for x in 1:pomdp.agents_specfi
+        b = zeros(pomdp.agents_size)
+        for y in 1:pomdp.agents_size
+            #create vector 
+            b[y]=apomdp_states[i]
+            i=i+1
+        end 
+        #append vectors 
+        beta_states[x+p:x+x]=b'
+        p=x
+    end
+       beta_states#to print the result 
+end 
 
 # Logging
 function log_execution(out_file, 
