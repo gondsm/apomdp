@@ -62,8 +62,6 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     agents_size::Int64
     # to define agents state we need 2) specification of agents which is for now their location node 
     agents_specfi::Int64
-    # this array has the states of apomdp 
-    apomdp_states::Array
     # for search and rescue scenario we have topological map and it has nodes
     # this to defines how many nodes we have  
     nodes_num::Int64
@@ -100,7 +98,8 @@ POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions=3, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size=2, agents_specfi=2, nodes_num=2,world_specfi=3)
-    # Generate an array with all possible states:
+#function aPOMDP(n_actions::Int64=5, state_structure::Array{Int64,1}=[3,3], n_actions=3, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size=2, agents_specfi=2, nodes_num=2,world_specfi=3)
+   # Generate an array with all possible states:
     vecs = [collect(1:n) for n in state_structure]
     states = collect(IterTools.product(vecs...))
     states = [[i for i in s] for s in states]
