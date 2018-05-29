@@ -1,4 +1,7 @@
-include("./apomdp.jl")
+if !isdefined(:aPOMDP)
+   include("./apomdp.jl")
+end 
+#include("./apomdp.jl")
 
 agents_states = rand(2,2)
 world_states = rand(2,3)
@@ -15,7 +18,11 @@ agents_specfi=2
 nodes_num=2
 world_specfi=3
 
-pomdp = aPOMDP(reward_name, 1, state_structure, 5,weight,agents_size,agents_specfi,nodes_num,world_specfi)
+state_values_dict::Dict
 
 
-state_a_to_b(pomdp,alpha_states)
+#pomdp = aPOMDP(reward_name, 1, state_structure, 5,weight,agents_size,agents_specfi,nodes_num,world_specfi)
+
+pomdp = aPOMDP(5,state_values_dict,1,normalize(rand(n_v_s)),transition_dict, reward_dict,0.95,states,state_indices,state_structure,"svr",agents_size,agents_specfi,nodes_num,world_specfi)
+
+#state_a_to_b(pomdp,alpha_states)
