@@ -97,8 +97,8 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-#function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size::Int64=2, agents_specfi::Int64=2, nodes_num::Int64=2,world_specfi::Int64=3)
-function aPOMDP(n_actions=5,state_values_dict,n_v_s=1,weights::Array{Float64,1}=normalize(rand(n_v_s)),transition_dict, reward_dict,0.95,states,state_indices,state_structure::Array{Int64,1}=[2,3] , reward_type::String="svr" , agents_size=2 , agents_specfi=2 , nodes_num:=2 , world_specfi=3)
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size::Int64=2, agents_specfi::Int64=2, nodes_num::Int64=2,world_specfi::Int64=3)
+#function aPOMDP(n_actions=5,state_values_dict,n_v_s=1,weights::Array{Float64,1}=normalize(rand(n_v_s)),transition_dict, reward_dict,0.95,states,state_indices,state_structure::Array{Int64,1}=[2,3] , reward_type::String="svr" , agents_size=2 , agents_specfi=2 , nodes_num:=2 , world_specfi=3)
 
    # Generate an array with all possible states:
     vecs = [collect(1:n) for n in state_structure]
