@@ -98,33 +98,49 @@ POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size::Int64=2, agents_specfi::Int64=2, nodes_num::Int64=2,world_specfi::Int64=3)
-#function aPOMDP(n_actions=5,state_values_dict,n_v_s=1,weights::Array{Float64,1}=normalize(rand(n_v_s)),transition_dict, reward_dict,0.95,states,state_indices,state_structure::Array{Int64,1}=[2,3] , reward_type::String="svr" , agents_size=2 , agents_specfi=2 , nodes_num:=2 , world_specfi=3)
-
    # Generate an array with all possible states:
+    println("printing state_structure:")
+    for i in 1: length(state_structure)
+        println(state_structure[i])
+    end 
     vecs = [collect(1:n) for n in state_structure]
+    println("printing vecs:")
+    for i in 1: length(vecs)
+        println(vecs[i])
+    end 
+
     states = collect(IterTools.product(vecs...))
     states = [[i for i in s] for s in states]
+    println("printing states:")
+    for i in 1: length(states)
+        println(states[i])
+    end 
 
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
     # functions we want to have
     state_values_dict = Dict()
+    println("state_values_dict:")
 
     for n = 1:n_v_s
         state_values_dict[n] = Dict()
         for state in states
             state_values_dict[n][state] = 0
+            println(n," ",state,": ",state_values_dict[n][state])
         end
     end
 
     # Initialize state-index matrix
+    println("state-index:")
     curr_index = 1
     state_indices = Dict()
     for state in states
         state_indices[state] = curr_index
+        println(state," : ",state_indices[state])
         curr_index += 1
     end
 
+    println("key and transition_dict:")
     # Initialize uniform transition matrix
     transition_dict = Dict()
     for state in states, k = 1:n_actions
@@ -133,13 +149,16 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
         # TODO: this line is taking an inordinate amount of time and rendering
         # the whole thing unfeasible
         transition_dict[key] = ones(Float64, state_structure...)/1000
+        println(key," ", transition_dict[key])
     end
 
+    println("key and reward_dict:")
     # Initialize uniform reward matrix
     reward_dict = Dict()
     for state in states, k = 1:n_actions
         key = vcat(state,[k])
         reward_dict[key] = 0.0
+        println(key," ", reward_dict[key])
     end
 
     # Create and return object
