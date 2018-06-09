@@ -97,8 +97,11 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1),agents_size::Int64=2, agents_specfi::Int64=2, nodes_num::Int64=2,world_specfi::Int64=3)
-   # Generate an array with all possible states:
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Array{Int64,1}=[], nodes_num::Int64=0, world_structure::Array{Int64,1}=[])
+    # Generate aPOMDP state structure
+    state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
+
+    # Generate an array with all possible states:
     println("printing state_structure:")
     for i in 1: length(state_structure)
         println(state_structure[i])
@@ -417,6 +420,34 @@ end
 
 
 # betapomdp
+function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
+    # Create array
+    apomdp_structure=Array{Int64}((length(agents_structure)*agents_size) + (length(world_structure)*nodes_num))
+
+    #counter is index for the apomdp_structure
+    counter = 1 
+
+    # Agents
+    for i in 1:agents_size
+        for j in 1:length(agents_structure)
+            apomdp_structure[counter]=agents_structure[j]
+            counter+=1
+        end
+    end
+
+    # Nodes
+    for i in 1:nodes_num
+        for j in 1:length(world_structure)
+            apomdp_structure[counter]=world_structure[j]
+            counter+=1
+        end
+    end
+    
+    # And return it
+    return apomdp_structure
+end 
+
+
 function fuse_beliefs(pomdp::aPOMDP, belief_vector)
     # Steps
     # First we check if there is a need to fuse beliefs 
