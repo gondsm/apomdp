@@ -61,12 +61,12 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # to define agents state we need 1) number of agents 
     agents_size::Int64
     # to define agents state we need 2) specification of agents which is for now their location node 
-    agents_specfi::Int64
+    agents_structure::Array
     # for search and rescue scenario we have topological map and it has nodes
     # this to defines how many nodes we have  
     nodes_num::Int64
     # for search and rescue scenario - in order to define the world what in it, we need to know how many specifications are there  
-    world_specfi::Int64
+    world_structure::Array
 end
 
 # Define probability distribution type
@@ -102,34 +102,34 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
 
     # Generate an array with all possible states:
-    println("printing state_structure:")
-    for i in 1: length(state_structure)
-        println(state_structure[i])
-    end 
+    # println("printing state_structure:")
+    # for i in 1: length(state_structure)
+    #     println(state_structure[i])
+    # end 
     vecs = [collect(1:n) for n in state_structure]
-    println("printing vecs:")
-    for i in 1: length(vecs)
-        println(vecs[i])
-    end 
+     println("printing vecs:")
+    # for i in 1: length(vecs)
+    #     println(vecs[i])
+    # end 
 
     states = collect(IterTools.product(vecs...))
     states = [[i for i in s] for s in states]
     println("printing states:")
-    for i in 1: length(states)
-        println(states[i])
-    end 
+    #for i in 1: length(states)
+    #    println(states[i])
+    #end 
 
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
     # functions we want to have
     state_values_dict = Dict()
-    println("state_values_dict:")
+    #println("state_values_dict:")
 
     for n = 1:n_v_s
         state_values_dict[n] = Dict()
         for state in states
             state_values_dict[n][state] = 0
-            println(n," ",state,": ",state_values_dict[n][state])
+    #        println(n," ",state,": ",state_values_dict[n][state])
         end
     end
 
@@ -139,7 +139,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     state_indices = Dict()
     for state in states
         state_indices[state] = curr_index
-        println(state," : ",state_indices[state])
+    #    println(state," : ",state_indices[state])
         curr_index += 1
     end
 
@@ -152,7 +152,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
         # TODO: this line is taking an inordinate amount of time and rendering
         # the whole thing unfeasible
         transition_dict[key] = ones(Float64, state_structure...)/1000
-        println(key," ", transition_dict[key])
+    #    println(key," ", transition_dict[key])
     end
 
     println("key and reward_dict:")
@@ -161,7 +161,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     for state in states, k = 1:n_actions
         key = vcat(state,[k])
         reward_dict[key] = 0.0
-        println(key," ", reward_dict[key])
+        #println(key," ", reward_dict[key])
     end
 
     # Create and return object
@@ -177,9 +177,9 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   state_structure,
                   reward_type,
                   agents_size,
-                  agents_specfi,
+                  agents_structure,
                   nodes_num,
-                  world_specfi)
+                  world_structure)
 end
 
 # Define reward calculation function
