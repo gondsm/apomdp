@@ -1,3 +1,5 @@
+import YAML
+
 if !isdefined(:aPOMDP)
    include("./apomdp.jl")
 end 
@@ -22,27 +24,40 @@ weight = normalize(rand(1),1)
 #	convert_structure         #
 # apomdp_structure = [agent1_stucture, agent2_strucure,..agentN_stucture,node1_stucture,node2_stucture...nodeN_structure]
 ###############################
-
 # define variables 
-agents_size = 2
-nodes_num = 2 #world size 
-agents_structure = [2,2] #every agent will have 2 specifications with two values [node, equipment], nodes 1 or 2, equipment 0 or 1
-world_structure = [2,2,2] # every node of the world will have 3 speicifications with 2 values 0 or 1 [fire, debris, victim]
+#n_agents = 2
+#nodes_num = 2 #world size 
+#agents_structure = [2,2] #every agent will have 2 specifications with two values [node, equipment], nodes 1 or 2, equipment 0 or 1
+#world_structure = [2,2,2] # every node of the world will have 3 speicifications with 2 values 0 or 1 [fire, debris, victim]
 
-#apomdp_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
+# Read configuration
+config = YAML.load(open("/home/hend/catkin_ws/src/apomdp/config/common.yaml"))
+n_actions = config["n_actions"]
+n_agents = config["n_agents"]
+nodes_num = config["nodes_num"]
+agents_structure = config["agents_structure"]
+world_structure = config["world_structure"]
+println("Read a configuration file:")
+println("n_actions: ",n_actions)
+println("n_agents: ",n_agents)
+println("nodes_num: ",nodes_num)
+println("agents_structure: ",agents_structure)
+println("world_structure: ",world_structure)
+
+#apomdp_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
 
 println("Creating aPOMDP object")
 #pomdp=aPOMDP()
-pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), agents_size, agents_structure, nodes_num, world_structure)
+pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure)
 println("Finish creating aPOMDP object")
 
 #state_a_to_b(pomdp,alpha_states)
 
 # define function convert_structure
-function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
+function convert_structure(n_agents::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
 	#counter is index for the apomdp_structure
 	counter = 1 
-	for i in 1:agents_size
+	for i in 1:n_agents
 		for j in 1:length(agents_structure)
 			apomdp_structure[counter]=agents_structure[j]
 			counter+=1
@@ -67,3 +82,4 @@ end
 # call the function and save it in array 
 #
 convert_structure(3, 3, [2,1], [3,3,3])
+

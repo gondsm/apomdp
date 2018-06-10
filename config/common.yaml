@@ -44,3 +44,6 @@ n_agents: 2
 #   - 3 # Move to node 1
 #   - 4 # Move to node 2
 n_actions: 5 # 3 for problem-solving, the remainder for movement
+nodes_num: 2
+agents_structure: [2,2]
+world_structure: [2,2,2]
