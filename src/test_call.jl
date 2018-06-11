@@ -53,32 +53,6 @@ println("Finish creating aPOMDP object")
 
 #state_a_to_b(pomdp,alpha_states)
 
-# define function convert_structure
-function convert_structure(n_agents::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
-	#counter is index for the apomdp_structure
-	counter = 1 
-	for i in 1:n_agents
-		for j in 1:length(agents_structure)
-			apomdp_structure[counter]=agents_structure[j]
-			counter+=1
-		end
-	end
-
-	for i in 1:nodes_num
-		for j in 1:length(world_structure)
-			apomdp_structure[counter]=world_structure[j]
-			counter+=1
-		end
-	end
-	
-	println("apomdp_structure:")
-	#apomdp_structure # didnt print the array 
-	for i in 1: length(apomdp_structure)
-        println(apomdp_structure[i])
-    end 
-end 
-
-
 # call the function and save it in array 
 #
 convert_structure(3, 3, [2,1], [3,3,3])
