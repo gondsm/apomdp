@@ -109,28 +109,25 @@ function main(agent_id)
 
     # Read configuration
     # TODO: make path dynamic
-    config = YAML.load(open("/home/vsantos/catkin_ws/src/apomdp/config/common.yaml"))
+    # Read configuration
+    config = YAML.load(open("/home/hend/catkin_ws/src/apomdp/config/common.yaml"))
     n_actions = config["n_actions"]
     n_agents = config["n_agents"]
-    dim_x = config["world_geometry"]["X"]
-    dim_y = config["world_geometry"]["Y"]
+    nodes_num = config["nodes_num"]
+    agents_structure = config["agents_structure"]
+    world_structure = config["world_structure"]
     println("Read a configuration file:")
-    println("World Geometry: $(dim_x) by $(dim_y)")
-    println("Working with $(n_agents) agents and $(n_actions) actions.")
+    println("n_actions: ",n_actions)
+    println("n_agents: ",n_agents)
+    println("nodes_num: ",nodes_num)
+    println("agents_structure: ",agents_structure)
+    println("world_structure: ",world_structure)
 
     # Calculate state structure
     state_structure = Array{Int64, 1}([])
-    for i = 1:n_agents
-        # For each agent, we have two variables that go from
-        # 1 to dim_x and 1 to dim_y that encode the agent's location
-        append!(state_structure, dim_x)
-        append!(state_structure, dim_y)
-    end
-    for i = 1:(dim_x*dim_y)
-        # For each cell, we have four binary variables that encode
-        # the contents of each cell, whatever they may be.
-        append!(state_structure, [2,2,2,2])
-    end
+    
+    state_structure = convert_structure(3, 3, [2,1], [3,3,3])
+
     println("This corresponds to aPOMDP state structure $state_structure.")
 
 
@@ -142,8 +139,7 @@ function main(agent_id)
     # consistency.
     # TODO: build state_structure from config
     print("Creating aPOMDP object... ")
-    #pomdp = aPOMDP("isvr", 1, state_structure, n_actions)
-    pomdp = aPOMDP("isvr", 1, [2,2,2], n_actions)
+    pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure)
     println("Done!")
 
     # Subscribe to the agent's shared_data topic
