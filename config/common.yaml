@@ -33,7 +33,7 @@
 # n_actions: 24 # 7 for problem-solving, the remainder for movement
 
 # Conservative:
-n_agents: 2
+n_agents: 3
 #world_geometry:# it is 2 nodes 
   #X: 2 # Width of the world
   #Y: 2 # Height of the world
@@ -43,7 +43,7 @@ n_agents: 2
 #   - 2 # Extract person
 #   - 3 # Move to node 1
 #   - 4 # Move to node 2
-n_actions: 5 # 3 for problem-solving, the remainder for movement
-nodes_num: 2
-agents_structure: [2,2]
+n_actions: 8 # 3 for problem-solving, the remainder for movement
+nodes_num: 5
+agents_structure: [5,2]
 world_structure: [2,2,2]

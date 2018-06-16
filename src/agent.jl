@@ -126,7 +126,7 @@ function main(agent_id)
     # Calculate state structure
     state_structure = Array{Int64, 1}([])
     
-    state_structure = convert_structure(3, 3, [2,1], [3,3,3])
+    state_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
 
     println("This corresponds to aPOMDP state structure $state_structure.")
 
