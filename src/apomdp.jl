@@ -98,71 +98,56 @@ POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Array{Int64,1}=[], nodes_num::Int64=0, world_structure::Array{Int64,1}=[])
-    # Generate aPOMDP state structure
+    # Generate aPOMDP state structure from bPOMDP structure
+    # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
 
     # Generate an array with all possible states:
-    # println("printing state_structure:")
-    # for i in 1: length(state_structure)
-    #     println(state_structure[i])
-    # end 
     vecs = [collect(1:n) for n in state_structure]
-     println("printing vecs:")
-    # for i in 1: length(vecs)
-    #     println(vecs[i])
-    # end 
-
     states = collect(IterTools.product(vecs...))
     states = [[i for i in s] for s in states]
-    println("printing states:")
-    #for i in 1: length(states)
-    #    println(states[i])
-    #end 
+
+    # Initialize state-index matrix
+    curr_index = 1
+    state_indices = Dict()
+    for state in states
+        state_indices[state] = curr_index
+        curr_index += 1
+    end
 
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
     # functions we want to have
     state_values_dict = Dict()
-    #println("state_values_dict:")
 
+    # Lazy initialization: we create only the dicts, and then
+    # initialize only when needed (i.e. when adding value to a state)
     for n = 1:n_v_s
         state_values_dict[n] = Dict()
-        for state in states
-            state_values_dict[n][state] = 0
-    #        println(n," ",state,": ",state_values_dict[n][state])
-        end
+    #     for state in states
+    #         state_values_dict[n][state] = 0
+    #     end
     end
 
-    # Initialize state-index matrix
-    println("state-index:")
-    curr_index = 1
-    state_indices = Dict()
-    for state in states
-        state_indices[state] = curr_index
-    #    println(state," : ",state_indices[state])
-        curr_index += 1
-    end
-
-    println("key and transition_dict:")
     # Initialize uniform transition matrix
     transition_dict = Dict()
-    for state in states, k = 1:n_actions
-        # For every S, A combination, we have a probability distribution indexed by 
-        key = vcat(state,[k])
-        # TODO: this line is taking an inordinate amount of time and rendering
-        # the whole thing unfeasible
-        transition_dict[key] = ones(Float64, state_structure...)/1000
-    #    println(key," ", transition_dict[key])
-    end
+    # Lazy initialization again, code kept for future reference
+    # for state in states, k = 1:n_actions
+    #     # For every S, A combination, we have a probability distribution indexed by 
+    #     key = vcat(state,[k])
+    #     # TODO: this line is taking an inordinate amount of time and rendering
+    #     # the whole thing unfeasible
+    #     transition_dict[key] = ones(Float64, state_structure...)/1000
+    # #    println(key," ", transition_dict[key])
+    # end
 
-    println("key and reward_dict:")
     # Initialize uniform reward matrix
     reward_dict = Dict()
-    for state in states, k = 1:n_actions
-        key = vcat(state,[k])
-        reward_dict[key] = 0.0
-        #println(key," ", reward_dict[key])
-    end
+    # And more lazy initialization
+    # for state in states, k = 1:n_actions
+    #     key = vcat(state,[k])
+    #     reward_dict[key] = 0.0
+    # end
 
     # Create and return object
     return aPOMDP(n_actions,
@@ -192,22 +177,43 @@ function calculate_reward_matrix(pomdp::aPOMDP)
         dist = transition(pomdp, s, k)
         if pomdp.reward_type == "msvr"
             for f = 1:pomdp.n_v_s
-                #println("Calculating MSVR for f = ", f)
                 inner_sum = 0
                 for state = dist.state_space
-                    inner_sum += pdf(dist, state)*(pomdp.state_values[f][state]-pomdp.state_values[f][s])
+                    v_s_1 = try
+                        pomdp.state_values[f][state]
+                    catch
+                        0
+                    end
+                    v_s_2 = try 
+                        pomdp.state_values[f][s]
+                    catch
+                        0
+                    end
+                    inner_sum += pdf(dist, state)*(v_s_1-v_s_2)
                 end
                 sum_var += pomdp.weights[f]*inner_sum
             end
         else
             for state = dist.state_space
-                sum_var += pdf(dist, state)*(pomdp.state_values[1][state]-pomdp.state_values[1][s])
+                v_s_1 = try
+                    pomdp.state_values[1][state]
+                catch
+                    0
+                end
+                v_s_2 = try 
+                    pomdp.state_values[1][s]
+                catch
+                    0
+                end
+                sum_var += pdf(dist, state)*(v_s_1-v_s_2)
             end
         end
         if pomdp.reward_type == "isvr" || pomdp.reward_type == "msvr"
             sum_var += calc_entropy(dist.dist)
         end
-        pomdp.reward_matrix[key] = sum_var
+        if sum_var != 0
+            pomdp.reward_matrix[key] = sum_var
+        end
     end
 end
 
@@ -227,7 +233,12 @@ function integrate_transition(pomdp::aPOMDP, prev_state::Array, final_state::Arr
     # with simply summing 1 to the counter.
     key = prev_state[:]
     append!(key, action)
-    pomdp.transition_matrix[key][final_state...] += 1
+    try
+        pomdp.transition_matrix[key][final_state...] += 1
+    catch
+        pomdp.transition_matrix[key] = ones(Float64, pomdp.state_structure...)/1000
+        pomdp.transition_matrix[key][final_state...] += 1
+    end
 end
 
 # Set a state's value
@@ -275,7 +286,11 @@ function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO: probably also limited to 2 state variables (indirectly)
     key = state[:]
     append!(key, action)
-    dist = copy(pomdp.transition_matrix[key])
+    try
+        dist = copy(pomdp.transition_matrix[key])
+    catch
+        dist = ones(Float64, pomdp.state_structure...)/1000
+    end
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
@@ -289,7 +304,12 @@ function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO: also likely limited to 2 state vars
     key = state[:]
     append!(key, action)
-    return pomdp.reward_matrix[key]
+    r = try
+        pomdp.reward_matrix[key]
+    catch
+        0
+    end
+    return r
 end
 
 # Define observation model. Fully observed for now.
