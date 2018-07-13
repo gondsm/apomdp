@@ -51,7 +51,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # An array of all possible states---- this is the bPOMDP_states 
     states::Array
     # Maintains the state indices as a dict of the form [S] (vector) -> Int
-    state_indices::Dict 
+    #state_indices::Dict 
     # An array with the current state structure
     # The state structure is of the form [i, j, k, ...]
     # i.e. first var has i states, second has j states, and so on
@@ -67,6 +67,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     nodes_num::Int64
     # for search and rescue scenario - in order to define the world what in it, we need to know how many specifications are there  
     world_structure::Array
+    # A matrix of ones that represents the full state space
+    state_dims::Array
 end
 
 # Define probability distribution type
@@ -80,6 +82,7 @@ end
 
 # Define a deterministic distribution from a simple state
 function apomdpDistribution(pomdp::aPOMDP, state::Array)
+    # TODO: change this to work with the new new state structure
     dist = ones(Float64, pomdp.state_structure...)/1000
     dist[state...] = 1000
     dist[:] = normalize(dist[:], 1)
@@ -88,6 +91,7 @@ end
 
 # Define a uniform distribution
 function apomdpDistribution(pomdp::aPOMDP)
+    # TODO: change this to work with the new new state structure
     dist = ones(Float64, pomdp.state_structure...)/1000
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
@@ -102,19 +106,12 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
 
-    # Generate an array with all possible states:
-    vecs = [collect(1:n) for n in state_structure]
-    states = collect(IterTools.product(vecs...))
-    states = [[i for i in s] for s in states]
+    println("Generating states")
+    states = collect(1:reduce(*, state_structure))
+    println(size(states))
+    state_dims = ones(state_structure...)
 
-    # Initialize state-index matrix
-    curr_index = 1
-    state_indices = Dict()
-    for state in states
-        state_indices[state] = curr_index
-        curr_index += 1
-    end
-
+    println("Generating everything else")
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
     # functions we want to have
@@ -158,13 +155,14 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   reward_dict,
                   0.95,
                   states,
-                  state_indices,
+                  #state_indices,
                   state_structure,
                   reward_type,
                   agents_size,
                   agents_structure,
                   nodes_num,
-                  world_structure)
+                  world_structure,
+                  state_dims)
 end
 
 # Define reward calculation function
@@ -326,7 +324,17 @@ end
 POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(pomdp);
 
 # Define state indices
-POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1}) = pomdp.state_indices[state];
+function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
+    # = pomdp.state_indices[state];
+    state_dims = ones(state_structure...)
+    index = sub2ind(size(state_dims), state...)
+    return index
+end
+
+function state_from_index(pomdp::aPOMDP, index)
+    state =  ind2sub(state_dims, index)
+    return state
+end
 
 # Define action indices
 POMDPs.action_index(::aPOMDP, action::Int64) = action;
