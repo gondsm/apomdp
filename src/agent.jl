@@ -110,7 +110,7 @@ function main(agent_id)
     # Read configuration
     # TODO: make path dynamic
     # Read configuration
-    config = YAML.load(open("/home/hend/catkin_ws/src/apomdp/config/common.yaml"))
+    config = YAML.load(open("/home/user/catkin_ws/src/apomdp/config/common.yaml"))
     n_actions = config["n_actions"]
     n_agents = config["n_agents"]
     nodes_num = config["nodes_num"]
@@ -232,4 +232,6 @@ if size(ARGS)[1] == 0
     exit(-1)
 else
     main(parse(Int64,ARGS[1]))
+    #println("Go run agent 1")
+     #exit(-1)
 end

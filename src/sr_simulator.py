@@ -103,6 +103,7 @@ def initialize_system(common_data_filename, team_config_filename, problem_config
 	global state
 	# Get first state
 	state = problem_data["initial_state"]
+	#print("state:",state)
 
 	# Set connectivity_constant
 	global connectivity_constant
@@ -111,7 +112,7 @@ def initialize_system(common_data_filename, team_config_filename, problem_config
 	# Create first connection matrix
 	global connection_matrix
 	connection_matrix = calc_connection_matrix(state, connectivity_constant)
-	print(connection_matrix)
+	print("connection_matrix",connection_matrix)
 
 	# Log first state
 	log_initial_state(log_dict, state, connection_matrix)
@@ -123,17 +124,21 @@ def calc_connection_matrix(state, c):
 	delivery to and from every agent.
 	"""
 	# Allocate the Matrix
+
+	
 	n_agents = len(state["Agents"])
+
 	connection_matrix = [[0 for x in range(n_agents)] for y in range(n_agents)]
 
 	# Calculate matrix values
 	for i in range(n_agents):
 		for j in range(n_agents):
 			# Import agent coordinates to local variables
-			a1 = state["Agents"][i]
-			a2 = state["Agents"][j]
+			a1 = state["Agents"][i+1]
+			a2 = state["Agents"][j+1]
 			# Calculate dist between agents
 			d = math.sqrt((a1[0]-a2[0])**2 + (a1[1]-a2[1])**2)
+			print(d)
 			# Apply inverse-square law
 			try:
 				connection_matrix[i][j] = c*(1/(d**2))
@@ -167,11 +172,11 @@ def generate_observation(state, action, agent, noisy=True):
 	# Then, for each bit in the cell, we sample a uniform distribution.
 	# If the result in lower than the probability of noise, then we randomly
 	# attribute a value to the bit.
-	x,y = state["Agents"][agent] # Get location of the agent
+	x = state["Agents"][agent] # Get location of the agent
 	for i in range(len(state["World"])):
 		for j in range(len(state["World"][i])):
 			# Calculate distance/probability of noise for the cell
-			d = math.sqrt((i-x)**2 + (j-y)**2) # Euclidean distance
+			d = math.sqrt((i-x)**2 + (j-y)**2) # Euclidean distance #SHOULD BE WHAT?
 			p = d / len(state["World"]) # Normalized distance = probability of noise
 			# DEBUG: Print the current values
 			#print("Agent", x, y)
@@ -192,37 +197,37 @@ def transition(state, action, agent_id):
 	was received. Returns the updated state of the world.
 	"""
 	# Get the position of the agent
-	x,y = state["Agents"][agent_id]
+	x = state["Agents"][agent_id][0]
 
 	# Copy state to output variable
 	new_state = copy.deepcopy(state)
 
+	print("action",action)
 	# Process each possible action
 	# If action is put out fire
 	if action == 0:
 		# If there is fire in the current position, it gets put out
-		if state["World"][x][y][1] == 1:
-			new_state["World"][x][y][1] = 0
+		if state["World"][x][0] == 1:
+			new_state["World"][x][0] = 0
 	# If action is remove debris
 	elif action == 1:
 		# If there is debris in the current position, it gets removed
-		if state["World"][x][y][2] == 1:
-			new_state["World"][x][y][2] = 0
+		if state["World"][x][1] == 1:
+			new_state["World"][x][1] = 0
 	# If action is extract person
 	elif action == 2:
 		# If there is a victim in the current position, they get extracted
-		if state["World"][x][y][3] == 1:
-			new_state["World"][x][y][3] = 0
+		if state["World"][x][2] == 1:
+			new_state["World"][x][2] = 0
 	# If action is move
 	elif action > 2:
 		# Determine where the agent wants to move
 		a = action - 3 # "Pull" the action value to index the map correctly
 		target_x = a // len(state["World"])
-		target_y = a - target_x*len(state["World"])
 		# Move them there if possible
-		if state["World"][target_x][target_y][0] == 0:
+		if state["World"][target_x][0] == 0:
 			new_state["Agents"][agent_id][0] = target_x
-			new_state["Agents"][agent_id][0] = target_y
+			#new_state["Agents"][agent_id][0] = target_y
 		# Drop them on the way if not
 		# TODO
 
