@@ -69,6 +69,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     world_structure::Array
     # A matrix of ones that represents the full state space
     state_dims::Array
+    # nodes locations
+     nodes_location::Array
 end
 
 # Define probability distribution type
@@ -101,7 +103,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Array{Int64,1}=[], nodes_num::Int64=0, world_structure::Array{Int64,1}=[])
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Array{Int64,1}=[], nodes_num::Int64=0, world_structure::Array{Int64,1}=[],nodes_location::Array{Int64,1}=[])
     # Generate aPOMDP state structure from bPOMDP structure
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
@@ -162,7 +164,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   agents_structure,
                   nodes_num,
                   world_structure,
-                  state_dims)
+                  state_dims,
+                  nodes_location)
 end
 
 # Define reward calculation function

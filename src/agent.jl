@@ -110,18 +110,20 @@ function main(agent_id)
     # Read configuration
     # TODO: make path dynamic
     # Read configuration
-    config = YAML.load(open("/home/user/catkin_ws/src/apomdp/config/common.yaml"))
+    config = YAML.load(open("/home/hend/catkin_ws/src/apomdp/config/common.yaml"))
     n_actions = config["n_actions"]
     n_agents = config["n_agents"]
     nodes_num = config["nodes_num"]
     agents_structure = config["agents_structure"]
     world_structure = config["world_structure"]
+    nodes_location = config["nodes_location"]
     println("Read a configuration file:")
     println("n_actions: ",n_actions)
     println("n_agents: ",n_agents)
     println("nodes_num: ",nodes_num)
     println("agents_structure: ",agents_structure)
     println("world_structure: ",world_structure)
+    println("nodes_location: ",nodes_location)
 
     # Calculate state structure
     state_structure = Array{Int64, 1}([])

@@ -196,8 +196,8 @@ def transition(state, action, agent_id):
 	""" Updates the state of the world according to the action that
 	was received. Returns the updated state of the world.
 	"""
-	# Get the position of the agent
-	x = state["Agents"][agent_id][0]
+	# Get the node of the agent
+	node = state["Agents"][agent_id][0]
 
 	# Copy state to output variable
 	new_state = copy.deepcopy(state)
