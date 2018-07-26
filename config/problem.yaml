@@ -36,8 +36,8 @@
 # Conservative:
 initial_state:
   Agents:
-    1: [5,1]
-    2: [7,1]
+    1: 5
+    2: 7
     #3: [2,1]
 # The "World" state is a matrix of lists, with each inner list corresponding to one cell
 # of the world. Variables are defined as follows:

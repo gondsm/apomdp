@@ -36,6 +36,9 @@ connectivity_constant = 0	# Connectivity constant (see problem.yaml)
 shared_data_pubs = [] 		# Maintains publishers for each individual agent
 global_lock = [] 			# Mutex for controlling critical sections
 log_dict = dict()			# A dictionary containing the full logs of the execution
+nodes_location = dict()
+nodes_connectivity = dict()
+n_actions =0
 
 
 # Logging functions
@@ -105,6 +108,17 @@ def initialize_system(common_data_filename, team_config_filename, problem_config
 	state = problem_data["initial_state"]
 	#print("state:",state)
 
+	global nodes_location 
+	nodes_location = common_data["nodes_location"]
+	print("nodes_location",nodes_location)
+
+	global nodes_connectivity
+	nodes_connectivity = common_data["nodes_connectivity"]
+	print ("nodes_connectivity",nodes_connectivity)
+
+	global n_actions
+	n_actions = common_data["n_actions"]
+	print ("n_actions",n_actions) 
 	# Set connectivity_constant
 	global connectivity_constant
 	connectivity_constant = problem_data["connectivity_constant"]
@@ -123,9 +137,7 @@ def calc_connection_matrix(state, c):
 	associated connectivity matrix containing the probability of message
 	delivery to and from every agent.
 	"""
-	# Allocate the Matrix
-
-	
+	# Allocate the Matrix	
 	n_agents = len(state["Agents"])
 
 	connection_matrix = [[0 for x in range(n_agents)] for y in range(n_agents)]
@@ -136,8 +148,10 @@ def calc_connection_matrix(state, c):
 			# Import agent coordinates to local variables
 			a1 = state["Agents"][i+1]
 			a2 = state["Agents"][j+1]
+			print("a1",a1)
+			print("a2",a2)
 			# Calculate dist between agents
-			d = math.sqrt((a1[0]-a2[0])**2 + (a1[1]-a2[1])**2)
+			d = math.sqrt((a1-a2)**2 + (a1-a2)**2)
 			print(d)
 			# Apply inverse-square law
 			try:
@@ -172,22 +186,26 @@ def generate_observation(state, action, agent, noisy=True):
 	# Then, for each bit in the cell, we sample a uniform distribution.
 	# If the result in lower than the probability of noise, then we randomly
 	# attribute a value to the bit.
-	x = state["Agents"][agent] # Get location of the agent
+	node = state["Agents"][agent] # Get node location of the agent
+
+	# get the position of the node 
+	position_x = nodes_location[node][0]
+	position_y = nodes_location[node][1]
+
 	for i in range(len(state["World"])):
 		for j in range(len(state["World"][i])):
 			# Calculate distance/probability of noise for the cell
-			d = math.sqrt((i-x)**2 + (j-y)**2) # Euclidean distance #SHOULD BE WHAT?
+			d = math.sqrt((i-position_x)**2 + (j-position_y)**2) 
 			p = d / len(state["World"]) # Normalized distance = probability of noise
 			# DEBUG: Print the current values
-			#print("Agent", x, y)
+			#print("Agent", node)
 			#print("Cell", i,j)
 			#print("D", d)
 			#print("P", p)
 			# Corrupt bits one by one
-			for k in range(len(state["World"][i][j])):
-				if random.random() < p:
-					obs["World"][i][j][k] = random.randint(0,1)
-
+			#for k in range(len(state["World"][i])):
+			if random.random() < p:
+				obs["World"][i][j] = random.randint(0,1)
 	# Return the observation
 	return obs
 
@@ -196,41 +214,54 @@ def transition(state, action, agent_id):
 	""" Updates the state of the world according to the action that
 	was received. Returns the updated state of the world.
 	"""
+	action = 0
 	# Get the node of the agent
-	node = state["Agents"][agent_id][0]
+	node = state["Agents"][agent_id]
 
+	#TODO: we don't need this maybe? since i am using nodes_connectivity in common.yaml 
+	# get the position of the node (x and y)
+	position_x = nodes_location[node][0]
+	position_y = nodes_location[node][1]
+	#print("position_x",position_x)
+	#print("position_y",position_y)
 	# Copy state to output variable
 	new_state = copy.deepcopy(state)
 
-	print("action",action)
+	#print("action",action)
+	#[fire, debris, victim]
 	# Process each possible action
 	# If action is put out fire
 	if action == 0:
 		# If there is fire in the current position, it gets put out
-		if state["World"][x][0] == 1:
-			new_state["World"][x][0] = 0
+		if state["World"][node][0] == 1:
+			new_state["World"][node][0] = 0
 	# If action is remove debris
 	elif action == 1:
 		# If there is debris in the current position, it gets removed
-		if state["World"][x][1] == 1:
-			new_state["World"][x][1] = 0
+		if state["World"][node][1] == 1:
+			new_state["World"][node][1] = 0
 	# If action is extract person
 	elif action == 2:
 		# If there is a victim in the current position, they get extracted
-		if state["World"][x][2] == 1:
-			new_state["World"][x][2] = 0
+		if state["World"][node][2] == 1:
+			new_state["World"][node][2] = 0
 	# If action is move
-	elif action > 2:
-		# Determine where the agent wants to move
-		a = action - 3 # "Pull" the action value to index the map correctly
-		target_x = a // len(state["World"])
-		# Move them there if possible
-		if state["World"][target_x][0] == 0:
-			new_state["Agents"][agent_id][0] = target_x
-			#new_state["Agents"][agent_id][0] = target_y
-		# Drop them on the way if not
-		# TODO
+	elif action > 2 and action != n_actions-2:
+		new_node=nodes_connectivity[node][action]
+		# new_node cannot go to any direction 
+		if new_node == 0:
+			new_state["Agents"][agent_id]=state["World"][node]
+		# direction will take you to another node
+		else :
+			new_state["Agents"][agent_id]=state["World"][new_state]
+	# if action is stop 
+	elif action == n_actions-1: 
+		new_state["Agents"][agent_id]=state["World"][node]
 
+	print("agent in node: ", state["Agents"][agent_id])
+	print("action taken:", action)
+	print("new state: ", new_state["Agents"][agent_id])
+	
 	# Return the newly-constructed state
 	return new_state
 

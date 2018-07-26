@@ -61,7 +61,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # to define agents state we need 1) number of agents 
     agents_size::Int64
     # to define agents state we need 2) specification of agents which is for now their location node 
-    agents_structure::Array
+    agents_structure::Int64
     # for search and rescue scenario we have topological map and it has nodes
     # this to defines how many nodes we have  
     nodes_num::Int64
@@ -70,7 +70,9 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # A matrix of ones that represents the full state space
     state_dims::Array
     # nodes locations
-     nodes_location::Array
+    nodes_location::Dict
+    # connectivity of nodes
+    nodes_connectivity::Dict
 end
 
 # Define probability distribution type
@@ -103,7 +105,7 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=5, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Array{Int64,1}=[], nodes_num::Int64=0, world_structure::Array{Int64,1}=[],nodes_location::Array{Int64,1}=[])
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Int64=0, nodes_num::Int64=0, world_structure::Array{Int64,1}=[],nodes_location=Dict(), nodes_connectivity=Dict())
     # Generate aPOMDP state structure from bPOMDP structure
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
@@ -148,6 +150,9 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     #     reward_dict[key] = 0.0
     # end
 
+    nodes_location = Dict()
+
+    nodes_connectivity = Dict()
     # Create and return object
     return aPOMDP(n_actions,
                   state_values_dict,
@@ -165,7 +170,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   nodes_num,
                   world_structure,
                   state_dims,
-                  nodes_location)
+                  nodes_location,
+                  nodes_connectivity)
 end
 
 # Define reward calculation function
@@ -451,7 +457,8 @@ end
 
 
 # betapomdp
-function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
+function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Int64, world_structure::Array{Int64,1})
+    
     # Create array
     apomdp_structure=Array{Int64}((length(agents_structure)*agents_size) + (length(world_structure)*nodes_num))
 

@@ -67,8 +67,11 @@ function act(action, agent_id, service_client)
     ros_action.a.agent_id = agent_id
     fieldnames(ros_action)
 
+#apomdp.srv.ActResponse(apomdp.msg.obs
+    o = service_client(ros_action)
+    #print("o",o)
     # Call ROS service
-    return service_client(ros_action)# call ROS service and that call will return the observation
+    return o# call ROS service and that call will return the observation
 end
 
 # publish to broadcast topic (function ?? or just from the main) 
@@ -117,6 +120,7 @@ function main(agent_id)
     agents_structure = config["agents_structure"]
     world_structure = config["world_structure"]
     nodes_location = config["nodes_location"]
+    nodes_connectivity = config["nodes_connectivity"]
     println("Read a configuration file:")
     println("n_actions: ",n_actions)
     println("n_agents: ",n_agents)
@@ -124,7 +128,7 @@ function main(agent_id)
     println("agents_structure: ",agents_structure)
     println("world_structure: ",world_structure)
     println("nodes_location: ",nodes_location)
-
+    println("nodes_connectivity: ",nodes_connectivity)
     # Calculate state structure
     state_structure = Array{Int64, 1}([])
     
@@ -141,7 +145,7 @@ function main(agent_id)
     # consistency.
     # TODO: build state_structure from config
     print("Creating aPOMDP object... ")
-    pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure)
+    pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure,nodes_location, nodes_connectivity)
     println("Done!")
 
     # Subscribe to the agent's shared_data topic
@@ -185,9 +189,16 @@ function main(agent_id)
         println("Got an observation:")
         println(observation)
         println("Which corresponds to aPOMDP state:")
-        temp_s = state_b_to_a(pomdp, observation)
+         #call indices function  
+
+              
+        temp_s = state_b_to_a(pomdp, observation.o)
+        
+        index = POMDPs.state_index(pomdp, temp_s)
+        temp_s = state_from_index(pomdp,index) 
         println(temp_s)
         println("Which has index $(POMDPs.state_index(pomdp, temp_s))")
+
 
         # Update belief - on the local 
         previous_b = beliefs_vector[agent_index] # save the previous belief 
