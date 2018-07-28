@@ -198,7 +198,7 @@ function main(agent_id)
         index = POMDPs.state_index(pomdp, temp_s)
         temp_s = state_from_index(pomdp,index) 
         println(temp_s)
-        println("Which has index $(POMDPs.state_index(pomdp, temp_s))")
+        println("Which has index: ",index)
 
 
         # Update belief - on the local 

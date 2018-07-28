@@ -109,6 +109,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     # Generate aPOMDP state structure from bPOMDP structure
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
+    println("state_structure: ", state_structure)
 
     println("Generating states")
     states = collect(1:reduce(*, state_structure))
@@ -335,13 +336,15 @@ POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(pomdp);
 # Define state indices
 function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
     # = pomdp.state_indices[state];
-    state_dims = ones(state_structure...)
+    println("state_structure: ",pomdp.state_structure)
+    state_dims = ones(pomdp.state_structure...)
+    #println("state_dims: ",state_dims)
     index = sub2ind(size(state_dims), state...)
     return index
 end
 
 function state_from_index(pomdp::aPOMDP, index)
-    state =  ind2sub(state_dims, index)
+    state =  ind2sub(pomdp.state_dims, index)
     return state
 end
 
