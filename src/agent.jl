@@ -185,14 +185,15 @@ function main(agent_id)
 
         # Act and receive an observation 
         println("Applying action $action")
-        observation = act(action, agent_id, service_client)
+        observation_msg = act(action, agent_id, service_client)
         println("Got an observation:")
-        println(observation)
+        println(observation_msg)
         println("Which corresponds to aPOMDP state:")
          #call indices function  
 
-              
-        temp_s = state_b_to_a(pomdp, observation.o)
+        observation = YAML.load(observation_msg.o.obs)
+        println(observation)      
+        temp_s = state_b_to_a(pomdp, observation)
         
         index = POMDPs.state_index(pomdp, temp_s)
         temp_s = state_from_index(pomdp,index) 

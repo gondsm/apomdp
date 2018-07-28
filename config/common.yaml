@@ -45,8 +45,8 @@ n_agents: 2
 #   - 4 # Move to node 2
 n_actions: 8 # 3 for problem-solving, the remainder for movement
 nodes_num: 7
-agents_structure: 7
-world_structure: [2,2,2]
+agents_structure: 7 #it could be one of the 7 nodes 
+world_structure: [2,2,2] # it has three objectives and each one either 0 or 1
 
 #Node in 5x5 grid
 nodes_location: 

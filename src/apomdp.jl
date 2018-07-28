@@ -583,47 +583,84 @@ function learn(pomdp::aPOMDP, belief, action, previous_b)
     return Float32[]
 end 
 
-function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Array) #it should be return type ?
+function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict) #it should be return type ?
     # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
     # correspondence between the two
-    index = (pomdp.agents_size*pomdp.agents_specfi)+1 #index where i to continou the loop of alpha states 
-    alpha_states=zeros(pomdp.nodes_num,pomdp.world_specfi)
-    q=0
-    #construct world_states 
-    for x in 1:pomdp.world_specfi
-        c = zeros(pomdp.nodes_num)
-        for y in 1:pomdp.nodes_num
-            #create vector 
-            c[y]=bpomdp_states[index]
-            index=index+1
-        end 
-        println(c)
-        #append vectors 
-        alpha_states[x+q:x+x]=c
-        q=x
+
+    println("bpomdp_states: ",bpomdp_states)
+    println("bpomdp state agents: ",bpomdp_states["Agents"][1])
+    println("bpomdp state agents length: ",length(bpomdp_states["Agents"]))
+    println("bpomdp state world: ",bpomdp_states["World"][1])
+    println("bpomdp state world length: ",length(bpomdp_states["World"]))
+    println("size of array world: ", length(bpomdp_states["World"][1]))
+
+    index =1
+    alpha_states=Array{Int64}(pomdp.agents_size+(pomdp.nodes_num*length(bpomdp_states["World"][1])))
+    #alpha_states= zeros(pomdp.agents_size+(pomdp.nodes_num*length(bpomdp_states["World"][1])))
+    println("alpha_states length: ",length(alpha_states))
+    println(alpha_states)
+
+    #TODO: make it general to use keys of dic===> for k in keys(dict) println(k, " ==> ", dict[k])
+    #for k in keys(bpomdp_states) 
+     #   println(k, " ==> ", bpomdp_states[k])
+    
+    for x in 1: length(bpomdp_states["Agents"]) 
+        println("agent in node: ",bpomdp_states["Agents"][x])
+        alpha_states[index] = bpomdp_states["Agents"][x]
+        index=index+1
     end
-    alpha_states#to print the result 
+
+    for y in 1: length(bpomdp_states["World"])
+        println("World in node: ",bpomdp_states["World"][y])
+        for z in 1: length(bpomdp_states["World"][y])
+            alpha_states[index] = bpomdp_states["World"][y][z]
+            index = index+1
+        end
+        
+    end
+    #end
+    println(alpha_states)
+    return alpha_states
+    #index = (pomdp.agents_size)+1 #index where i to continou the loop of alpha states 
+    #alpha_states=zeros(pomdp.nodes_num,pomdp.world_specfi)
+    #q=0
+    #construct world_states 
+    #for x in 1:pomdp.world_specfi
+    #   c = zeros(pomdp.nodes_num)
+     #   for y in 1:pomdp.nodes_num
+            #create vector 
+      #      c[y]=bpomdp_states[index]
+       #     index=index+1
+        #end 
+        #println(c)
+        #append vectors 
+        #alpha_states[x+q:x+x]=c
+        #q=x
+    #end
+    #alpha_states#to print the result 
 end
 
 function state_a_to_b(pomdp::aPOMDP, apomdp_states::Array) ##it should be return type ?
     # Converts an aPOMDP state to a bPOMDP state, allowing for plug-and-play
     # correspondence between the two
-    i=1
+    
+
+    #i=1
     #construct agents_states
-    p=0
-    beta_states = zeros(pomdp.agents_size,pomdp.agents_specfi)
-    for x in 1:pomdp.agents_specfi
-        b = zeros(pomdp.agents_size)
-        for y in 1:pomdp.agents_size
+    #p=0
+    #beta_states = zeros(pomdp.agents_size,pomdp.agents_specfi)
+    #for x in 1:pomdp.agents_specfi
+     #   b = zeros(pomdp.agents_size)
+    #  for y in 1:pomdp.agents_size
             #create vector 
-            b[y]=apomdp_states[i]
-            i=i+1
-        end 
+     #       b[y]=apomdp_states[i]
+      #      i=i+1
+       # end 
         #append vectors 
-        beta_states[x+p:x+x]=b'
-        p=x
-    end
-       beta_states#to print the result 
+        #beta_states[x+p:x+x]=b'
+        #p=x
+    #end
+     #  beta_states#to print the result 
 end 
 
 # Logging
