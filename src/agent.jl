@@ -44,7 +44,7 @@ end
 
 # this function will retun cost vector for all actions for this agent
 #
-function calc_cost_vector(belief, ability_vector) 
+function calc_cost_vector(n_agents,world_structure,agent_id,n_actions,belief, pomdp, agents_capabibilities) 
     # C_i(a,s) = Ab(a) * Cc(a,s)
     # The final cost of each action in each state is the product of the fixed
     # action cost (abilities or Ab) times the current cost (Cc) of the action
@@ -54,6 +54,46 @@ function calc_cost_vector(belief, ability_vector)
     # Get abilites vector (from global var?)
     # Calculate the current cost for each individual action
     # Get the final vector as the vector product of the previous two
+
+    # Get the ability 
+    println("=======agents_capabibilities=======")
+    println(agents_capabibilities[1])
+    println(agents_capabibilities[2])
+    println(agents_capabibilities[1][3])
+    
+    # TODO: get the state from belief using argmax that has the highest probability 
+    # We will assume that the index of the state we got from the belief  
+    index = 11 
+
+    # Getting this index we pass it to function to retrieve the state
+    state = state_from_index(pomdp,index)
+    println("=========state=========")
+    println(state)
+    println(state[1])
+
+    println("size of world_structure: ", size(world_structure,1))
+    #take the cells states from the state 
+    size_world_structure = size(world_structure,1)
+    index_counter =1
+    x_1 = n_agents+1
+    println("index",size_world_structure+(size_world_structure*(state[agent_id]-1)))
+    for x in 1: length(state)
+        println(x)
+        println(state[size_world_structure+(size_world_structure*(state[agent_id]-1))])   
+        
+        #get the the world strucutre state of the index got from prevous loop 
+        for j in 1:size(world_structure,1)
+
+        end    
+    end
+
+
+
+    # calculate the cost vector 
+    for i in 1:n_actions
+       
+    end 
+
 end 
 ######
 
@@ -121,6 +161,7 @@ function main(agent_id)
     world_structure = config["world_structure"]
     nodes_location = config["nodes_location"]
     nodes_connectivity = config["nodes_connectivity"]
+    agents_capabibilities = config["Agents_capabiblities"]
     println("Read a configuration file:")
     println("n_actions: ",n_actions)
     println("n_agents: ",n_agents)
@@ -129,9 +170,11 @@ function main(agent_id)
     println("world_structure: ",world_structure)
     println("nodes_location: ",nodes_location)
     println("nodes_connectivity: ",nodes_connectivity)
+    println("agents_capabibilities: ",agents_capabibilities)
     # Calculate state structure
+    #TODO: confirm if we need this now or not?
     state_structure = Array{Int64, 1}([])
-    
+    #TODO: call the state_b_to_a then print to see 
     state_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
 
     println("This corresponds to aPOMDP state structure $state_structure.")
@@ -143,7 +186,6 @@ function main(agent_id)
     # All agents need to build aPOMDP structs that are the same, so that
     # they inform the aPOMDP primitives in the same way and ensure
     # consistency.
-    # TODO: build state_structure from config
     print("Creating aPOMDP object... ")
     pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure,nodes_location, nodes_connectivity)
     println("Done!")
@@ -169,8 +211,11 @@ function main(agent_id)
         println("Iteration $iter")
 
         # Get the cost 
+        println("========print beliefs_vector================")
+        println(beliefs_vector)
+        # Get the cost 
         println("Calculating cost vector")
-        c_vector = calc_cost_vector(beliefs_vector[agent_index], ability_vector)
+        c_vector = calc_cost_vector(n_agents,world_structure,agent_id,n_actions,beliefs_vector[agent_index], pomdp, agents_capabibilities)
 
         # Solve
         println("Calculating new policy")

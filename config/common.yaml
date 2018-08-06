@@ -67,3 +67,10 @@ nodes_connectivity:
   5: [0,3,0,6]
   6: [0,7,5,0]
   7: [6,0,0,0]
+
+#capabiblities 
+Agents_capabiblities:
+    #actions[extinguishFire, extract_victim, clearPath, up, down, left, right, stop] Do i add the movement?  extract victim and clearpath also depends on the test case 
+    1: [1, -1, 0, 1, 1, 1, 1, 1]   #UAV 
+    2: [1, -1, 1, 1, 1, 1, 1, 1] #UGV
+    #3: [0,  0, 1, 1, 1, 1, 1, 1]  #human
