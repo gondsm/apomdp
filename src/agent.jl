@@ -44,7 +44,7 @@ end
 
 # this function will retun cost vector for all actions for this agent
 #
-function calc_cost_vector(n_agents,world_structure,agent_id,n_actions,belief, pomdp, agents_capabibilities) 
+function calc_cost_vector(nodes_connectivity,n_agents,world_structure,agent_id,n_actions,belief, pomdp, agents_capabibilities) 
     # C_i(a,s) = Ab(a) * Cc(a,s)
     # The final cost of each action in each state is the product of the fixed
     # action cost (abilities or Ab) times the current cost (Cc) of the action
@@ -59,7 +59,7 @@ function calc_cost_vector(n_agents,world_structure,agent_id,n_actions,belief, po
     println("=======agents_capabibilities=======")
     println(agents_capabibilities[1])
     println(agents_capabibilities[2])
-    println(agents_capabibilities[1][3])
+    #println(agents_capabibilities[1][3])
     
     # TODO: get the state from belief using argmax that has the highest probability 
     # We will assume that the index of the state we got from the belief  
@@ -69,30 +69,42 @@ function calc_cost_vector(n_agents,world_structure,agent_id,n_actions,belief, po
     state = state_from_index(pomdp,index)
     println("=========state=========")
     println(state)
-    println(state[1])
+    #println(state[1])
 
-    println("size of world_structure: ", size(world_structure,1))
     #take the cells states from the state 
     size_world_structure = size(world_structure,1)
-    index_counter =1
-    x_1 = n_agents+1
-    println("index",size_world_structure+(size_world_structure*(state[agent_id]-1)))
-    for x in 1: length(state)
-        println(x)
-        println(state[size_world_structure+(size_world_structure*(state[agent_id]-1))])   
-        
-        #get the the world strucutre state of the index got from prevous loop 
-        for j in 1:size(world_structure,1)
-
-        end    
-    end
-
-
-
+    
+    #println("index",size_world_structure+(size_world_structure*(state[agent_id]-1)))#for testing
+   
     # calculate the cost vector 
-    for i in 1:n_actions
-       
+    cost_vector = zeros(Int8, n_actions)
+    
+    for i in 1:n_actions       
+        nodes_connectivity_index = 1
+        #actions of movement 
+        if i>size_world_structure && i<n_actions
+            println("i: ",i)
+            if nodes_connectivity[agent_id][nodes_connectivity_index] != 0 #can move to a node 
+                cost_vector[i] = 1*agents_capabibilities[agent_id][nodes_connectivity_index]
+            else 
+                cost_vector[i] = 0     
+            end 
+        elseif i == n_actions #action is stop 
+           cost_vector[i] = 0
+        else  #first three actions fire, victim_debris 
+            for j in 1:size(world_structure,1)
+                if i == j #action and the world_structure match state 
+                    println("i: ",i)
+                    cost_vector[i]=(state[size_world_structure+(size_world_structure*(state[agent_id]-1))])*agents_capabibilities[agent_id][i]#+(j-1)
+                end 
+            end
+        end    
+
+        nodes_connectivity_index+=1
     end 
+    println("cost_vector: ",cost_vector)
+
+    return cost_vector
 
 end 
 ######
@@ -215,7 +227,7 @@ function main(agent_id)
         println(beliefs_vector)
         # Get the cost 
         println("Calculating cost vector")
-        c_vector = calc_cost_vector(n_agents,world_structure,agent_id,n_actions,beliefs_vector[agent_index], pomdp, agents_capabibilities)
+        c_vector = calc_cost_vector(nodes_connectivity,n_agents,world_structure,agent_id,n_actions,beliefs_vector[agent_index], pomdp, agents_capabibilities)
 
         # Solve
         println("Calculating new policy")
