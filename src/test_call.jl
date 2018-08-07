@@ -37,6 +37,9 @@ n_agents = config["n_agents"]
 nodes_num = config["nodes_num"]
 agents_structure = config["agents_structure"]
 world_structure = config["world_structure"]
+nodes_location = config["nodes_location"]
+nodes_connectivity = config["nodes_connectivity"]
+agents_capabibilities = config["Agents_capabiblities"]
 println("Read a configuration file:")
 println("n_actions: ",n_actions)
 println("n_agents: ",n_agents)
@@ -45,15 +48,24 @@ println("agents_structure: ",agents_structure)
 println("world_structure: ",world_structure)
 
 #apomdp_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
+#TODO: confirm if we need this now or not?
+state_structure = Array{Int64, 1}([])
+#TODO: call the state_b_to_a then print to see 
+state_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
+
 
 println("Creating aPOMDP object")
 #pomdp=aPOMDP()
-pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure)
+#pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure)
+pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure,nodes_location, nodes_connectivity)
 println("Finish creating aPOMDP object")
 
 #state_a_to_b(pomdp,alpha_states)
 
 # call the function and save it in array 
 #
-convert_structure(3, 3, [2,1], [3,3,3])
+#convert_structure(3, 3, [2,1], [3,3,3])
 
+#call fuse_belief 
+vector =[] 
+belief_f = fuse_beliefs(pomdp,vector)
