@@ -508,15 +508,17 @@ function fuse_beliefs(pomdp::aPOMDP, belief_vector)
     #println(pomdp.states)#will get indcies of states 
     
     #create a fake vector of two beliefs , each vector with length of states size 
-    beliefs_vector = ones(Float64,2,length(pomdp.states))
-    fused_belief = zeros(Float64,1,length(pomdp.states))
-    for x=1:size(beliefs_vector,1)
-        for y=1:size(beliefs_vector,2)
-            fused_belief[y] = fused_belief[y]+ beliefs_vector[x][y]
-        end
+    beliefs_vec = ones(2,length(pomdp.states))
+    fused_belief = zeros(length(pomdp.states))
+
+    for x=1:size(beliefs_vec,1)     
+        fused_belief = fused_belief + beliefs_vec[x]
     end
 
-    println("print one fused_belief[1]: ", fused_belief[1])
+    #normalize 
+    fused_belief[:] = normalize(fused_belief[:], 1)
+    
+    println("fused_belief[1] ", fused_belief[1])
     
 end
 
