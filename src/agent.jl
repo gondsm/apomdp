@@ -62,6 +62,7 @@ function calc_cost_vector(nodes_connectivity,n_agents,world_structure,agent_id,n
     #println(agents_capabibilities[1][3])
     
     # TODO: get the state from belief using argmax that has the highest probability 
+    # Question: is it one belief vector of beliefs ? if beliefs.  will get highest state  index from all vectors, and then how used all to cal cost?
     # We will assume that the index of the state we got from the belief  
     index = 11 
 

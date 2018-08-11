@@ -508,17 +508,40 @@ function fuse_beliefs(pomdp::aPOMDP, belief_vector)
     #println(pomdp.states)#will get indcies of states 
     
     #create a fake vector of two beliefs , each vector with length of states size 
-    beliefs_vec = ones(2,length(pomdp.states))
-    fused_belief = zeros(length(pomdp.states))
+    #beliefs_vec = ones(2,length(pomdp.states))
+    #fused_belief = zeros(length(pomdp.states))
 
-    for x=1:size(beliefs_vec,1)     
-        fused_belief = fused_belief + beliefs_vec[x]
+    #if not fake should be like this
+    #beliefs_vec = belief_vector
+    #=fused_belief = zeros(size(belief_vector,2))
+    println("size(belief_vector,1): ", size(belief_vector,2))
+
+    for x=1:size(belief_vector,2)     
+        println("belief_vector: ",belief_vector)
+        println("fused_belief: ",fused_belief)
+        fused_belief = fused_belief + belief_vector[x]
     end
-
+    println("not-normalized fused_belief: ", fused_belief)
     #normalize 
     fused_belief[:] = normalize(fused_belief[:], 1)
-    
-    println("fused_belief[1] ", fused_belief[1])
+
+    println("normalized fused_belief: ", fused_belief)=#
+
+    b = Any[]
+    for i=1:size(belief_vector,1)
+    println("belief_vector[i]:", belief_vector[i])
+    if i==1
+        b=belief_vector[i]
+    else
+        b+=belief_vector[i]
+    end 
+    println("b", b)
+    end 
+    #normalize 
+    #
+    b[:] = normalize(b[:], 1)
+    println("normalized b: ", b)
+   return b
     
 end
 
