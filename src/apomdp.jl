@@ -109,14 +109,14 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     # Generate aPOMDP state structure from bPOMDP structure
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
-    println("state_structure: ", state_structure)
+    #println("state_structure: ", state_structure)
 
-    println("Generating states")
+    #println("Generating states")
     states = collect(1:reduce(*, state_structure))
-    println(size(states))
+    #println(size(states))
     state_dims = ones(state_structure...)
 
-    println("Generating everything else")
+    #println("Generating everything else")
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
     # functions we want to have
@@ -336,7 +336,7 @@ POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(pomdp);
 # Define state indices
 function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
     # = pomdp.state_indices[state];
-    println("state_structure: ",pomdp.state_structure)
+    #println("state_structure: ",pomdp.state_structure)
     state_dims = ones(pomdp.state_structure...)
     #println("state_dims: ",state_dims)
     index = sub2ind(size(state_dims), state...)
@@ -529,18 +529,18 @@ function fuse_beliefs(pomdp::aPOMDP, belief_vector)
 
     b = Any[]
     for i=1:size(belief_vector,1)
-    println("belief_vector[i]:", belief_vector[i])
+    #println("belief_vector[i]:", belief_vector[i])
     if i==1
         b=belief_vector[i]
     else
         b+=belief_vector[i]
     end 
-    println("b", b)
+    #println("b", b)
     end 
     #normalize 
     #
     b[:] = normalize(b[:], 1)
-    println("normalized b: ", b)
+    #println("normalized b: ", b)
    return b
     
 end
@@ -561,6 +561,31 @@ function fuse_transitions(pomdp::aPOMDP, transition_vector)
     # Fusion is done in the same principle as beliefs, but iterating
     # over all possible combinations of s', s and a.
     # Use state indices to iterate?
+
+    #=
+    transition_vector[agent][state, action] -> distributions
+    distributions -> fuse_belief -> fused transition for current key (state, action)
+    transition_vector
+    [
+        transitions(s,a) 
+        [
+            1D prob distributions
+        ]
+    ]
+    T(s,a) -> dist
+    =#
+    
+    fused_transitions = Dict()
+
+    for s in pomdp.states
+        # [1, 2, 3, 4, ..., n_actions]
+        for a in 1:pomdp.n_actions
+            key = [s, a]
+            distributions = [transition[key] for transition in transition_vector]
+            fused_transitions[key] = fuse_beliefs(pomdp,distributions)
+        end
+    end
+    return fused_transitions
 end
 
 
@@ -629,31 +654,31 @@ function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict) #it should be return ty
     # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
     # correspondence between the two
 
-    println("bpomdp_states: ",bpomdp_states)
-    println("bpomdp state agents: ",bpomdp_states["Agents"][1])
-    println("bpomdp state agents length: ",length(bpomdp_states["Agents"]))
-    println("bpomdp state world: ",bpomdp_states["World"][1])
-    println("bpomdp state world length: ",length(bpomdp_states["World"]))
-    println("size of array world: ", length(bpomdp_states["World"][1]))
+    #println("bpomdp_states: ",bpomdp_states)
+    #println("bpomdp state agents: ",bpomdp_states["Agents"][1])
+    #println("bpomdp state agents length: ",length(bpomdp_states["Agents"]))
+    #println("bpomdp state world: ",bpomdp_states["World"][1])
+    #println("bpomdp state world length: ",length(bpomdp_states["World"]))
+    #println("size of array world: ", length(bpomdp_states["World"][1]))
 
     index =1
     alpha_states=Array{Int64}(pomdp.agents_size+(pomdp.nodes_num*length(bpomdp_states["World"][1])))
     #alpha_states= zeros(pomdp.agents_size+(pomdp.nodes_num*length(bpomdp_states["World"][1])))
-    println("alpha_states length: ",length(alpha_states))
-    println(alpha_states)
+    #println("alpha_states length: ",length(alpha_states))
+    #println(alpha_states)
 
     #TODO: make it general to use keys of dic===> for k in keys(dict) println(k, " ==> ", dict[k])
     #for k in keys(bpomdp_states) 
      #   println(k, " ==> ", bpomdp_states[k])
     
     for x in 1: length(bpomdp_states["Agents"]) 
-        println("agent in node: ",bpomdp_states["Agents"][x])
+        #println("agent in node: ",bpomdp_states["Agents"][x])
         alpha_states[index] = bpomdp_states["Agents"][x]
         index=index+1
     end
 
     for y in 1: length(bpomdp_states["World"])
-        println("World in node: ",bpomdp_states["World"][y])
+        #println("World in node: ",bpomdp_states["World"][y])
         for z in 1: length(bpomdp_states["World"][y])
             alpha_states[index] = bpomdp_states["World"][y][z]
             index = index+1
@@ -661,7 +686,7 @@ function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict) #it should be return ty
         
     end
     #end
-    println(alpha_states)
+    #println(alpha_states)
     return alpha_states
     #index = (pomdp.agents_size)+1 #index where i to continou the loop of alpha states 
     #alpha_states=zeros(pomdp.nodes_num,pomdp.world_specfi)
