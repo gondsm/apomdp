@@ -643,11 +643,36 @@ function get_policy(pomdp::aPOMDP, fused_T, c_vector)
 end
 
 
-function learn(pomdp::aPOMDP, belief, action, previous_b) 
+function learn(pomdp::aPOMDP, current_belief, action, previous_belief, local_transition_matrix) 
     # integrate_transition(pomdp, prev_state, state, prev_action) 
+    # pomdp contains structure
+    # belief contains the final state
+    # action is the action
+    # previous_b is the previous belief (previous state)
+
+    # Get the key from the previous state
+    # key = prev_state[:]
+    # Key will be result of argmaxing the belif and appending action
+    prev_state_maxval, prev_state_indx = findmax(previous_belief,2)
+    key = [prev_state_indx[1], action]
+    
+    # Find out which is the state we are in
+    current_belief_maxval, current_belief_indx = findmax(current_belief,2)
+    final_state = current_belief_indx[1]
+    
+    # Add this transition to the matrix
+    try
+        local_transition_matrix[key][final_state] += 1
+    catch
+        local_transition_matrix[key] = ones(Float64, pomdp.state_structure...)/1000
+        local_transition_matrix[key][final_state] += 1
+    end
+
+    # Return the matrix for assignment
+    return local_transition_matrix
 
     # Return empty bogus array. Final type must match shared_data.msg
-    return Float32[]
+    #return Float32[]
 end 
 
 function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict) #it should be return type ?
