@@ -157,7 +157,9 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
 
     nodes_connectivity = Dict()
 
+    # Create an empty cost vector
     c_vector = []
+
     # Create and return object
     return aPOMDP(n_actions,
                   state_values_dict,
@@ -299,6 +301,20 @@ function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO: probably also limited to 2 state variables (indirectly)
     key = state[:]
     append!(key, action)
+    try
+        dist = copy(pomdp.transition_matrix[key])
+    catch
+        dist = ones(Float64, pomdp.state_structure...)/1000
+    end
+    dist[:] = normalize(dist[:], 1)
+    return apomdpDistribution(POMDPs.states(pomdp), dist)
+end
+
+function POMDPs.transition(pomdp::aPOMDP, state::Int64, action::Int64)
+    # Returns the distribution over states
+    # The distribution is first normalized, and then returned
+    # Note: This method serves the new int-based state space representation
+    key = state[state, action]
     try
         dist = copy(pomdp.transition_matrix[key])
     catch
