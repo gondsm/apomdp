@@ -50,12 +50,15 @@ world_structure = config["world_structure"]
 nodes_location = config["nodes_location"]
 nodes_connectivity = config["nodes_connectivity"]
 agents_capabibilities = config["Agents_capabiblities"]
-#println("Read a configuration file:")
-#println("n_actions: ",n_actions)
-#println("n_agents: ",n_agents)
-#println("nodes_num: ",nodes_num)
-#println("agents_structure: ",agents_structure)
-#println("world_structure: ",world_structure)
+println("Read a configuration file:")
+println("n_actions: ",n_actions)
+println("n_agents: ",n_agents)
+println("nodes_num: ",nodes_num)
+println("agents_structure: ",agents_structure)
+println("world_structure: ",world_structure)
+println("nodes_location: ",nodes_location)
+println("nodes_connectivity: ",nodes_connectivity)
+println("Agents_capabiblities: ",agents_capabibilities)
 
 #apomdp_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
 #TODO: confirm if we need this now or not?
@@ -63,44 +66,50 @@ agents_capabibilities = config["Agents_capabiblities"]
 #TODO: call the state_b_to_a then print to see 
 # state_structure = convert_structure(n_agents, nodes_num, agents_structure, world_structure)
 
-
- println("Creating aPOMDP object")
- pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure,nodes_location, nodes_connectivity)
- println("Finish creating aPOMDP object")
+println("Creating aPOMDP object")
+pomdp = aPOMDP("isvr", 1, [3,3], 5, normalize(rand(1), 1), n_agents, agents_structure, nodes_num, world_structure,nodes_location, nodes_connectivity)
+println("Finish creating aPOMDP object")
 
 #state_a_to_b(pomdp,alpha_states)
 
 # call the function and save it in array 
 #convert_structure(3, 3, [2,1], [3,3,3])
 
-#call fuse_belief 
+#call fuse_belief #########################################
 #belief_vector = [[1.0 2.0], [3.0 4.0], [5.0 6.0]]
 #fused_belief = fuse_beliefs(pomdp, belief_vector)
 #println("fused_belief:",fused_belief)
 
-#call fuse_transition 
+#call fuse_transition #####################################
 #println("transition_vector")
 # Bogus transitions
 # For 2 states and 2 actions
-#t1 = Dict([1,1] => [0.25, 0.75], [1,2] => [0.15, 0.85], [2,1] => [0.05, 0.95], [2,2] => [0.95, 0.05])
-#t2 = Dict([1,1] => [0.35, 0.65], [1,2] => [0.25, 0.75], [2,1] => [0.75, 0.25], [2,2] => [0.85, 0.15])
-#t3 = Dict([1,1] => [0.45, 0.55], [1,2] => [0.35, 0.65], [2,1] => [0.65, 0.35], [2,2] => [0.25, 0.75])
+t1 = Dict([1,1] => [0.25, 0.75], [1,2] => [0.15, 0.85], [2,1] => [0.05, 0.95], [2,2] => [0.95, 0.05])
+t2 = Dict([1,1] => [0.35, 0.65], [1,2] => [0.25, 0.75], [2,1] => [0.75, 0.25], [2,2] => [0.85, 0.15])
+t3 = Dict([1,1] => [0.45, 0.55], [1,2] => [0.35, 0.65], [2,1] => [0.65, 0.35], [2,2] => [0.25, 0.75])
+println("t1:", t1)
+transition_vector = [t1, t2, t3]
+fused_T = fuse_transitions(pomdp, transition_vector)
+println("fused_T: ", fused_T)
 
-#transition_vector = [t1, t2, t3]
-
-#transition = fuse_transitions(pomdp, transition_vector)
-
-#println("transition: ", transition)
-
-# call learn function 
+# call learn function ####################################
 #bogas info for 2 states and 2 actions 
-current_belief = [0.6 0.4]
+#=current_belief = [0.6 0.4]
 action = 1
 previous_belief = [0.1 0.9]
 local_transition_matrix = Dict([1,1] => [0.25, 0.75], [1,2] => [0.15, 0.85], [2,1] => [0.05, 0.95], [2,2] => [0.95, 0.05]) 
 println("local_transition_matrix before learn: ", local_transition_matrix)
 local_transition_matrix = learn(pomdp, current_belief, action, previous_belief, local_transition_matrix)
 println("local_transition_matrix after learn: ", local_transition_matrix)
+=#
+
+#call get_policy #########################################
+#for two actions and two states 
+c_vector = [1, 0]
+println("c_vector:", c_vector)
+policy = get_policy(pomdp, fused_T, c_vector)
+println("policy: ", policy)
+
 
 #plot(fused_belief, color="red", linewidth=2.0, linestyle="--")
 #=b = Any[]

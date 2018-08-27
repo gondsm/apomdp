@@ -43,7 +43,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # Maintains the transition history in a dict of the form [S,A] (vector) -> P(S') (n-d matrix).
     # It is not normalized and acts as a history of occurrences. Normalization into a proper distribution
     # happens when it is queried via the transition() function
-    transition_matrix::Dict 
+    transition_dict::Dict 
     # Maintains the rewards associated with states in a dict of the form [S,A] (vector) -> R (float)
     reward_matrix::Dict 
     # The good old discount factor
@@ -73,6 +73,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     nodes_location::Dict
     # connectivity of nodes
     nodes_connectivity::Dict
+    # cost vector
+    c_vector::Array
 end
 
 # Define probability distribution type
@@ -154,6 +156,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     nodes_location = Dict()
 
     nodes_connectivity = Dict()
+
+    c_vector = []
     # Create and return object
     return aPOMDP(n_actions,
                   state_values_dict,
@@ -172,7 +176,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   world_structure,
                   state_dims,
                   nodes_location,
-                  nodes_connectivity)
+                  nodes_connectivity,
+                  c_vector)
 end
 
 # Define reward calculation function
@@ -577,9 +582,11 @@ function fuse_transitions(pomdp::aPOMDP, transition_vector)
     
     fused_transitions = Dict()
 
-    for s in pomdp.states
+    states_n = 2
+    actions_n = 2
+    for s in 1:states_n#pomdp.states
         # [1, 2, 3, 4, ..., n_actions]
-        for a in 1:pomdp.n_actions
+        for a in 1:actions_n#pomdp.n_actions
             key = [s, a]
             distributions = [transition[key] for transition in transition_vector]
             fused_transitions[key] = fuse_beliefs(pomdp,distributions)
@@ -635,11 +642,20 @@ function get_policy(pomdp::aPOMDP, fused_T, c_vector)
     #get the v_s
     #v = get_v_s(state)
     #TODO: this function will return the value of state v(s) 
-
-    # Steps
+    println("calling get_policy")
+    # Integrate fuset_T into pomdp
+    pomdp.transition_dict = fused_T
+    # c_vector
+    pomdp.c_vector = c_vector
     # Iterate over all possible states to -construct (set) the V(S) in apomdp
-    # call the solve function to obtain policy
-    # Call apomdp and passing fused_T and the cost vector, apomdp will then used these to create rewards and solve the problem 
+    calculate_reward_matrix(pomdp)
+
+    # Initialize a solver and solve
+    solver = QMDPSolver()
+    policy = POMDPs.solve(solver, pomdp)
+
+    # Return the policy
+    return policy 
 end
 
 

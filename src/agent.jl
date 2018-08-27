@@ -268,7 +268,7 @@ function main(agent_id)
         fused_b = fuse_beliefs(pomdp, beliefs_vector)
 
         # Learn - based on the local 
-        transitions_vector[agent_index] = learn(pomdp, beliefs_vector[agent_index], action, previous_b)
+        transitions_vector[agent_index] = learn(pomdp, beliefs_vector[agent_index], action, previous_b, local_transition_matrix)
         # TODO: decide whether to use the fused_b or local belief 
 
         # Fuse new transition with everyone else's
