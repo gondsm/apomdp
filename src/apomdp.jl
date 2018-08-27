@@ -226,6 +226,14 @@ function calculate_reward_matrix(pomdp::aPOMDP)
         if pomdp.reward_type == "isvr" || pomdp.reward_type == "msvr"
             sum_var += calc_entropy(dist.dist)
         end
+
+        # Add the cost relative to the c_vector
+        try
+            sum_var += c_vector[k]
+        catch
+            println("Tried to add action cost to reward, but c_vector seems to be emtpy!")
+        end
+
         if sum_var != 0
             pomdp.reward_matrix[key] = sum_var
         end
