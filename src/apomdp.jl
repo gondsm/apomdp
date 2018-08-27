@@ -43,7 +43,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # Maintains the transition history in a dict of the form [S,A] (vector) -> P(S') (n-d matrix).
     # It is not normalized and acts as a history of occurrences. Normalization into a proper distribution
     # happens when it is queried via the transition() function
-    transition_dict::Dict 
+    transition_matrix::Dict 
     # Maintains the rewards associated with states in a dict of the form [S,A] (vector) -> R (float)
     reward_matrix::Dict 
     # The good old discount factor
@@ -644,7 +644,7 @@ function get_policy(pomdp::aPOMDP, fused_T, c_vector)
     #TODO: this function will return the value of state v(s) 
     println("calling get_policy")
     # Integrate fuset_T into pomdp
-    pomdp.transition_dict = fused_T
+    pomdp.transition_matrix = fused_T
     # c_vector
     pomdp.c_vector = c_vector
     # Iterate over all possible states to -construct (set) the V(S) in apomdp
