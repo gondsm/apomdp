@@ -118,6 +118,11 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     #println(size(states))
     state_dims = ones(state_structure...)
 
+    state_structure = [states[end]]
+
+    println("Initialized new state structure:")
+    println(state_structure)
+
     #println("Generating everything else")
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
@@ -186,7 +191,10 @@ end
 function calculate_reward_matrix(pomdp::aPOMDP)
     # Re-calculate the whole reward matrix according to the current transition matrix and state values
     for s in pomdp.states, k = 1:pomdp.n_actions
+        tic()
         key = vcat(s,[k])
+        println("Starting new key")
+        print(key)
         sum_var = 0
         # Get P(S'|S,A)
         dist = transition(pomdp, s, k)
@@ -238,6 +246,7 @@ function calculate_reward_matrix(pomdp::aPOMDP)
             pomdp.reward_matrix[key] = sum_var
         end
     end
+    toc()
 end
 
 # A function for calculating the entropy of a discrete distribution
@@ -309,6 +318,7 @@ function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO: probably also limited to 2 state variables (indirectly)
     key = state[:]
     append!(key, action)
+    dist = nothing
     try
         dist = copy(pomdp.transition_matrix[key])
     catch
@@ -323,6 +333,7 @@ function POMDPs.transition(pomdp::aPOMDP, state::Int64, action::Int64)
     # The distribution is first normalized, and then returned
     # Note: This method serves the new int-based state space representation
     key = state[state, action]
+    dist = nothing
     try
         dist = copy(pomdp.transition_matrix[key])
     catch
@@ -385,6 +396,8 @@ POMDPs.obs_index(pomdp::aPOMDP, state::Array{Int64,1}) = POMDPs.state_index(pomd
 
 # Define distribution calculation
 POMDPs.pdf(dist::apomdpDistribution, state::Array) = dist.dist[state...]
+
+POMDPs.pdf(dist::apomdpDistribution, state::Int64) = dist.dist[state]
 
 # Discrete Belief constructor from apomdpDistribution (SARSOP)
 function POMDPToolbox.DiscreteBelief(dist::apomdpDistribution)
