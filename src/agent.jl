@@ -231,15 +231,16 @@ function main(agent_id)
         c_vector = calc_cost_vector(nodes_connectivity,n_agents,world_structure,agent_id,n_actions,beliefs_vector[agent_index], pomdp, agents_capabibilities)
 
         # Solve
-        println("Calculating new policy")
-        policy = get_policy(pomdp, fused_T, c_vector)
+        #println("Calculating new policy")
+        #policy = get_policy(pomdp, fused_T, c_vector)
 
         # Call fuse belief function
-        println("Fusing beliefs")
-        fused_b = fuse_beliefs(pomdp, beliefs_vector)
+        #println("Fusing beliefs")
+        #fused_b = fuse_beliefs(pomdp, beliefs_vector)
 
         # Decision_making (action selection)
-        action = get_action(pomdp, policy,fused_b)
+        #action = get_action(pomdp, policy,fused_b)
+        action = rand(1:8)
 
         # Act and receive an observation 
         println("Applying action $action")
@@ -248,7 +249,6 @@ function main(agent_id)
         println(observation_msg)
         println("Which corresponds to aPOMDP state:")
          #call indices function  
-
         observation = YAML.load(observation_msg.o.obs)
         println(observation)      
         temp_s = state_b_to_a(pomdp, observation)
@@ -261,6 +261,11 @@ function main(agent_id)
 
         # Update belief - on the local 
         previous_b = beliefs_vector[agent_index] # save the previous belief 
+        println("previous_b:",previous_b)
+        println("observation:",observation)
+        println("action:",action)
+        println("beliefs_vector[agent_index]:",beliefs_vector[agent_index])
+        println("transitions_vector[agent_index]:",transitions_vector[agent_index])
         beliefs_vector[agent_index]= update_belief(pomdp, observation, action, beliefs_vector[agent_index], transitions_vector[agent_index])
         #TODO: rethink if we should use the local transition or the fused one
 

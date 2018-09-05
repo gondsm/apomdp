@@ -571,12 +571,12 @@ function fuse_beliefs(pomdp::aPOMDP, belief_vector)
 
     b = Any[]
     for i=1:size(belief_vector,1)
-    #println("belief_vector[i]:", belief_vector[i])
-    if i==1
-        b=belief_vector[i]
-    else
-        b+=belief_vector[i]
-    end 
+        #println("belief_vector[i]:", belief_vector[i])
+        if i==1
+            b=belief_vector[i]
+        else
+            b+=belief_vector[i]
+        end 
     #println("b", b)
     end 
     #normalize 
@@ -618,12 +618,13 @@ function fuse_transitions(pomdp::aPOMDP, transition_vector)
     =#
     
     fused_transitions = Dict()
+    #for testing 
+    #states_n = 2
+    #actions_n = 2
 
-    states_n = 2
-    actions_n = 2
-    for s in 1:states_n#pomdp.states
+    for s in pomdp.states
         # [1, 2, 3, 4, ..., n_actions]
-        for a in 1:actions_n#pomdp.n_actions
+        for a in 1:pomdp.n_actions
             key = [s, a]
             distributions = [transition[key] for transition in transition_vector]
             fused_transitions[key] = fuse_beliefs(pomdp,distributions)
@@ -669,6 +670,27 @@ function update_belief(pomdp::aPOMDP, observation, action, belief, transition)
     # belief over the next state.
     # Observation is a dict, action is an int, belief is a vector over state
     # indices as usual, transition is a transition matrix as defined before.
+
+    updated_b = Any[]
+    #equation of the belief update_belief
+    #=
+        b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
+    =#
+    sum_t =0.0
+    for s in pomdp.states
+           key = [s,action]
+           println("key:",key)
+           println("transition[key]:",transition[key])
+           t=transition[key]
+           println("b",b)
+           println("a",a)
+           println("b[a]:",t[action])
+           sum_t += t[action]*belief[s]
+           update_belief[s] = observation[s]*sum_t
+    end
+
+    #normalize
+    update_belief[:] = normalize(update_belief[:], 1)
 
     # Return empty bogus array. Final type must match shared_data.msg
     return Float32[]

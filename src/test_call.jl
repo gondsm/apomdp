@@ -76,9 +76,9 @@ println("Finish creating aPOMDP object")
 #convert_structure(3, 3, [2,1], [3,3,3])
 
 #call fuse_belief #########################################
-#belief_vector = [[1.0 2.0], [3.0 4.0], [5.0 6.0]]
-#fused_belief = fuse_beliefs(pomdp, belief_vector)
-#println("fused_belief:",fused_belief)
+belief_vector = [[1.0 2.0], [3.0 4.0], [5.0 6.0]]
+fused_belief = fuse_beliefs(pomdp, belief_vector)
+println("fused_belief:",fused_belief)
 
 #call fuse_transition #####################################
 #println("transition_vector")
