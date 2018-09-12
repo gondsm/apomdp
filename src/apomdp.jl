@@ -671,6 +671,87 @@ function update_belief(pomdp::aPOMDP, observation, action, belief, transition)
     # Observation is a dict, action is an int, belief is a vector over state
     # indices as usual, transition is a transition matrix as defined before.
 
+    # b(s)
+    # [P(s=1), P(s=2), P(s=3), ..]
+    #
+    # b'(s')
+    # [b'(s'=1), b'(s'=2), ...]
+
+    # 3 cells
+    # O-------O-------O
+    # 1       2       3
+    #
+    # State 1:
+    # agent_1 is in cell 1
+    # fire is in cell 2
+    #
+    # State 2:
+    # agent_1 is in cell 1
+    # fire is in cell 3
+    #
+    # State 3:
+    # agent_1 is in cell 2
+    # fire is in cell 3
+    #
+    # State 2 is closer to State 1 than State 3!
+    # Distance(1->2) < Distance(1->3)
+    # Function D
+
+    # o = 1
+    # P(o=1|s', a=1)
+    # s' = 1 -> P = 0.6
+    # s' = 2 -> P = 0.3
+    # s' = 3 -> P = 0.1
+    #
+    # Because:
+    # D(1,2) > D(1,3) and o = 1 (i.e. observation says we are in state 1)
+
+    # Concepts:
+    # -> Some states are closer to one another than others
+    # -> We can define a real-valued function for distance between states
+    # -> O(o|s',a) could be defined as a function of distance between states
+    #    (closer states should have higher probability)
+
+    # Tentative formulation
+    #
+    # O(o|s', a) = normalize D(o,s')
+    #
+    # -> Y axis: D(o=1, s')
+    # -> X axis: s'
+    # This can be a distribution over s' if we normalize!
+
+    # State s is an in (e.g 1)
+    # But it translates into an instantiation of state space:
+    #
+    # [3,2,4,3,1]
+    #
+    # So, D could be just the norm of the difference vector!
+    
+    # Better example
+    # 4 states: [1,1], [1,2], [2,1], [2,2]
+    #           1      2      3      4
+    #
+    # We get o = 2
+    # Distances (from 2 to x):
+    #
+    # [1.0, 0.0, 1.41, 1.0]
+    #
+    # Subtract by maximum and take absolute:
+    #
+    # [0.41, 1.41, 0.0, 0.41]
+    #
+    # Normalize:
+    #
+    # [0.18, 0.63, 0.0, 0.18] -> Possible definition of O(o=2|s', a)
+    #
+    # If we want O(o=2, s'=1, a) -> we get 0.18
+
+
+    # Implementation
+    # -> Convert from int state to vector
+    # -> Calculate the difference vector: (C = A - B)
+    # -> Calculate the norm: (norm(C))
+
     updated_b = Any[]
     #equation of the belief update_belief
     #=
