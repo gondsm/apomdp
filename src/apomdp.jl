@@ -752,17 +752,18 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
     # -> Calculate the difference vector: (C = A - B)
     # -> Calculate the norm: (norm(C))
 
-    b_prime = [0.0, 0.0, 0.0, 0.0]
+    
     #equation of the belief update_belief
     #=
         b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
     =#
-    #example of 4 states and 
+    #example of 4 states and 2 actions  
     println("Initial belief $belief")
     states = [[1,1] [1,2] [2,1] [2,2]]
     state_indices = [1, 2, 3, 4]
     dist_vector = zeros(size(states,2))
 
+    b_prime = zeros(size(states,2))
     #observation 
     o=1
     println("Observation: $o")
@@ -775,7 +776,7 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
         #println(dist_vector)
         #println("states:", states[s:s+size(states,1)-1]) 
         # TODO: Hend, look at this thing:
-        s=s+2
+        s=s+size(states,1)
     end
 
     dist_vector = abs.(dist_vector-maximum(dist_vector))
@@ -786,28 +787,33 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
     # https://en.wikipedia.org/wiki/Partially_observable_Markov_decision_process
     for s_prime in state_indices
         sum_t = 0.0
+        #println("=====s_prime=====",s_prime)
         for s in state_indices
+            #println("-----s-----",s)
             key = [s, action]
             #println("key:",key)
             #println("transition[key]:",transition[key])
             t=transition[key]
-            #println("b",belief)
-            #println("a",a)
-            #println("b[a]:",t[a])
-            sum_t += t[s_prime]*belief[s]
+            #println("t",t)
+            #println("t[s_prime]",t[s_prime])
+            #println("belief[s]:",belief[s])
+            m = t[s_prime]*belief[s]
+            sum_t = sum_t + m
+            #println("sum_t:",sum_t)
         end
         b_prime[s_prime] = dist_vector[o]*sum_t
+        #println("b_prime[s_prime]:",b_prime[s_prime])
     end 
-
+    #println("+++b_prime: ",b_prime)
     b_prime = b_prime / sum(b_prime)
 
-    println("b': $b_prime")
+    #println("b': $b_prime")
     
     #normalize
     #update_belief[:] = normalize(update_belief[:], 1)
 
     # Return empty bogus array. Final type must match shared_data.msg
-    return Float32[]
+    return b_prime
 end
 
 

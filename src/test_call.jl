@@ -41,7 +41,7 @@ weight = normalize(rand(1),1)=#
 #world_structure = [2,2,2] # every node of the world will have 3 speicifications with 2 values 0 or 1 [fire, debris, victim]
 
 # Read configuration
-config = YAML.load(open("/home/vsantos/catkin_ws/src/apomdp/config/common.yaml"))
+config = YAML.load(open("/home/hend/catkin_ws/src/apomdp/config/common.yaml"))
 n_actions = config["n_actions"]
 n_agents = config["n_agents"]
 nodes_num = config["nodes_num"]
@@ -171,15 +171,17 @@ belief_vector = [1.0 2.0 1.0 5.0]
 belief_vector = belief_vector / sum(belief_vector)
 # [state_index, action] -> distribution
 t1 = Dict(
-	[1,1] => [0.25, 0.75, 0.25, 0.75], 
-	[1,2] => [0.15, 0.85, 0.15, 0.85], 
-	[2,1] => [0.05, 0.95, 0.05, 0.95], 
-	[2,2] => [0.95, 0.05, 0.95, 0.05],
-	[3,1] => [0.25, 0.75, 0.25, 0.75], 
-	[3,2] => [0.15, 0.85, 0.15, 0.85], 
-	[4,1] => [0.05, 0.95, 0.05, 0.95], 
-	[4,2] => [0.95, 0.05, 0.95, 0.05]
+	[1,1] => [0.65, 0.25, 0.0, 0.1], 
+	[1,2] => [0.15, 0.75, 0.1, 0.00], 
+	[2,1] => [0.05, 0.85, 0.05, 0.05], 
+	[2,2] => [0.05, 0.00, 0.9, 0.05],
+	[3,1] => [0.65, 0.2, 0.15, 0.0], 
+	[3,2] => [0.8, 0.1, 0.05, 0.05], 
+	[4,1] => [0.9, 0.0, 0.05, 0.05], 
+	[4,2] => [0.8, 0.05, 0.05, 0.1]
 	)
 a = 1
 o = 2
 b_prime = update_belief(pomdp, o, a, belief_vector, t1)
+
+println(b_prime)
