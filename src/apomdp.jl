@@ -661,7 +661,7 @@ function get_action(pomdp::aPOMDP, policy, belief)
 end
 
 
-function update_belief(pomdp::aPOMDP, observation, action, belief, transition)
+function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief, transition)
     # Steps: 
     # Will pass observation, action, belief and transition to a function in apomdp.update_belief
     # It will return the updated belief 
@@ -752,26 +752,46 @@ function update_belief(pomdp::aPOMDP, observation, action, belief, transition)
     # -> Calculate the difference vector: (C = A - B)
     # -> Calculate the norm: (norm(C))
 
-    updated_b = Any[]
+    b_prime = Any[]
     #equation of the belief update_belief
     #=
         b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
     =#
+    #example of 4 states and 
+    states = [[1,1] [1,2] [2,1] [2,2]]
+    dist_vector = zeros(size(states,2))
+    println("size(states,1):", size(states,2))
+    #observation 
+    o=2
     sum_t =0.0
-    for s in pomdp.states
-           key = [s,action]
-           println("key:",key)
-           println("transition[key]:",transition[key])
-           t=transition[key]
-           println("b",b)
-           println("a",a)
-           println("b[a]:",t[action])
-           sum_t += t[action]*belief[s]
-           update_belief[s] = observation[s]*sum_t
+    s=1
+    for i=1:size(states,2)
+        obs_state = states[o+size(states,1)-1:o+size(states,1)-1+size(states,1)-1]
+        println(obs_state)
+        dist_vector[i]=norm(obs_state-(states[s:s+size(states,1)-1]))
+        println(dist_vector)
+        #println("states:", states[s:s+size(states,1)-1]) 
+        s=s+2
     end
 
+    dist_vector = abs(dist_vector-maximum(dist_vector))
+    dist_vector = dist_vector / sum(dist_vector)
+    println(dist_vector)
+
+    for s=1:size(states,2)
+        key = [s,a]
+        println("key:",key)
+        println("transition[key]:",transition[key])
+        t=transition[key]
+        println("b",b)
+        println("a",a)
+        println("b[a]:",t[a])
+        sum_t += t[a]*belief[s]
+        update_belief[s] = dist_vector[o]*sum_t
+    end 
+    
     #normalize
-    update_belief[:] = normalize(update_belief[:], 1)
+    #update_belief[:] = normalize(update_belief[:], 1)
 
     # Return empty bogus array. Final type must match shared_data.msg
     return Float32[]

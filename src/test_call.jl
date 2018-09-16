@@ -88,10 +88,10 @@ t1 = Dict([1,1] => [0.25, 0.75], [1,2] => [0.15, 0.85], [2,1] => [0.05, 0.95], [
 t2 = Dict([1,1] => [0.35, 0.65], [1,2] => [0.25, 0.75], [2,1] => [0.75, 0.25], [2,2] => [0.85, 0.15])
 t3 = Dict([1,1] => [0.45, 0.55], [1,2] => [0.35, 0.65], [2,1] => [0.65, 0.35], [2,2] => [0.25, 0.75])
 println("t1:", t1)
-transition_vector = [t1, t2, t3]
+#=transition_vector = [t1, t2, t3]
 fused_T = fuse_transitions(pomdp, transition_vector)
 println("fused_T: ", fused_T)
-
+=#
 # call learn function ####################################
 #bogas info for 2 states and 2 actions 
 #=current_belief = [0.6 0.4]
@@ -105,11 +105,11 @@ println("local_transition_matrix after learn: ", local_transition_matrix)
 
 #call get_policy #########################################
 #for two actions and two states 
-c_vector = [1, 0]
+#=c_vector = [1, 0]
 println("c_vector:", c_vector)
 policy = get_policy(pomdp, fused_T, c_vector)
 println("policy: ", policy)
-
+=#
 
 #plot(fused_belief, color="red", linewidth=2.0, linestyle="--")
 #=b = Any[]
@@ -162,3 +162,8 @@ println("normalized fused_belief: ", fused_belief)
 #println("after fused: ", belief_f)
 #plot_(result, fused_belief)
 
+
+##################calling update beliefe###################
+a = 1
+o = 2
+b_prime = update_belief(pomdp, o, a, belief_vector, t1)
