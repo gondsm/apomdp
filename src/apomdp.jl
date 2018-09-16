@@ -752,43 +752,56 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
     # -> Calculate the difference vector: (C = A - B)
     # -> Calculate the norm: (norm(C))
 
-    b_prime = Any[]
+    b_prime = [0.0, 0.0, 0.0, 0.0]
     #equation of the belief update_belief
     #=
         b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
     =#
     #example of 4 states and 
+    println("Initial belief $belief")
     states = [[1,1] [1,2] [2,1] [2,2]]
+    state_indices = [1, 2, 3, 4]
     dist_vector = zeros(size(states,2))
-    println("size(states,1):", size(states,2))
+
     #observation 
-    o=2
-    sum_t =0.0
+    o=1
+    println("Observation: $o")
+
     s=1
     for i=1:size(states,2)
         obs_state = states[o+size(states,1)-1:o+size(states,1)-1+size(states,1)-1]
-        println(obs_state)
+        #println(obs_state)
         dist_vector[i]=norm(obs_state-(states[s:s+size(states,1)-1]))
-        println(dist_vector)
+        #println(dist_vector)
         #println("states:", states[s:s+size(states,1)-1]) 
+        # TODO: Hend, look at this thing:
         s=s+2
     end
 
-    dist_vector = abs(dist_vector-maximum(dist_vector))
+    dist_vector = abs.(dist_vector-maximum(dist_vector))
     dist_vector = dist_vector / sum(dist_vector)
-    println(dist_vector)
+    println("Distance/probability vector: $dist_vector")
 
-    for s=1:size(states,2)
-        key = [s,a]
-        println("key:",key)
-        println("transition[key]:",transition[key])
-        t=transition[key]
-        println("b",b)
-        println("a",a)
-        println("b[a]:",t[a])
-        sum_t += t[a]*belief[s]
-        update_belief[s] = dist_vector[o]*sum_t
+    # TODO: correct this according to the equation
+    # https://en.wikipedia.org/wiki/Partially_observable_Markov_decision_process
+    for s_prime in state_indices
+        sum_t = 0.0
+        for s in state_indices
+            key = [s, action]
+            #println("key:",key)
+            #println("transition[key]:",transition[key])
+            t=transition[key]
+            #println("b",belief)
+            #println("a",a)
+            #println("b[a]:",t[a])
+            sum_t += t[s_prime]*belief[s]
+        end
+        b_prime[s_prime] = dist_vector[o]*sum_t
     end 
+
+    b_prime = b_prime / sum(b_prime)
+
+    println("b': $b_prime")
     
     #normalize
     #update_belief[:] = normalize(update_belief[:], 1)
