@@ -772,8 +772,50 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief:
     dist_vector = zeros(size(states,2))
     b_prime = zeros(size(states,2)) 
     
+    # Possible optimization: mahalanobis-like distance for states
+    # s1 = [1, 2, 1, 0]
+    #
+    # We know that the closest possible states will differ by
+    # -> One variable
+    # -> One unit
+    #
+    # Meaning that the closes states will be (e.g.):
+    #
+    # s2 = [2, 2, 1, 0]
+    # s3 = [1, 3, 1, 0]
+    # s4 = [1, 2, 2, 0]
+    # [...]
+    #
+    # Thus, we have a neighborhood of arbitrary distance in the state space!
+    # Approach: we can disregard states that are farther away than a certain
+    # fixed distance, and take only the remaining into account when updating
+    # the belief.
+    #
+    # states = [1, 2, 3, 4, 5]
+    # obs = 2
+    # If states closer than distance = 1: [3, 4], then
+    # -> Calculate vector only for these,
+    # -> Update the belief only for these
+    # -> Re-normalize the belief
+    #
+    # So, instead of building dist_vector over the whole state space, we need
+    # to generate a neighborhood of states, and build dist_vector over those!
+    #
+    # Set a distance (for instance 1 or 2)
+    # Get all states within that maximum distance
+    # Re-calculate all the stuff based only on that
+
+
+    # Create a neighborhood of close states
+    # Idea: define neighborhood per agent
+
+    # Get the neighborhood surrounding o
+    neighborhood = find_neighborhood(pomdp, o)
+
     #create dist_vector- 
-    for i in states
+    #for i in states
+    # OPERATE ONLY ON THE NEIGHBORHOOD
+    for i in neighborhood
         dist_vector[i]=norm(state_from_index(pomdp,o)-state_from_index(pomdp,i)) 
     end
 
@@ -784,12 +826,19 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief:
 
     # TODO: correct this according to the equation
     # https://en.wikipedia.org/wiki/Partially_observable_Markov_decision_process
-    for s_prime in states
+    # CAREFUL: use only the indices of the neighborhood
+    for s_prime in neighborhood
         sum_t = 0.0
-        for s in states
+        for s in neighborhood
             key = [s, action]
-            t = transition[key]
-            m = t[s_prime]*belief[s]
+            try
+                t = transition[key]
+                t_s_prime = t[s_prime]
+            catch
+                # then create a uniform distribution of the correct length
+                t_s_prime = #something else (uniform distribution, 1/n_states)
+            end
+            m = t_s_prime*belief[s]
             sum_t = sum_t + m
         end
         b_prime[s_prime] = dist_vector[o]*sum_t
