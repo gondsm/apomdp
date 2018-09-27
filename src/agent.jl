@@ -210,9 +210,24 @@ function main(agent_id)
 
     # Initialize variables 
     # TODO: do it properly 
-    fused_T = nothing
+    fused_T = nothing # This is for what? 
     ability_vector = [nothing, nothing, nothing, nothing] #TODO: read this from configuration (agent.yaml) 
 
+    #TODO: first iteration there should be initial belief vector ?
+    beliefs_vector = zeros(pomdp.states)
+    #TODO: make the transition vector also initial value 
+    transitions_vector = Dict()
+    #key = zeros(Int64,pomdp.states,pomdp.n_actions)
+    #value= zeros(pomdp.states)
+    for s in pomdp.states
+        for a in 1:pomdp.n_actions
+            key = [s, a]
+            transitions_vector[key] = 0.0
+        end
+    end
+
+    
+    
     # "spin" while waiting for requests
     println("Going into execution loop!")
 
@@ -224,8 +239,10 @@ function main(agent_id)
         println("Iteration $iter")
 
         # Get the cost 
-        println("========print beliefs_vector================")
-        println(beliefs_vector)
+        #println("========print beliefs_vector================")
+        
+        #println(beliefs_vector)
+        #agent_index = 1
         # Get the cost 
         println("Calculating cost vector")
         c_vector = calc_cost_vector(nodes_connectivity,n_agents,world_structure,agent_id,n_actions,beliefs_vector[agent_index], pomdp, agents_capabibilities)
@@ -252,13 +269,14 @@ function main(agent_id)
         observation = YAML.load(observation_msg.o.obs)
         println(observation)      
         temp_s = state_b_to_a(pomdp, observation)
-        
+        println("temp_s: ",temp_s)
         index = POMDPs.state_index(pomdp, temp_s)
+        println("index:",index)
         temp_s = state_from_index(pomdp,index) 
         println(temp_s)
         println("Which has index: ",index)
 
-
+        index =5
         # Update belief - on the local 
         previous_b = beliefs_vector[agent_index] # save the previous belief 
         println("previous_b:",previous_b)
@@ -266,7 +284,8 @@ function main(agent_id)
         println("action:",action)
         println("beliefs_vector[agent_index]:",beliefs_vector[agent_index])
         println("transitions_vector[agent_index]:",transitions_vector[agent_index])
-        beliefs_vector[agent_index]= update_belief(pomdp, observation, action, beliefs_vector[agent_index], transitions_vector[agent_index])
+        beliefs_vector[agent_index]= update_belief(pomdp, index, action, beliefs_vector[agent_index], transitions_vector[agent_index])
+        println("beliefs_vector[agent_index]:",beliefs_vector[agent_index])
         #TODO: rethink if we should use the local transition or the fused one
 
         # Fuse beliefs

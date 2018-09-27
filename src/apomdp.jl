@@ -661,7 +661,7 @@ function get_action(pomdp::aPOMDP, policy, belief)
 end
 
 
-function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief, transition)
+function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief::Array, transition=Dict())
     # Steps: 
     # Will pass observation, action, belief and transition to a function in apomdp.update_belief
     # It will return the updated belief 
@@ -754,65 +754,50 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
 
     
     #equation of the belief update_belief
-    #=
-        b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
-    =#
+    #b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
+    
     #example of 4 states and 2 actions  
-    println("Initial belief $belief")
-    states = [[1,1] [1,2] [2,1] [2,2]]
-    state_indices = [1, 2, 3, 4]
+    #println("Initial belief $belief")
+    #states = [[1,1] [1,2] [2,1] [2,2]]
+    #state_indices = [1, 2, 3, 4]
+    #o=1
+    #println("Observation: $o")
+    
+    println("Observation: $observation")
+    o=observation
+    #states
+    states = pomdp.states # these actually the indicies of the states not the actual ones 
+
+    #initialization
     dist_vector = zeros(size(states,2))
-
-    b_prime = zeros(size(states,2))
-    #observation 
-    o=1
-    println("Observation: $o")
-
-    s=1
-    for i=1:size(states,2)
-        obs_state = states[o+size(states,1)-1:o+size(states,1)-1+size(states,1)-1]
-        #println(obs_state)
-        dist_vector[i]=norm(obs_state-(states[s:s+size(states,1)-1]))
-        #println(dist_vector)
-        #println("states:", states[s:s+size(states,1)-1]) 
-        # TODO: Hend, look at this thing:
-        s=s+size(states,1)
+    b_prime = zeros(size(states,2)) 
+    
+    #create dist_vector- 
+    for i in states
+        dist_vector[i]=norm(state_from_index(pomdp,o)-state_from_index(pomdp,i)) 
     end
 
+    #probability of distances and normalize 
     dist_vector = abs.(dist_vector-maximum(dist_vector))
     dist_vector = dist_vector / sum(dist_vector)
     println("Distance/probability vector: $dist_vector")
 
     # TODO: correct this according to the equation
     # https://en.wikipedia.org/wiki/Partially_observable_Markov_decision_process
-    for s_prime in state_indices
+    for s_prime in states
         sum_t = 0.0
-        #println("=====s_prime=====",s_prime)
-        for s in state_indices
-            #println("-----s-----",s)
+        for s in states
             key = [s, action]
-            #println("key:",key)
-            #println("transition[key]:",transition[key])
-            t=transition[key]
-            #println("t",t)
-            #println("t[s_prime]",t[s_prime])
-            #println("belief[s]:",belief[s])
+            t = transition[key]
             m = t[s_prime]*belief[s]
             sum_t = sum_t + m
-            #println("sum_t:",sum_t)
         end
         b_prime[s_prime] = dist_vector[o]*sum_t
-        #println("b_prime[s_prime]:",b_prime[s_prime])
     end 
-    #println("+++b_prime: ",b_prime)
+    #normalize
     b_prime = b_prime / sum(b_prime)
 
-    #println("b': $b_prime")
-    
-    #normalize
-    #update_belief[:] = normalize(update_belief[:], 1)
-
-    # Return empty bogus array. Final type must match shared_data.msg
+    # TODO: confirm with goncalo: Final type must match shared_data.msg
     return b_prime
 end
 
