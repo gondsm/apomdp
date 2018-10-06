@@ -1,4 +1,3 @@
-import YAML
 
 #Pkg.add("PyPlot")
 #using PyPlot
@@ -8,6 +7,7 @@ if !isdefined(:aPOMDP)
    include("./apomdp.jl")
 end
 include("./apomdp.jl")
+import YAML
 
 
 #function plot_(x, y)
@@ -41,7 +41,7 @@ weight = normalize(rand(1),1)=#
 #world_structure = [2,2,2] # every node of the world will have 3 speicifications with 2 values 0 or 1 [fire, debris, victim]
 
 # Read configuration
-config = YAML.load(open("/home/vsantos/catkin_ws/src/apomdp/config/common.yaml"))
+config = YAML.load(open("/home/hend/catkin_ws/src/apomdp/config/common.yaml"))
 n_actions = config["n_actions"]
 n_agents = config["n_agents"]
 nodes_num = config["nodes_num"]

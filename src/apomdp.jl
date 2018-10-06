@@ -202,13 +202,13 @@ function calculate_reward_matrix(pomdp::aPOMDP)
             for f = 1:pomdp.n_v_s
                 inner_sum = 0
                 for state = dist.state_space
-                    v_s_1 = try
-                        pomdp.state_values[f][state]
+                    try
+                        v_s_1 =pomdp.state_values[f][state]
                     catch
                         0
                     end
-                    v_s_2 = try 
-                        pomdp.state_values[f][s]
+                    try 
+                        v_s_2 =pomdp.state_values[f][s]
                     catch
                         0
                     end
@@ -218,13 +218,15 @@ function calculate_reward_matrix(pomdp::aPOMDP)
             end
         else
             for state = dist.state_space
-                v_s_1 = try
-                    pomdp.state_values[1][state]
+                 
+                try
+                    v_s_1 =pomdp.state_values[1][state]
                 catch
                     0
                 end
-                v_s_2 = try 
-                    pomdp.state_values[1][s]
+                 
+                try 
+                    v_s_2 =pomdp.state_values[1][s]
                 catch
                     0
                 end
@@ -352,8 +354,9 @@ function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     # TODO: also likely limited to 2 state vars
     key = state[:]
     append!(key, action)
-    r = try
-        pomdp.reward_matrix[key]
+     
+    try
+        r =pomdp.reward_matrix[key]
     catch
         0
     end
@@ -810,14 +813,14 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief:
     # Idea: define neighborhood per agent
 
     # Get the neighborhood surrounding o
-    neighborhood = find_neighborhood(pomdp, o)
+    #neighborhood = find_neighborhood(pomdp, o)
 
     #create dist_vector- 
     #for i in states
     # OPERATE ONLY ON THE NEIGHBORHOOD
-    for i in neighborhood
-        dist_vector[i]=norm(state_from_index(pomdp,o)-state_from_index(pomdp,i)) 
-    end
+    #for i in neighborhood
+    #    dist_vector[i]=norm(state_from_index(pomdp,o)-state_from_index(pomdp,i)) 
+    #end
 
     #probability of distances and normalize 
     dist_vector = abs.(dist_vector-maximum(dist_vector))
@@ -827,7 +830,7 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief:
     # TODO: correct this according to the equation
     # https://en.wikipedia.org/wiki/Partially_observable_Markov_decision_process
     # CAREFUL: use only the indices of the neighborhood
-    for s_prime in neighborhood
+    #=for s_prime in neighborhood
         sum_t = 0.0
         for s in neighborhood
             key = [s, action]
@@ -842,12 +845,12 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief:
             sum_t = sum_t + m
         end
         b_prime[s_prime] = dist_vector[o]*sum_t
-    end 
+    end =#
     #normalize
-    b_prime = b_prime / sum(b_prime)
+    #b_prime = b_prime / sum(b_prime)
 
     # TODO: confirm with goncalo: Final type must match shared_data.msg
-    return b_prime
+    #return b_prime
 end
 
 
