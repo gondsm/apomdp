@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 
-# TODO: Write module docstring
+"""
+This script implements a ROS node for simulating a search and rescue scenario. The node is
+responsible for maintaining the (true) state of the world, receiving actions from the agents
+replying with noisy observations. This essentially done based on the assumptions that are specified
+in the config/*.yaml files.
+
+The node is also responsible for broadcasting messages to agents, introducing noise in the
+communication under the form of lost messages. This is done using the inverse-square law to
+model a noisy channel with message loss.
+"""
 
 # Futures
 from __future__ import print_function
