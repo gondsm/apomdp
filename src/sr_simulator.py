@@ -37,7 +37,7 @@ import time
 # Global Variables
 # The only functions that touch these variables are the ROS callbacks and the
 # initialization function.
-# The ROS callbacks use a mutext to ensure that there is no simultaneous
+# The ROS callbacks use a mutex to ensure that there is no simultaneous
 # access to the variables.
 state = []                  # Maintains the state of the simulated world
 connection_matrix = []      # Maintains the connectivity of the agents
@@ -45,10 +45,10 @@ connectivity_constant = 0   # Connectivity constant (see problem.yaml)
 shared_data_pubs = []       # Maintains publishers for each individual agent
 global_lock = []            # Mutex for controlling critical sections
 log_dict = dict()           # A dictionary containing the full logs of the execution
-nodes_location = dict()
-node_connectivity = dict()
-agent_abilities = []
-n_actions = 0
+nodes_location = dict()     # A dictionary containing the locations of nodes (see common.yaml)
+node_connectivity = dict()  # A dictionary containing how nodes are connected (see common.yaml)
+agent_abilities = []        # A dictionary containing the agents' abilities (see common.yaml)
+n_actions = 0               # The action space (see common.yaml)
 
 
 # Logging functions
