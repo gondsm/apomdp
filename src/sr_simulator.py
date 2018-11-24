@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """
 This script implements a ROS node for simulating a search and rescue scenario. The node is
@@ -161,7 +162,6 @@ def calc_connection_matrix(state, c):
             a2 = state["Agents"][j+1][0]
             # Calculate dist between agents
             d = math.sqrt((a1-a2)**2 + (a1-a2)**2)
-            print(d)
             # Apply inverse-square law
             try:
                 connection_matrix[i][j] = c*(1/(d**2))
@@ -195,7 +195,7 @@ def generate_observation(state, action, agent, noisy=True):
     # Then, for each bit in the cell, we sample a uniform distribution.
     # If the result in lower than the probability of noise, then we randomly
     # attribute a value to the bit.
-    node = state["Agents"][agent] # Get node location of the agent
+    node = state["Agents"][agent][0] # Get node location of the agent
 
     # Ǵet the position of the node
     position_x = nodes_location[node][0]
@@ -205,10 +205,12 @@ def generate_observation(state, action, agent, noisy=True):
     # TODO: fix this calculation, it appears to be using indices and not
     # actual position values (probably wrongly adapted from previous code)
     for i in range(len(state["World"])):
+        # Calculate distance/probability of noise for the cell
+        cell_pos_x = nodes_location[i+1][0]
+        cell_pos_y = nodes_location[i+1][0]
+        dist = math.sqrt((cell_pos_x-position_x)**2 + (cell_pos_y-position_y)**2)
+        prob = dist / len(state["World"]) # Normalized distance = probability of noise
         for j in range(len(state["World"][i])):
-            # Calculate distance/probability of noise for the cell
-            dist = math.sqrt((i-position_x)**2 + (j-position_y)**2)
-            prob = dist / len(state["World"]) # Normalized distance = probability of noise
             # Corrupt bits one by one
             if random.random() < prob:
                 obs["World"][i][j] = random.randint(0, 1)
@@ -223,7 +225,7 @@ def transition(state, action, agent_id):
     """
     action = 0
     # Get the node of the agent
-    node = state["Agents"][agent_id]
+    node = state["Agents"][agent_id][0]
 
     # Copy state to output variable
     new_state = copy.deepcopy(state)
