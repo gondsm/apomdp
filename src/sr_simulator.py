@@ -37,8 +37,9 @@ shared_data_pubs = [] 		# Maintains publishers for each individual agent
 global_lock = [] 			# Mutex for controlling critical sections
 log_dict = dict()			# A dictionary containing the full logs of the execution
 nodes_location = dict()
-nodes_connectivity = dict()
-n_actions =0
+node_connectivity = dict()
+agent_abilities = []
+n_actions = 0
 
 
 # Logging functions
@@ -77,48 +78,45 @@ def dump_log(filename, log):
 
 
 # Simulation functions
-def initialize_system(common_data_filename, team_config_filename, problem_config_file):
+def initialize_system(common_data_filename, problem_config_filename):
 	""" Receives a file name and initializes the global variables according to
 	the information contained therein.
 
 	The function assumes the file is YAML
 	"""
 	# Inform
-	rospy.loginfo("Initializing system. Files loaded:\n{}\n{}".format(common_data_filename, team_config_filename))
+	rospy.loginfo("Initializing system. Files loaded:\n{}\n{}".format(common_data_filename, problem_config_filename))
 
 	# Read data from files
 	common_data = []
-	team_config = []
 	problem_data = []
 	with open(common_data_filename) as data_file:
 		common_data = yaml.load(data_file)
-	with open(team_config_filename) as data_file:
-		team_config = yaml.load(data_file)
-	with open(problem_config_file) as data_file:
+	with open(problem_config_filename) as data_file:
 		problem_data = yaml.load(data_file)
 
 	# Inform
 	rospy.loginfo("Common information: {}".format(common_data))
-	rospy.loginfo("Team configuration: {}".format(team_config))
 	rospy.loginfo("Problem: {}".format(problem_data))
 
-	# Build state vector
+	# Build state vector from first state
 	global state
-	# Get first state
 	state = problem_data["initial_state"]
-	#print("state:",state)
 
 	global nodes_location 
 	nodes_location = common_data["nodes_location"]
 	print("nodes_location",nodes_location)
 
-	global nodes_connectivity
-	nodes_connectivity = common_data["nodes_connectivity"]
-	print ("nodes_connectivity",nodes_connectivity)
+	global node_connectivity
+	node_connectivity = common_data["node_connectivity"]
+	print ("node_connectivity",node_connectivity)
+
+	global agent_abilities
+	agent_abilities = common_data["agent_abilities"]
 
 	global n_actions
-	n_actions = common_data["n_actions"]
-	print ("n_actions",n_actions) 
+	n_actions = len(node_connectivity) + len(agent_abilities[1])
+
 	# Set connectivity_constant
 	global connectivity_constant
 	connectivity_constant = problem_data["connectivity_constant"]
@@ -137,6 +135,7 @@ def calc_connection_matrix(state, c):
 	associated connectivity matrix containing the probability of message
 	delivery to and from every agent.
 	"""
+	# TODO: fix after changes: the agent's coordinates are no longer in the state, and have to be gotten from the location of the nodes (common)
 	# Allocate the Matrix	
 	n_agents = len(state["Agents"])
 
@@ -146,10 +145,8 @@ def calc_connection_matrix(state, c):
 	for i in range(n_agents):
 		for j in range(n_agents):
 			# Import agent coordinates to local variables
-			a1 = state["Agents"][i+1]
-			a2 = state["Agents"][j+1]
-			print("a1",a1)
-			print("a2",a2)
+			a1 = state["Agents"][i+1][0]
+			a2 = state["Agents"][j+1][0]
 			# Calculate dist between agents
 			d = math.sqrt((a1-a2)**2 + (a1-a2)**2)
 			print(d)
@@ -218,7 +215,7 @@ def transition(state, action, agent_id):
 	# Get the node of the agent
 	node = state["Agents"][agent_id]
 
-	#TODO: we don't need this maybe? since i am using nodes_connectivity in common.yaml 
+	#TODO: we don't need this maybe? since i am using node_connectivity in common.yaml 
 	# get the position of the node (x and y)
 	position_x = nodes_location[node][0]
 	position_y = nodes_location[node][1]
@@ -247,7 +244,7 @@ def transition(state, action, agent_id):
 			new_state["World"][node][2] = 0
 	# If action is move
 	elif action > 2 and action != n_actions-2:
-		new_node=nodes_connectivity[node][action]
+		new_node=node_connectivity[node][action]
 		# new_node cannot go to any direction 
 		if new_node == 0:
 			new_state["Agents"][agent_id]=state["World"][node]
@@ -343,9 +340,8 @@ if __name__ == "__main__":
 	# Initialize state
 	rospack = rospkg.RosPack()
 	common_filename = rospack.get_path('apomdp') + "/config/common.yaml"
-	team_filename = rospack.get_path('apomdp') + "/config/team.yaml"
 	problem_filename = rospack.get_path('apomdp') + "/config/problem.yaml"
-	initialize_system(common_filename, team_filename, problem_filename)
+	initialize_system(common_filename, problem_filename)
 
 	# Define log file location
 	log_filename = rospack.get_path('apomdp') + "/config/{}_sim_log.yaml".format(int(time.time()))

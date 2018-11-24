@@ -1,47 +1,10 @@
 # Configuration file for specifying the objectives and ground-truth structure of the world
-# Ambitious
-# initial_state:
-#   Agents: #agent_id: [Node<int>,Equipped<bool>]
-#    1: [15,0] #UAV
-#    2: [13,0] #UGV
-#    3: [12,0] #Responder1
-#    4: [14,0] #Responder2
-#    5: [18,0] #Responder3
-# # The "World" state is a matrix of lists, with each inner list corresponding to one cell
-# # of the world. Variables are defined as follows:
-# # [fire, debris, victim, door, window, responder]
-#   World:
-#    [[1,0,0,0,0], # node 1
-#     [0,0,1,0,0], # node 2
-#     [0,1,0,0,0], # node 3
-#     [0,0,0,0,0], # node 4
-#     [1,0,0,0,0], # node 5
-#     [0,0,1,0,0], # node 6
-#     [1,0,0,0,0], # node 7
-#     [0,0,1,0,0], # node 8
-#     [0,0,0,0,0], # node 9
-#     [1,0,0,0,0], # node 10
-#     [0,0,0,1,0], # node 11
-#     [0,0,0,0,0], # node 12
-#     [0,0,0,0,0], # node 13
-#     [0,0,0,0,0], # node 14
-#     [0,0,0,0,0], # node 15
-#     [0,0,0,0,0], # node 16
-#     [0,0,0,0,1], # node 17
-#     [0,0,0,0,0]] # node 18
-# # This constant is multiplied by the probability of message delivery to modulate the
-# # inverse-square law to fit our needs.  
-# connectivity_constant: 1.0
-
 # Conservative:
 initial_state:
   Agents:
-    1: 5 #UGV
-    2: 7 #UAV
-    #3: 6 #Human
-    #3: [2,1]
-# The "World" state is a matrix of lists, with each inner list corresponding to one cell
-# of the world. Variables are defined as follows:
+    1: [5] #UGV
+    2: [7] #UAV
+# This list contains an element for each node in the world:
 # [fire, debris, victim]
   World:
     [[1,0,0], #node 1
@@ -51,6 +14,7 @@ initial_state:
      [0,0,0], #node 5
      [0,0,0], #node 6
      [0,0,0]] #node 7 
+
 # This constant is multiplied by the probability of message delivery to modulate the
 # inverse-square law to fit our needs.  
 connectivity_constant: 1.0
