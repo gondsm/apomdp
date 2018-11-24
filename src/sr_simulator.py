@@ -223,7 +223,6 @@ def transition(state, action, agent_id):
     """ Updates the state of the world according to the action that
     was received. Returns the updated state of the world.
     """
-    action = 0
     # Get the node of the agent
     node = state["Agents"][agent_id][0]
 
@@ -232,7 +231,6 @@ def transition(state, action, agent_id):
 
     # Process each possible action
     # If action is put out fire
-    # TODO: completely rework this according to the new action definition:
     # [fire, victim, path, <move to node i>]
     if action == 0:
         # If there is fire in the current position, it gets put out
@@ -249,14 +247,11 @@ def transition(state, action, agent_id):
         if state["World"][node][2] == 1:
             new_state["World"][node][2] = 0
     # If action is move
-    elif action > 2 and action != n_actions-2:
-        new_node = node_connectivity[node][action]
-        # TODO: change according to new actions
-        if new_node == 0:
-            new_state["Agents"][agent_id] = state["World"][node]
-        # Direction will take you to another node
-        else:
-            new_state["Agents"][agent_id] = state["World"][new_state]
+    elif action > 2:
+        # If the agent wants to move, we move it.
+        # (pomdp costs should avoid illegal movement)
+        new_node = action - 3
+        new_state["Agents"][agent_id][0] = new_node
 
     print("agent in node: ", state["Agents"][agent_id])
     print("action taken:", action)
