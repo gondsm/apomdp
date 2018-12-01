@@ -46,7 +46,7 @@ connectivity_constant = 0   # Connectivity constant (see problem.yaml)
 shared_data_pubs = []       # Maintains publishers for each individual agent
 global_lock = []            # Mutex for controlling critical sections
 log_dict = dict()           # A dictionary containing the full logs of the execution
-nodes_location = dict()     # A dictionary containing the locations of nodes (see common.yaml)
+node_locations = dict()     # A dictionary containing the locations of nodes (see common.yaml)
 node_connectivity = dict()  # A dictionary containing how nodes are connected (see common.yaml)
 agent_abilities = []        # A dictionary containing the agents' abilities (see common.yaml)
 n_actions = 0               # The action space (see common.yaml)
@@ -118,9 +118,9 @@ def initialize_system(common_data_filename, problem_config_filename):
     global state
     state = problem_data["initial_state"]
 
-    global nodes_location
-    nodes_location = common_data["nodes_location"]
-    print("nodes_location",nodes_location)
+    global node_locations
+    node_locations = common_data["node_locations"]
+    print("node_locations",node_locations)
 
     global node_connectivity
     node_connectivity = common_data["node_connectivity"]
@@ -198,16 +198,16 @@ def generate_observation(state, action, agent, noisy=True):
     node = state["Agents"][agent][0] # Get node location of the agent
 
     # Ǵet the position of the node
-    position_x = nodes_location[node][0]
-    position_y = nodes_location[node][1]
+    position_x = node_locations[node][0]
+    position_y = node_locations[node][1]
 
     # Corrupt bits as a function of distance
     # TODO: fix this calculation, it appears to be using indices and not
     # actual position values (probably wrongly adapted from previous code)
     for i in range(len(state["World"])):
         # Calculate distance/probability of noise for the cell
-        cell_pos_x = nodes_location[i+1][0]
-        cell_pos_y = nodes_location[i+1][0]
+        cell_pos_x = node_locations[i+1][0]
+        cell_pos_y = node_locations[i+1][0]
         dist = math.sqrt((cell_pos_x-position_x)**2 + (cell_pos_y-position_y)**2)
         prob = dist / len(state["World"]) # Normalized distance = probability of noise
         for j in range(len(state["World"][i])):
