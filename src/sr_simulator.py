@@ -43,7 +43,7 @@ import time
 state = []                  # Maintains the state of the simulated world
 connection_matrix = []      # Maintains the connectivity of the agents
 connectivity_constant = 0   # Connectivity constant (see problem.yaml)
-shared_data_pubs = []       # Maintains publishers for each individual agent
+shared_data_pubs = {}       # Maintains publishers for each individual agent
 global_lock = []            # Mutex for controlling critical sections
 log_dict = dict()           # A dictionary containing the full logs of the execution
 node_locations = dict()     # A dictionary containing the locations of nodes (see common.yaml)
@@ -354,9 +354,8 @@ if __name__ == "__main__":
     rospy.Service('act', Act, receive_action)
 
     # Start the publishers for each agent
-    n_agents = len(state["Agents"])
-    for a in range(n_agents):
-        shared_data_pubs.append(rospy.Publisher('shared_data/{}'.format(a), shared_data, queue_size=10))
+    for a in state["Agents"]:
+        shared_data_pubs[a] = rospy.Publisher('shared_data/{}'.format(a), shared_data, queue_size=10)
 
     # Initialize mutexes
     global_lock = Lock()
