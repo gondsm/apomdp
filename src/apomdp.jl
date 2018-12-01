@@ -580,6 +580,9 @@ function fuse_beliefs(pomdp::aPOMDP, belief_vector)
 
     println("normalized fused_belief: ", fused_belief)=#
 
+    # TODO
+    return nothing
+
     b = Any[]
     for i=1:size(belief_vector,1)
         #println("belief_vector[i]:", belief_vector[i])
@@ -605,6 +608,9 @@ function fuse_transitions(pomdp::aPOMDP, transition_vector)
     # Create the vector of fusion from the transitions_vector which will only contains transitions for fusion --> the clean vector
     # Pass a clean vector(a vector without nothing, a vector that can be used)
     # We should have the fused_T to be returned
+
+    # TODO
+    return nothing
 
     # Warning: the vector may contain "nothings"
 
@@ -672,7 +678,7 @@ function get_action(pomdp::aPOMDP, policy, belief)
 end
 
 
-function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief::Array, transition=Dict())
+function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief, transition=Dict())
     # Steps: 
     # Will pass observation, action, belief and transition to a function in apomdp.update_belief
     # It will return the updated belief 
@@ -774,6 +780,10 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief:
     #o=1
     #println("Observation: $o")
     
+    # TODO
+    # Also rework argument types
+    return nothing
+
     println("Observation: $observation")
     o=observation
     #states
@@ -889,6 +899,9 @@ function learn(pomdp::aPOMDP, current_belief, action, previous_belief, local_tra
     # belief contains the final state
     # action is the action
     # previous_b is the previous belief (previous state)
+
+    # TODO
+    return nothing
 
     # Get the key from the previous state
     # key = prev_state[:]
