@@ -202,12 +202,10 @@ def generate_observation(state, action, agent, noisy=True):
     position_y = node_locations[node][1]
 
     # Corrupt bits as a function of distance
-    # TODO: fix this calculation, it appears to be using indices and not
-    # actual position values (probably wrongly adapted from previous code)
-    for i in range(len(state["World"])):
+    for i in state["World"]:
         # Calculate distance/probability of noise for the cell
-        cell_pos_x = node_locations[i+1][0]
-        cell_pos_y = node_locations[i+1][0]
+        cell_pos_x = node_locations[i][0]
+        cell_pos_y = node_locations[i][0]
         dist = math.sqrt((cell_pos_x-position_x)**2 + (cell_pos_y-position_y)**2)
         prob = dist / len(state["World"]) # Normalized distance = probability of noise
         for j in range(len(state["World"][i])):
@@ -250,7 +248,7 @@ def transition(state, action, agent_id):
     elif action > 2:
         # If the agent wants to move, we move it.
         # (pomdp costs should avoid illegal movement)
-        new_node = action - 3
+        new_node = action - 2
         new_state["Agents"][agent_id][0] = new_node
 
     print("agent in node: ", state["Agents"][agent_id])
