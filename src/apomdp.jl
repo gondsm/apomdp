@@ -59,22 +59,23 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # The kind of reward to be used. Can be one of svr, isvr or msvr
     reward_type::String
     # to define agents state we need 1) number of agents 
-    agents_size::Int64
-    # to define agents state we need 2) specification of agents which is for now their location node 
-    agents_structure::Int64
-    # for search and rescue scenario we have topological map and it has nodes
-    # this to defines how many nodes we have  
-    nodes_num::Int64
-    # for search and rescue scenario - in order to define the world what in it, we need to know how many specifications are there  
-    world_structure::Array
-    # A matrix of ones that represents the full state space
-    state_dims::Array
-    # nodes locations
-    nodes_location::Dict
-    # connectivity of nodes
-    nodes_connectivity::Dict
-    # cost vector
-    c_vector::Array
+    # TODO: Determine if these are really necessary in the aPOMDP object
+    # agents_size::Int64
+    # # to define agents state we need 2) specification of agents which is for now their location node 
+    # agents_structure::Int64
+    # # for search and rescue scenario we have topological map and it has nodes
+    # # this to defines how many nodes we have  
+    # nodes_num::Int64
+    # # for search and rescue scenario - in order to define the world what in it, we need to know how many specifications are there  
+    # world_structure::Array
+    # # A matrix of ones that represents the full state space
+    # state_dims::Array
+    # # nodes locations
+    # nodes_location::Dict
+    # # connectivity of nodes
+    # nodes_connectivity::Dict
+    # # cost vector
+    # c_vector::Array
 end
 
 # Define probability distribution type
@@ -106,23 +107,30 @@ end
 # Define iterator over distribution, returns the list of possible states
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
-# Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), agents_size::Int64=0, agents_structure::Int64=0, nodes_num::Int64=0, world_structure::Array{Int64,1}=[],nodes_location=Dict(), nodes_connectivity=Dict())
+# bPOMDP constructor, encapsulating the original aPOMDP construtcor
+function aPOMDP(n_actions::Int64, agents_size::Int64, agents_structure::Array{Int64,1}, nodes_num::Int64, world_structure::Array{Int64,1}, nodes_location=Dict(), nodes_connectivity=Dict())
     # Generate aPOMDP state structure from bPOMDP structure
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
-    #println("state_structure: ", state_structure)
 
-    #println("Generating states")
+    # And send stuff to the original constructor
+    return aPOMDP("isvr", 1, state_structure, n_actions)
+end
+
+# Default constructor, initializes everything as uniform
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
+    # Generate state space
     states = collect(1:reduce(*, state_structure))
-    #println(size(states))
     state_dims = ones(state_structure...)
 
+    # Fill in state structure
     state_structure = [states[end]]
 
+    # Inform
     println("Initialized new state structure:")
     println(state_structure)
 
+    # Lazy initialization of everything else
     #println("Generating everything else")
     # Initialize V-function attributing values to states
     # The inner cycle initializes V(S) as 0 for all V(S)
@@ -174,17 +182,17 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   reward_dict,
                   0.95,
                   states,
-                  #state_indices,
                   state_structure,
                   reward_type,
-                  agents_size,
-                  agents_structure,
-                  nodes_num,
-                  world_structure,
-                  state_dims,
-                  nodes_location,
-                  nodes_connectivity,
-                  c_vector)
+                  #agents_size,
+                  #agents_structure,
+                  #nodes_num,
+                  #world_structure,
+                  #state_dims,
+                  #nodes_location,
+                  #nodes_connectivity,
+                  #c_vector)
+                  )
 end
 
 # Define reward calculation function
@@ -505,7 +513,7 @@ end
 
 
 # betapomdp
-function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Int64, world_structure::Array{Int64,1})
+function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
     
     # Create array
     apomdp_structure=Array{Int64}((length(agents_structure)*agents_size) + (length(world_structure)*nodes_num))
