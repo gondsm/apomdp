@@ -151,15 +151,22 @@ def calc_connection_matrix(state, c):
     delivery to and from every agent.
     """
     # Allocate the Matrix
-    n_agents = len(state["Agents"])
-    connection_matrix = [[0 for x in range(n_agents)] for y in range(n_agents)]
+    # Maintining the matrix as a dict is less elegant, but makes the code more 
+    # readable and is a simpler way to conform to Julia's 1-indexing without
+    # mysterious +1s all over the code.
+    connection_matrix = {}
 
     # Calculate matrix values
-    for i in range(n_agents):
-        for j in range(n_agents):
+    for i in state["Agents"]:
+        for j in state["Agents"]:
+            # Ensure matrix is allocated
+            try:
+                connection_matrix[i]
+            except KeyError:
+                connection_matrix[i] = {}
             # Import agent coordinates to local variables
-            a1 = state["Agents"][i+1][0]
-            a2 = state["Agents"][j+1][0]
+            a1 = state["Agents"][i][0]
+            a2 = state["Agents"][j][0]
             # Calculate dist between agents
             d = math.sqrt((a1-a2)**2 + (a1-a2)**2)
             # Apply inverse-square law
@@ -273,9 +280,7 @@ def broadcast(msg):
     deliveries = []
 
     # For each other agent in the team
-    n_agents = len(state["Agents"])
-    for a in range(n_agents):
-        # TODO: check if agent indices start at 0 or 1
+    for a in state["Agents"]:
         # Agents won't broadcast to themselves
         if msg.agent_id != a:
             # Get probability of delivery
