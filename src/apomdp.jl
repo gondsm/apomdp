@@ -127,8 +127,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     state_structure = [states[end]]
 
     # Inform
-    println("Initialized new state structure:")
-    println(state_structure)
+    #println("Initialized new state structure:")
+    #println(state_structure)
 
     # Lazy initialization of everything else
     #println("Generating everything else")
