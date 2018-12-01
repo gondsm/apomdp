@@ -343,7 +343,7 @@ if __name__ == "__main__":
     initialize_system(common_filename, problem_filename)
 
     # Define log file location
-    log_filename = rospack.get_path('apomdp') + "/config/{}_sim_log.yaml".format(int(time.time()))
+    log_filename = rospack.get_path('apomdp') + "/results/{}_sim_log.yaml".format(int(time.time()))
     rospy.loginfo("Logs will be saved in {}.".format(log_filename))
 
     # Launch servers etc
