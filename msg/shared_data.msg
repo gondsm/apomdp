@@ -1,7 +1,7 @@
 # This message contains the information that each agent wants to broadcast
+# All data except for the ID is passed as JSON-encoded data.
 uint8 agent_id
 # Belief 
-float32[] b_s
+string b_s
 # Transition
-#TODO: list of list
-float32[] T # This is a bogus data type
+string T # This is a bogus data type
