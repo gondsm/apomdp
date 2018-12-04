@@ -58,6 +58,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     state_structure::Array
     # The kind of reward to be used. Can be one of svr, isvr or msvr
     reward_type::String
+    # A function from which we can get the state values from the agent
+    get_v_s::Function
     # to define agents state we need 1) number of agents 
     # TODO: Determine if these are really necessary in the aPOMDP object
     # agents_size::Int64
@@ -108,17 +110,19 @@ end
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
 # bPOMDP constructor, encapsulating the original aPOMDP construtcor
-function aPOMDP(n_actions::Int64, agents_size::Int64, agents_structure::Array{Int64,1}, nodes_num::Int64, world_structure::Array{Int64,1}, nodes_location=Dict(), nodes_connectivity=Dict())
+function aPOMDP(n_actions::Int64, agents_size::Int64, agents_structure::Array{Int64,1}, nodes_num::Int64, world_structure::Array{Int64,1}, nodes_location=Dict(), nodes_connectivity=Dict(), get_v_s::Function=0)
     # Generate aPOMDP state structure from bPOMDP structure
     # TODO: Make this compatible with aPOMDP again.
     state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
 
     # And send stuff to the original constructor
-    return aPOMDP("isvr", 1, state_structure, n_actions)
+    # For some reason, when I added the get_v_s arg I had to start explicitly
+    # defining the whole thing ¯\_(ツ)_/¯ 
+    return aPOMDP("isvr", 1, state_structure, n_actions, normalize(rand(1), 1), get_v_s)
 end
 
 # Default constructor, initializes everything as uniform
-function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
+function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1), get_v_s::Function=0)
     # Generate state space
     states = collect(1:reduce(*, state_structure))
     state_dims = ones(state_structure...)
@@ -184,6 +188,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   states,
                   state_structure,
                   reward_type,
+                  get_v_s,
                   #agents_size,
                   #agents_structure,
                   #nodes_num,

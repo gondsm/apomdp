@@ -32,7 +32,6 @@ using apomdp.msg
 # Global vars
 # These need to be global in order to be written to by the callback
 # TODO: Figure out inter-thread communication
-# TODO: allocate the number of agents to be passed as number of elements of the array 
 global beliefs_vector
 global transitions_vector
 beliefs_vector = []
@@ -42,12 +41,18 @@ transitions_vector = []
 # Agent-specific actions
 #this function will return the v(s)
 function get_v_s(state)
-    #TODO: v(s) = -2n_victim * -n_depries * n_fire
+    # Algorithm:
+    # Convert apomdp state to bpomdp state (where each var has meaning)
+    # Apply the equation:
+    # v(s) = -2n_victim * -n_depries * n_fire
+
+    # For now, we'll return 0, and all states will have the same value
+    return 0
 end 
 
 
 # this function will retun cost vector for all actions for this agent
-function calc_cost_vector(node_connectivity,n_agents,world_structure,agent_id,n_actions,belief, pomdp, agent_abilities) 
+function calc_cost_vector(node_connectivity, n_agents, world_structure, agent_id, n_actions, belief, pomdp, agent_abilities) 
     # C_i(a,s) = Ab(a) * Cc(a,s)
     # The final cost of each action in each state is the product of the fixed
     # action cost (abilities or Ab) times the current cost (Cc) of the action
@@ -217,7 +222,7 @@ function main(agent_id)
     # consistency.
     print("Creating aPOMDP object... ")
     tic()
-    pomdp = aPOMDP(n_actions, n_agents, agents_structure, n_nodes, world_structure, node_locations, node_connectivity)
+    pomdp = aPOMDP(n_actions, n_agents, agents_structure, n_nodes, world_structure, node_locations, node_connectivity, get_v_s)
     elapsed = toq()
     println("Done in $elapsed seconds.")
 
