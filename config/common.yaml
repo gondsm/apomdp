@@ -29,6 +29,9 @@ node_connectivity:
 # and of the number of nodes.
 # Semantic value of actions:
 # [extinguish fire, extract victim, clear path]
+#  1: should be done
+#  0: able to do, but preferable not to
+# -1: unable to do
 agent_abilities:
     # UAV
     1: [1, -1, 0] 

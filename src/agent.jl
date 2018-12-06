@@ -39,8 +39,9 @@ transitions_vector = []
 
 
 # Agent-specific actions
-#this function will return the v(s)
+# Function that returns the state values for this particular agent
 function get_v_s(state)
+    # TODO
     # Algorithm:
     # Convert apomdp state to bpomdp state (where each var has meaning)
     # Apply the equation:
@@ -51,71 +52,65 @@ function get_v_s(state)
 end 
 
 
-# this function will retun cost vector for all actions for this agent
-function calc_cost_vector(node_connectivity, n_agents, world_structure, agent_id, n_actions, belief, pomdp, agent_abilities) 
+# Function that returns the cost vector for all actions for this agent
+function calc_cost_vector(node_locations, n_agents, world_structure, agent_id, n_actions, belief, pomdp, agent_abilities) 
     # C_i(a,s) = Ab(a) * Cc(a,s)
     # The final cost of each action in each state is the product of the fixed
     # action cost (abilities or Ab) times the current cost (Cc) of the action
     # in the current state
-
-    # Steps
-    # Get abilites vector (from global var?)
-    # Calculate the current cost for each individual action
-    # Get the final vector as the vector product of the previous two
-
-    # TODO: re-implement
-    return zeros(Int8, n_actions)
-
-    # Get the ability 
-    println("=======agent_abilities=======")
-    for a in agent_abilities
-        println(a)
+    
+    # Determine the current state
+    if belief == nothing
+        println("calc_cost_vector is using a bogus index because beliefs were not defined.")
+        index = 11
+    else:
+        println("ERROR: calc_cost_vector got a non-nothing belief but does not know what to do with it.")
+        # TODO: get the state from belief using argmax
     end
+
+    # Convert state index to actual state
+    # After this, we should have a state dictionary, as in the simulator
+    # The first call gets a state vector in the aPOMDP style, the second
+    # converts that to a bPOMDP-style dict.
+    state = state_a_to_b(pomdp, state_from_index(pomdp, index))   
+
+    # Calculate the cost vector 
+    cost_vector = zeros(Float32, n_actions)
     
-    # TODO: get the state from belief using argmax that has the highest probability 
-    # Question: is it one belief vector of beliefs ? if beliefs.  will get highest state  index from all vectors, and then how used all to cal cost?
-    # We will assume that the index of the state we got from the belief  
-    index = 11 
+    # Actually calculate the cost
+    # For non-movement actions, the cost will be the inverse of the agent's
+    # abilities: if an action is desired, its cost is 0, if it is undesireable
+    # then its cost is 1, and if impossible its cost is 10.
+    for (i, ability) in enumerate(agent_abilities[agent_id])
+        if  ability == -1
+            cost_vector[i] = 1000
+        elseif  ability == 0
+            cost_vector[i] = 1
+        elseif  ability == 1
+            cost_vector[i] = 0
+        end
+    end
 
-    # Getting this index we pass it to function to retrieve the state
-    state = state_from_index(pomdp,index)
-    println("=========state=========")
-    println(state)
-    #println(state[1])
+    # For movement actions, the cost will be equal to the Euclidean distance
+    # between the current node and the target node.
+    n_abilities = length(agent_abilities[agent_id])
+    for i in n_abilities+1:n_actions
+        # Retrieve current and target nodes
+        curr_node = state["Agents"][agent_id][1]
+        target_node = i - n_abilities
 
-    #take the cells states from the state 
-    size_world_structure = size(world_structure,1)
-    
-    #println("index",size_world_structure+(size_world_structure*(state[agent_id]-1)))#for testing
-   
-    # calculate the cost vector 
-    cost_vector = zeros(Int8, n_actions)
-    
-    for i in 1:n_actions       
-        node_connectivity_index = 1
-        #actions of movement 
-        if i>size_world_structure && i<n_actions
-            println("i: ",i)
-            if node_connectivity[agent_id][node_connectivity_index] != 0 #can move to a node 
-                cost_vector[i] = 1*agent_abilities[agent_id][node_connectivity_index]
-            else 
-                cost_vector[i] = 0     
-            end 
-        elseif i == n_actions #action is stop 
-           cost_vector[i] = 0
-        else  #first three actions fire, victim_debris 
-            for j in 1:size(world_structure,1)
-                if i == j #action and the world_structure match state 
-                    println("i: ",i)
-                    cost_vector[i]=(state[size_world_structure+(size_world_structure*(state[agent_id]-1))])*agent_abilities[agent_id][i]#+(j-1)
-                end 
-            end
-        end    
+        # Retrieve their locations
+        curr_loc = node_locations[curr_node]
+        target_loc = node_locations[target_node]
 
-        node_connectivity_index+=1
-    end 
-    println("cost_vector: ",cost_vector)
+        # Calculate Euclidean dist
+        dist = norm(curr_loc - target_loc)
 
+        # Done!
+        cost_vector[i] = dist
+    end
+
+    # And we're done costing!
     return cost_vector
 
 end 
@@ -240,7 +235,8 @@ function main(agent_id)
 
         # Get the cost 
         println("Calculating cost vector")
-        c_vector = calc_cost_vector(node_connectivity,
+        c_vector = calc_cost_vector(
+            node_locations,
             n_agents,
             world_structure,
             agent_id,

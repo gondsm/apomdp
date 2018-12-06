@@ -69,7 +69,7 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # # for search and rescue scenario - in order to define the world what in it, we need to know how many specifications are there  
     # world_structure::Array
     # # A matrix of ones that represents the full state space
-    # state_dims::Array
+    state_dims::Array
     # # nodes locations
     # nodes_location::Dict
     # # connectivity of nodes
@@ -190,7 +190,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   #agents_structure,
                   #nodes_num,
                   #world_structure,
-                  #state_dims,
+                  state_dims,
                   #nodes_location,
                   #nodes_connectivity,
                   #c_vector)
@@ -928,7 +928,7 @@ function learn(pomdp::aPOMDP, current_belief, action, previous_belief, local_tra
     #return Float32[]
 end 
 
-function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict) #it should be return type ?
+function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict)
     # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
     # correspondence between the two
 
@@ -985,7 +985,7 @@ function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict) #it should be return ty
     #alpha_states#to print the result 
 end
 
-function state_a_to_b(pomdp::aPOMDP, apomdp_states::Array) ##it should be return type ?
+function state_a_to_b(pomdp::aPOMDP, apomdp_states) ##it should be return type ?
     # Converts an aPOMDP state to a bPOMDP state, allowing for plug-and-play
     # correspondence between the two
     
@@ -1006,6 +1006,27 @@ function state_a_to_b(pomdp::aPOMDP, apomdp_states::Array) ##it should be return
         #p=x
     #end
      #  beta_states#to print the result 
+
+     println("WARNING: state_a_to_b is returning a bogus state")
+
+     # For now, we'll build a bogus state
+     state = Dict(
+         "Agents" => Dict(
+             1 => [5],
+             2 => [7],
+             ),
+         "World" => Dict(
+             1 => [1,0,0],
+             2 => [0,0,1],
+             3 => [0,1,0],
+             4 => [1,0,0],
+             5 => [0,0,0],
+             6 => [0,0,0],
+             7 => [0,0,0]
+             )
+         )
+
+    return state
 end 
 
 # Logging
