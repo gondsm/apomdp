@@ -222,7 +222,7 @@ function main(agent_id)
     # consistency.
     print("Creating aPOMDP object... ")
     tic()
-    pomdp = aPOMDP(n_actions, n_agents, agents_structure, n_nodes, world_structure, node_locations, node_connectivity, get_v_s)
+    pomdp = aPOMDP(n_actions, n_agents, agents_structure, n_nodes, world_structure, node_locations, node_connectivity)
     elapsed = toq()
     println("Done in $elapsed seconds.")
 
@@ -252,7 +252,7 @@ function main(agent_id)
 
         # Solve
         println("Calculating new policy")
-        #policy = get_policy(pomdp, fused_T, c_vector)
+        #policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
 
         # Call fuse belief function
         println("Fusing beliefs")
