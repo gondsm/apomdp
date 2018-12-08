@@ -24,6 +24,17 @@ node_connectivity:
   6: [7,5]
   7: [6]
 
+occupied_cells:
+  - [1, 1]
+  - [2, 1]
+  - [2, 2]
+  - [3, 2]
+  - [4, 2]
+  - [2, 3]
+  - [2, 4]
+  - [3, 4]
+  - [4, 4]
+
 # The vector of abilities describes each agent's inherent ability to perform an action.
 # The number of actions available can be derived from the sum of the len of this vector
 # and of the number of nodes.

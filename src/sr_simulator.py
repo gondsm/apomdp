@@ -33,6 +33,7 @@ import math
 import random
 import copy
 import time
+import datetime
 
 
 # Global Variables
@@ -50,6 +51,7 @@ node_locations = dict()     # A dictionary containing the locations of nodes (se
 node_connectivity = dict()  # A dictionary containing how nodes are connected (see common.yaml)
 agent_abilities = []        # A dictionary containing the agents' abilities (see common.yaml)
 n_actions = 0               # The action space (see common.yaml)
+occupied_cells = []         # The coordinates of the occupied cells
 
 
 # Logging functions
@@ -59,6 +61,11 @@ def log_initial_state(log_dict, initial_state, initial_comm_matrix):
     log_dict["initial_connection_matrix"] = initial_comm_matrix
     log_dict["transitions"] = []
     log_dict["communications"] = []
+    log_dict["node_locations"] = node_locations
+    log_dict["node_connectivity"] = node_connectivity
+    log_dict["agent_abilities"] = agent_abilities
+    log_dict["n_actions"] = n_actions
+    log_dict["occupied_cells"] = occupied_cells
 
 
 def log_transition(log_dict, action, agent, final_connection_matrix, final_state, observation):
@@ -131,6 +138,9 @@ def initialize_system(common_data_filename, problem_config_filename):
 
     global n_actions
     n_actions = len(node_connectivity) + len(agent_abilities[1])
+
+    global occupied_cells
+    occupied_cells = common_data["occupied_cells"]
 
     # Set connectivity_constant
     global connectivity_constant
@@ -346,7 +356,7 @@ if __name__ == "__main__":
     initialize_system(common_filename, problem_filename)
 
     # Define log file location
-    log_filename = rospack.get_path('apomdp') + "/results/{}_sim_log.yaml".format(int(time.time()))
+    log_filename = rospack.get_path('apomdp') + "/results/{}_sim_log.yaml".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     rospy.loginfo("Logs will be saved in {}.".format(log_filename))
 
     # Launch servers etc
