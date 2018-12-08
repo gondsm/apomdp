@@ -22,6 +22,7 @@
 import matplotlib.pyplot as plt
 import matplotlib as mp
 from matplotlib import rc
+rc('text', usetex=True)
 import matplotlib.patches as mpatches
 import itertools
 import numpy as np
@@ -32,6 +33,7 @@ import time
 import sys
 from pprint import pprint
 import random
+import os
 
 
 def normalize(lst):
@@ -396,6 +398,63 @@ def read_test_yaml(filename):
 		print(data)
 
 
+def apomdp_plots():
+	"""
+	Aggregates all of the plots needed for the original paper.
+	"""
+	# Plot the learning distribution example:
+	#plot_distribution_example()
+
+	# Define relevant files
+	# Final test cases start here
+	# File names are defined with no extension on purpose.
+	other_files = [
+	                 # "results/random_sarsop_svr_100_1_0_1000",
+	                 # "results/random_sarsop_isvr_100_1_0_1000",
+	                 # "results/random_sarsop_svr_100_20_0_1000",
+	                 # "results/random_sarsop_isvr_100_20_0_1000",
+	                 # "results/random_qmdp_svr_100_1_0_1000",
+	                 # "results/random_qmdp_svr_100_20_0_1000",
+	                 # "results/random_qmdp_isvr_100_1_0_1000",
+	                 # "results/random_qmdp_isvr_100_20_0_1000",
+	                 # "results/random_qmdp_msvr_100_1_0_1000",
+	                 # "results/random_qmdp_msvr_100_20_0_1000",
+	                 # "results/random_sarsop_msvr_100_1_0_1000",
+	                 # "results/random_sarsop_msvr_100_20_0_1000"
+	                 #"results/hri_results",
+	                 #"results/random_qmdp_svr_100_1_0_100_new_struct"
+	                 "results/random_qmdp_svr_100_5_0_100_new_struct",
+	                 "results/random_qmdp_svr_100_20_0_100_new_struct",
+	                 "results/random_qmdp_svr_100_-1_0_100_new_struct"
+	              ]
+	all_files = []
+	# Feel free to add more stuff here
+	all_files.extend(other_files)
+
+	# Convert files to pickle:
+	for f in all_files:
+		convert_log_to_pickle(f+".yaml")
+
+	# Calculate the stuff we want for the table:
+	for f in all_files:
+		calculate_table_entries(f+".pkl")
+
+	# Plot stuff
+	for f in all_files:
+		plot_timeseries_data(f+".pkl", f+"_reward.pdf")
+
+	for f in all_files:
+		plot_timeseries_data(f+".pkl", f+"_entropy.pdf", entropy=True)
+
+	for f in all_files:
+		plot_state_histogram(f+".pkl", f+"_hist.pdf")
+
+
+###############################################################################
+#
+# bPOMDP PLOTTER STARTS HERE
+#
+###############################################################################
 def plot_connection_graph(connection_matrix, state):
 	""" Draw the connectivity graph for all agents.
 
@@ -596,46 +655,72 @@ def plot_reward(rewards_history):
 	plt.show()
 
 
-def plot_state_values(state_history,v_s):
+def plot_state_values(initial_state, transitions, v_s):
 	"""
-	This function is to plot the history of state values
+	This function plots the history of states and values
 	"""
+	# Extract data from args
+	world_state_history = [initial_state["World"]]
+	world_state_history.extend([t["final_state"]["World"] for t in transitions])
+	n_nodes = len(initial_state["World"])
+	# TODO: read v_s from data as well or calculate it or whatever
 
-	#TODO: get values from the arguments instead of using bogus data
-	#bogus data
-	#history is here 3, each contains [s1,s2,T]
-	state_history =[(0,1,1),(1,2,2),(3,4,3)]
-	
-	#create a dictionary of state values 
-	v_s = dict()
-	for i in range(len(state_history)):
-		v_s[state_history[i][0:-1]]=10*i
+	# Define some bogus state_value data
+	# TODO
 
-	#plotting the values for every time
-	plt.plot([v[-1] for v in state_history],[v_s[s[0:-1]] for s in state_history])
+	# Create a fig
+	f = plt.figure(figsize=(20, 10))
 
-	plt.xlabel("Time(s)")
+	# Plot state values
+	plt.subplot(2, 1, 1)
+
+	# TODO
+
 	plt.ylabel("V(s)")
+
+	# Plot states
+	# TODO: make this have double height
+	plt.subplot(2, 1, 2)
+
+	for node in range(1, n_nodes+1):
+		node_states = [sum(s[node]) for s in world_state_history]
+		plt.plot(node_states, label="Node {}".format(node))
+
+	plt.legend()
+	plt.ylim(-0.1, 3.1)
+	plt.ylabel("State [n hazards]")
+	plt.xlabel("Iteration [n]")
+
+	plt.tight_layout(True)
 
 	plt.show()
 
 
-def plot_state(state, filename=None):
-	""" Plots a betaPOMDP search-and-rescue state.
+def plot_state(state, node_locations, occupied_cells, node_connectivity, filename=None):
+	"""
+	Plots a betaPOMDP search-and-rescue state.
+
+	The state should be received as a dict in the format used in the yamls.
 	"""
 	# Set axes limits
-	map_w = len(state["World"])
-	map_h = len(state["World"][0])
+	# TODO: set different limits
+	#map_w = len(state["World"])
+	#map_h = len(state["World"][0])
+	locs = [l for _, l in node_locations.items()]
+	map_w = max([l[0] for l in locs])+1
+	map_h = max([l[1] for l in locs])+1
+
+	# Define some offsets
+	node_offset = [0.5, 0.5]
+	agent_offset = [0.25, 0.75]
 
 	# Initialize plot
 	# https://stackoverflow.com/questions/14406214/moving-x-axis-to-the-top-of-a-plot-in-matplotlib
 	# https://stackoverflow.com/questions/2051744/reverse-y-axis-in-pyplot
 	# Create fig
-	plt.figure()
+	f = plt.figure(figsize=(7,7))
 	# Get axes
 	ax = plt.gca()
-	# Set limits
-	ax.axis([0, map_w, 0 ,map_h])
 	# Create grid with correct ticks
 	plt.grid(ls="-", which="minor")
 	ax.set_xticks(range(map_w), minor=True)
@@ -646,41 +731,58 @@ def plot_state(state, filename=None):
 	ax.set_yticklabels([str(a) for a in range(map_h)])
 	plt.xlabel("i")
 	plt.ylabel("j")
-	#ax.invert_yaxis()
-	#ax.xaxis.tick_top()
 	ax.set_aspect('equal', 'box')
 
 	# Plot agents
-	for key, a_pos in state["Agents"].items():
+	for key, s in state["Agents"].items():
+		a_node = s[0]
+		a_pos = node_locations[a_node]
 		# Plot a circle with a number to illustrate the agent
-		ax.add_artist(plt.Circle([a + 0.5 for a in a_pos], 0.1, edgecolor='k', facecolor='w',  zorder=10))
-		plt.text(a_pos[0]+0.5,a_pos[1]+0.5, str(key), zorder=11, horizontalalignment='center', verticalalignment='center')
+		ax.add_artist(plt.Circle([a + agent_offset[i] for i, a in enumerate(a_pos)], 0.1, edgecolor='k', facecolor='w',  zorder=10))
+		plt.text(a_pos[0]+agent_offset[0],a_pos[1]+agent_offset[1], str(key), zorder=11, horizontalalignment='center', verticalalignment='center')
+
+	# Plot node locations
+	for node, location in node_locations.items():
+		# Plot a circle with a number to illustrate the agent
+		ax.add_artist(plt.Circle([a + node_offset[i] for i, a in enumerate(location)], 0.2, edgecolor='k', facecolor='w',  zorder=10))
+		plt.text(location[0]+node_offset[0],location[1]+node_offset[1], str(node), zorder=11, horizontalalignment='center', verticalalignment='center')
+		
+		# Plot connections
+		for neigh in node_connectivity[node]:
+			neigh_loc = node_locations[neigh]
+			plt.plot([location[0]+node_offset[0], neigh_loc[0]+node_offset[0]], [location[1]+node_offset[1], neigh_loc[1]+node_offset[1]], color="k")
+
+	for cell in occupied_cells:
+		i, j = cell
+		color = "gray"
+		# Draw rectangle
+		ax.add_patch(mp.patches.Rectangle((i, j), 1, 1, color=color))
 
 	# Plot state of cells
-	for i in range(map_w):
-		for j in range(map_h):
-			# Get cell to local var
-			cell = state["World"][i][j]
-			# Default color is white
-			color = "w"
-			# Occupancy
-			if cell[0] == 1:
-				color = "k"
-			# Fire
-			if cell[1] == 1:
-				color = "r"
-			# Debris
-			if cell[2] == 1:
-				color = "brown"
-			# Debris
-			if cell[3] == 1:
-				color = "pink"
+	for node, s in state["World"].items():
+		i, j = node_locations[node]
+		# Get cell to local var
+		cell = state["World"][node]
+		# Default color is white
+		color = "w"
+		# Fire
+		if cell[0] == 1:
+			color = "r"
+		# Debris
+		if cell[1] == 1:
+			color = "brown"
+		# Victim
+		if cell[2] == 1:
+			color = "pink"
 
-			# If there's more than one thing on the square, we give it another color
-			# TODO
+		# If there's more than one thing on the square, we give it another color
+		# TODO
 
-			# Draw rectangle
-			ax.add_patch(mp.patches.Rectangle((i, j), 1, 1, color=color))
+		# Draw rectangle
+		ax.add_patch(mp.patches.Rectangle((i, j), 1, 1, color=color))
+
+	# Set limits
+	ax.axis([1, map_w, 1 ,map_h])
 
 	# Show/save plot
 	if filename:
@@ -688,67 +790,47 @@ def plot_state(state, filename=None):
 	else:
 		plt.show()
 
+	plt.close(f)
+
+
+def bpomdp_plots():
+	"""
+	Aggregates all of the necessary bpomdp plots.
+	"""
+	# Change to the correct dir
+	os.chdir("/home/vsantos/catkin_ws/src/apomdp")
+
+	# Load log file
+	print("Loading data")
+	with open("results/2018-12-08_12-04-58_sim_log.yaml") as data_file:
+		data = yaml.load(data_file)
+
+	# Parse data
+	initial_state = data["initial_state"]
+	node_locations = data["node_locations"]
+	node_connectivity = data["node_connectivity"]
+	transitions = data["transitions"]
+	occupied_cells = data["occupied_cells"]
+	
+	# Plot initial state
+	print("Plotting states!")
+
+	plot_state(initial_state, node_locations, occupied_cells, node_connectivity, "figs/state_0.pdf")
+	for i, state in enumerate([t["final_state"] for t in transitions]):
+		plot_state(state, node_locations, occupied_cells, node_connectivity, "figs/state_{}.pdf".format(i+1))
+
+	# Plot all states
+	# TODO
+
+	# Plot state values
+	plot_state_values(initial_state, transitions, None)
+
+
 
 if __name__ == "__main__":
+	#apomdp_plots()
+	bpomdp_plots()
+	
 
-	#plot_connection_graph(None, None)
-	#plot_task_assignments(None)
-	#plot_reward(None)
-	#plot_state_values(None, None)
-	# Bogus: read state from yaml file
-	# TODO: Remove
-	with open("/home/vsantos/catkin_ws/src/apomdp/config/problem.yaml") as data_file:
-		state = yaml.load(data_file)["initial_state"]
-	plot_state(state)
-	exit()
-
-	# Configure matplotlib
-	rc('text', usetex=True)
-
-	# Plot the learning distribution example:
-	#plot_distribution_example()
-
-	# Define relevant files
-	# Final test cases start here
-	# File names are defined with no extension on purpose.
-	other_files = [
-	                 # "results/random_sarsop_svr_100_1_0_1000",
-	                 # "results/random_sarsop_isvr_100_1_0_1000",
-	                 # "results/random_sarsop_svr_100_20_0_1000",
-	                 # "results/random_sarsop_isvr_100_20_0_1000",
-	                 # "results/random_qmdp_svr_100_1_0_1000",
-	                 # "results/random_qmdp_svr_100_20_0_1000",
-	                 # "results/random_qmdp_isvr_100_1_0_1000",
-	                 # "results/random_qmdp_isvr_100_20_0_1000",
-	                 # "results/random_qmdp_msvr_100_1_0_1000",
-	                 # "results/random_qmdp_msvr_100_20_0_1000",
-	                 # "results/random_sarsop_msvr_100_1_0_1000",
-	                 # "results/random_sarsop_msvr_100_20_0_1000"
-	                 #"results/hri_results",
-	                 #"results/random_qmdp_svr_100_1_0_100_new_struct"
-	                 "results/random_qmdp_svr_100_5_0_100_new_struct",
-	                 "results/random_qmdp_svr_100_20_0_100_new_struct",
-	                 "results/random_qmdp_svr_100_-1_0_100_new_struct"
-	              ]
-	all_files = []
-	# Feel free to add more stuff here
-	all_files.extend(other_files)
-
-	# Convert files to pickle:
-	for f in all_files:
-		convert_log_to_pickle(f+".yaml")
-
-	# Calculate the stuff we want for the table:
-	for f in all_files:
-		calculate_table_entries(f+".pkl")
-
-	# Plot stuff
-	for f in all_files:
-		plot_timeseries_data(f+".pkl", f+"_reward.pdf")
-
-	for f in all_files:
-		plot_timeseries_data(f+".pkl", f+"_entropy.pdf", entropy=True)
-
-	for f in all_files:
-		plot_state_histogram(f+".pkl", f+"_hist.pdf")
+	
 	
