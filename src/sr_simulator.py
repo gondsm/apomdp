@@ -211,7 +211,7 @@ def generate_state_lut(state):
         for agent_state in agent_states:
             new_state = {
                 "World": copy.deepcopy(world_state),
-                "Agents": {i: agent_state[i] for i, n in enumerate(agent_state)}
+                "Agents": {i+1: [agent_state[i]] for i, n in enumerate(agent_state)}
             }
             if new_state not in states:
                 states.append(new_state)
@@ -270,6 +270,9 @@ def generate_observation(state, action, agent, noisy=True):
     
     # Copy the current state to the observation
     obs = copy.deepcopy(state)
+
+    if not noisy:
+        return obs
 
     # Corrupt observation with noise
     # For each of the cells, we get the distance of the agent to the cell.
