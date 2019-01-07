@@ -655,7 +655,7 @@ def plot_reward(rewards_history):
 	plt.show()
 
 
-def plot_state_values(initial_state, transitions, v_s):
+def plot_state_values(initial_state, transitions, v_s, filename=None):
 	"""
 	This function plots the history of states and values
 	"""
@@ -666,34 +666,48 @@ def plot_state_values(initial_state, transitions, v_s):
 	# TODO: read v_s from data as well or calculate it or whatever
 
 	# Define some bogus state_value data
-	# TODO
+	# TODO: read from somewhere else
+	if not v_s:
+		v_s = dict()
+		# How about this for Python trickery?
+		f = lambda i: lambda s: sum([sum(world_state_history[0][k]) for k in world_state_history[0]]) - sum([sum(s[k]) for k in s]) - i
+		for i in range(1, 3): # a function per agent
+			v_s[i] = f(i)
 
 	# Create a fig
-	f = plt.figure(figsize=(20, 10))
+	f = plt.figure(figsize=(20, 7.5))
 
 	# Plot state values
 	plt.subplot(2, 1, 1)
-
-	# TODO
-
+	values = [[v_s[i](s) for s in world_state_history] for i in v_s]
+	for i, v in enumerate(values):
+		plt.plot(v, label="agent {}".format(i+1))
+	plt.legend()
 	plt.ylabel("V(s)")
+	plt.xlim(0, len(world_state_history))
 
 	# Plot states
 	# TODO: make this have double height
 	plt.subplot(2, 1, 2)
-
 	for node in range(1, n_nodes+1):
 		node_states = [sum(s[node]) for s in world_state_history]
 		plt.plot(node_states, label="Node {}".format(node))
 
 	plt.legend()
 	plt.ylim(-0.1, 3.1)
+	plt.xlim(0, len(world_state_history))
 	plt.ylabel("State [n hazards]")
 	plt.xlabel("Iteration [n]")
 
 	plt.tight_layout(True)
 
-	plt.show()
+	# Show/save plot
+	if filename:
+		plt.savefig(filename)
+	else:
+		plt.show()
+
+	plt.close(f)
 
 
 def plot_state(state, node_locations, occupied_cells, node_connectivity, filename=None):
@@ -802,7 +816,8 @@ def bpomdp_plots():
 
 	# Load log file
 	print("Loading data")
-	with open("results/2018-12-08_12-04-58_sim_log.yaml") as data_file:
+	#with open("results/2018-12-08_12-04-58_sim_log.yaml") as data_file:
+	with open("results/2018-12-14_10-51-39_sim_log.yaml") as data_file:
 		data = yaml.load(data_file)
 
 	# Parse data
@@ -812,18 +827,20 @@ def bpomdp_plots():
 	transitions = data["transitions"]
 	occupied_cells = data["occupied_cells"]
 	
-	# Plot initial state
+	# Plot all states
 	print("Plotting states!")
-
 	plot_state(initial_state, node_locations, occupied_cells, node_connectivity, "figs/state_0.pdf")
 	for i, state in enumerate([t["final_state"] for t in transitions]):
 		plot_state(state, node_locations, occupied_cells, node_connectivity, "figs/state_{}.pdf".format(i+1))
 
-	# Plot all states
-	# TODO
+	# Plot all obsevations for comparison
+	#plot_state(initial_state, node_locations, occupied_cells, node_connectivity, "figs/state_0.pdf")
+	print("Plotting observations!")
+	for i, state in enumerate([t["observation"] for t in transitions]):
+		plot_state(state, node_locations, occupied_cells, node_connectivity, "figs/observation_{}.pdf".format(i))
 
 	# Plot state values
-	plot_state_values(initial_state, transitions, None)
+	plot_state_values(initial_state, transitions, None, filename="figs/state_values.pdf")
 
 
 
