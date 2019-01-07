@@ -34,6 +34,9 @@ import random
 import copy
 import time
 import datetime
+import copy
+from pprint import pprint
+import itertools
 
 
 # Global Variables
@@ -52,6 +55,7 @@ node_connectivity = dict()  # A dictionary containing how nodes are connected (s
 agent_abilities = []        # A dictionary containing the agents' abilities (see common.yaml)
 n_actions = 0               # The action space (see common.yaml)
 occupied_cells = []         # The coordinates of the occupied cells
+state_lut = []              # The whole state space
 
 
 # Logging functions
@@ -98,7 +102,7 @@ def dump_log(filename, log):
 
 
 # Simulation functions
-def initialize_system(common_data_filename, problem_config_filename):
+def initialize_system(common_data_filename, problem_config_filename, lut_filename):
     """ Receives a file name and initializes the global variables according to
     the information contained therein.
 
@@ -153,6 +157,67 @@ def initialize_system(common_data_filename, problem_config_filename):
 
     # Log first state
     log_initial_state(log_dict, state, connection_matrix)
+
+    # Generate the state LUT
+    print("Generating state LUT")
+    global state_lut
+    state_lut = generate_state_lut(state)
+
+    # And save it to the appropriate file
+    with open(lut_filename, "w") as lut_outfile:
+        lut_outfile.write(yaml.dump(state_lut, default_flow_style=False))
+    print("LUT Generated!")
+
+
+def generate_state_lut(state):
+    # Inform
+    #print("Got a state to generate LUT:")
+    #print(state)
+
+    n_agents = len(state["Agents"])
+    n_nodes = len(state["World"])
+
+    print(n_agents)
+    print(n_nodes)
+
+    # Iterate all possible world states
+    world_state = copy.deepcopy(state["World"])
+    world_states = [copy.deepcopy(world_state)]
+    open_states = [copy.deepcopy(world_state)]
+
+    while open_states:
+        curr_state = open_states.pop()
+        world_states.append(copy.deepcopy(curr_state))
+        for node in curr_state:
+            node_state = curr_state[node]
+            for i, elem in enumerate(node_state):
+                if elem == 1:
+                    # Change hazard in state and add to list
+                    curr_state[node][i] = 0
+                    if curr_state not in world_states and curr_state not in open_states:
+                        open_states.append(copy.deepcopy(curr_state))
+                    curr_state[node][i] = 1
+
+    print("Ended with {} world states".format(len(world_states)))
+
+    # Iterate all possible agent states in this world state
+    # (complementing the world state list)
+    # Create some data structures
+    states = []
+    vecs = [range(1, n_nodes+1) for a in range(1, n_agents+1)]
+    # And iterate
+    for world_state in world_states:
+        agent_states = itertools.product(*vecs)
+        for agent_state in agent_states:
+            new_state = {
+                "World": copy.deepcopy(world_state),
+                "Agents": {i: agent_state[i] for i, n in enumerate(agent_state)}
+            }
+            if new_state not in states:
+                states.append(new_state)
+
+    print("Ended with {} full states.".format(len(states)))
+    return states
 
 
 def calc_connection_matrix(state, c):
@@ -327,7 +392,9 @@ def receive_action(req):
     connection_matrix = calc_connection_matrix(state, connectivity_constant)
 
     # Generate an observation of the new state
-    observation = generate_observation(state, req.a.action, req.a.agent_id)
+    # TODO: make noisy. It was disabled because it may generate states that
+    # are not in the LUT.
+    observation = generate_observation(state, req.a.action, req.a.agent_id, noisy=False)
 
     # Log the transition
     log_transition(log_dict, req.a.action, req.a.agent_id, connection_matrix, state, observation)
@@ -353,7 +420,8 @@ if __name__ == "__main__":
     rospack = rospkg.RosPack()
     common_filename = rospack.get_path('apomdp') + "/config/common.yaml"
     problem_filename = rospack.get_path('apomdp') + "/config/problem.yaml"
-    initialize_system(common_filename, problem_filename)
+    lut_filename = rospack.get_path('apomdp') + "/config/state_lut.yaml"
+    initialize_system(common_filename, problem_filename, lut_filename)
 
     # Define log file location
     log_filename = rospack.get_path('apomdp') + "/results/{}_sim_log.yaml".format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
