@@ -23,7 +23,7 @@
 using POMDPs, POMDPModels, POMDPToolbox
 
 # Solvers
-using QMDP, SARSOP#, DESPOT, MCVI # (MCVI is failing on load)
+using QMDP, SARSOP
 
 # Other stuff
 using IterTools
@@ -108,18 +108,6 @@ end
 
 # Define iterator over distribution, returns the list of possible states
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
-
-# bPOMDP constructor, encapsulating the original aPOMDP construtcor
-function aPOMDP(n_actions::Int64, agents_size::Int64, agents_structure::Array{Int64,1}, nodes_num::Int64, world_structure::Array{Int64,1}, nodes_location=Dict(), nodes_connectivity=Dict())
-    # Generate aPOMDP state structure from bPOMDP structure
-    # TODO: Make this compatible with aPOMDP again.
-    state_structure = convert_structure(agents_size, nodes_num, agents_structure, world_structure)
-
-    # And send stuff to the original constructor
-    # For some reason, when I added the get_v_s arg I had to start explicitly
-    # defining the whole thing ¯\_(ツ)_/¯ 
-    return aPOMDP("isvr", 1, state_structure, n_actions, normalize(rand(1), 1))
-end
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
@@ -433,10 +421,12 @@ function POMDPToolbox.DiscreteBelief(dist::apomdpDistribution)
     return discrete_b
 end
 
+
 # Discrete belief converter from apomdpDistribution (SARSOP), adding it to the SARSOP module so it's found
 function SARSOP.convert(::Type{POMDPToolbox.DiscreteBelief}, dist::apomdpDistribution)
     return POMDPToolbox.DiscreteBelief(dist)
 end
+
 
 # Define sampling function to sample a state from the transition probability
 function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
@@ -463,6 +453,7 @@ function POMDPs.rand(rng::AbstractRNG, dist::apomdpDistribution)
     return dist.state_space[idx]
 end
 
+
 # Function for calculating the average entropy of the transition matrix
 function calc_average_entropy(pomdp)
     # Initialize an empty vector
@@ -477,21 +468,6 @@ function calc_average_entropy(pomdp)
     return mean(entropy_vec)
 end
 
-immutable apomdpBounds end
-immutable apomdpState end
-immutable apomdpObservation end    
-
-function apomdpBounds() # DESPOT
-    1,0
-end
-
-function apomdpState() # DESPOT
-    [0,0]
-end
-
-function apomdpObservation() # DESPOT
-    [0,0]
-end
 
 function solve(pomdp::aPOMDP, solver_name::String="")
     # Solve the POMDP according to the solver requested
@@ -502,113 +478,20 @@ function solve(pomdp::aPOMDP, solver_name::String="")
     elseif solver_name == "sarsop"
         solver = SARSOPSolver()
         policy = POMDPs.solve(solver, pomdp, silent=true)
-    elseif solver_name == "despot"
-        # TODO: fix this stuff
-        #solver = DESPOTSolver{apomdpState, Int64, apomdpObservation, apomdpBounds, RandomStreams}()
-        #policy = POMDPs.solve(solver, pomdp)
-    elseif solver_name == "mcvi"
-        # TODO: build a decent constructor call
-        #solver = MCVISolver(sim, nothing, 1, 10, 8, 50, 100, 500, 10, 1, 10)
-        #solver = MCVISolver()
-        #policy = POMDPs.solve(solver, pomdp)
     else
         println("aPOMDPs solve function received a request for an unknown solver: $solver_name")
         throw(ArgumentError)
     end
 
     # Get policy and return it
-    
     return policy
 end
 
 
 # betapomdp
-function convert_structure(agents_size::Int64, nodes_num::Int64, agents_structure::Array{Int64,1}, world_structure::Array{Int64,1})
-    
-    # Create array
-    apomdp_structure=Array{Int64}((length(agents_structure)*agents_size) + (length(world_structure)*nodes_num))
-
-    #counter is index for the apomdp_structure
-    counter = 1 
-
-    # Agents
-    for i in 1:agents_size
-        for j in 1:length(agents_structure)
-            apomdp_structure[counter]=agents_structure[j]
-            counter+=1
-        end
-    end
-
-    # Nodes
-    for i in 1:nodes_num
-        for j in 1:length(world_structure)
-            apomdp_structure[counter]=world_structure[j]
-            counter+=1
-        end
-    end
-    
-    # And return it
-    return apomdp_structure
-end 
-
-
 function fuse_beliefs(pomdp::aPOMDP, belief_vector)
-    # Steps
-    # First we check if there is a need to fuse beliefs 
-    # Create the vector of fusion from the beliefs_vector which will only contains belief for fusion --> the clean vector
-    # Pass a clean vector(a vector without nothing, a vector that can be used)
-    # We should have the fused_b to be returned
-
-    # Warning: the belief_vector may contain "nothings"
-
-    # Fuse the vector of beliefs that is received as input
-    # Each element of the vector is itself a vector in floats that encode
-    # a probability distributions.
-    # Fusion takes place via:
-    # bf = b1*b2*...*bn
-    # TODO: look up the theory on this
-
-    #println(pomdp.states)#will get indcies of states 
-    
-    #create a fake vector of two beliefs , each vector with length of states size 
-    #beliefs_vec = ones(2,length(pomdp.states))
-    #fused_belief = zeros(length(pomdp.states))
-
-    #if not fake should be like this
-    #beliefs_vec = belief_vector
-    #=fused_belief = zeros(size(belief_vector,2))
-    println("size(belief_vector,1): ", size(belief_vector,2))
-
-    for x=1:size(belief_vector,2)     
-        println("belief_vector: ",belief_vector)
-        println("fused_belief: ",fused_belief)
-        fused_belief = fused_belief + belief_vector[x]
-    end
-    println("not-normalized fused_belief: ", fused_belief)
-    #normalize 
-    fused_belief[:] = normalize(fused_belief[:], 1)
-
-    println("normalized fused_belief: ", fused_belief)=#
-
     # TODO
-    return nothing
-
-    b = Any[]
-    for i=1:size(belief_vector,1)
-        #println("belief_vector[i]:", belief_vector[i])
-        if i==1
-            b=belief_vector[i]
-        else
-            b+=belief_vector[i]
-        end 
-    #println("b", b)
-    end 
-    #normalize 
-    #
-    b[:] = normalize(b[:], 1)
-    #println("normalized b: ", b)
-   return b
-    
+    return nothing    
 end
 
 
@@ -621,48 +504,6 @@ function fuse_transitions(pomdp::aPOMDP, transition_vector)
 
     # TODO
     return nothing
-
-    # Warning: the vector may contain "nothings"
-
-    # Fuse the vector of transition matrices
-    # Each element of the vector is a full transition matrix
-    # for the whole state space (both s and s') and action space
-    # Fusion is done in the same principle as beliefs, but iterating
-    # over all possible combinations of s', s and a.
-    # Use state indices to iterate?
-
-    #=
-    transition_vector[agent][state, action] -> distributions
-    distributions -> fuse_belief -> fused transition for current key (state, action)
-    transition_vector
-    [
-        transitions(s,a) 
-        [
-            1D prob distributions
-        ]
-    ]
-    T(s,a) -> dist
-    =#
-    
-    fused_transitions = Dict()
-    #for testing 
-    #states_n = 2
-    #actions_n = 2
-
-    for s in pomdp.states
-        # [1, 2, 3, 4, ..., n_actions]
-        for a in 1:pomdp.n_actions
-            key = [s, a]
-            distributions = [transition[key] for transition in transition_vector]
-            fused_transitions[key] = fuse_beliefs(pomdp,distributions)
-        end
-    end
-    return fused_transitions
-end
-
-
-function set_transition_matrix(pomdp::aPOMDP, transition_matrix)
-    # Set the transition matrix of the current system as the one received
 end
 
 
@@ -682,9 +523,12 @@ function get_action(pomdp::aPOMDP, policy, belief)
     # plug into the policy using: 
     # a = action(policy, apomdpDistribution(pomdp, belief))
 
+    println("WARNING: get_action is returning random actions.")
+    a = rand(0:pomdp.n_actions-1)
+
     # TODO: actually get from policy!
     # The return value should be integer
-    return 1
+    return a
 end
 
 
@@ -704,6 +548,9 @@ end
 
 
 function initialize_transitions(pomdp::aPOMDP)
+    # Initializes an empty transition matrix.
+    # Essentially abstracts away this initialization from the agent, so we can
+    # deal with transitions only in this module.
     return Dict()
 end
 
@@ -730,189 +577,14 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
     # Observation is a dict, action is an int, belief is a vector over state
     # indices as usual, transition is a transition matrix as defined before.
 
-    # b(s)
-    # [P(s=1), P(s=2), P(s=3), ..]
-    #
-    # b'(s')
-    # [b'(s'=1), b'(s'=2), ...]
-
-    # 3 cells
-    # O-------O-------O
-    # 1       2       3
-    #
-    # State 1:
-    # agent_1 is in cell 1
-    # fire is in cell 2
-    #
-    # State 2:
-    # agent_1 is in cell 1
-    # fire is in cell 3
-    #
-    # State 3:
-    # agent_1 is in cell 2
-    # fire is in cell 3
-    #
-    # State 2 is closer to State 1 than State 3!
-    # Distance(1->2) < Distance(1->3)
-    # Function D
-
-    # o = 1
-    # P(o=1|s', a=1)
-    # s' = 1 -> P = 0.6
-    # s' = 2 -> P = 0.3
-    # s' = 3 -> P = 0.1
-    #
-    # Because:
-    # D(1,2) > D(1,3) and o = 1 (i.e. observation says we are in state 1)
-
-    # Concepts:
-    # -> Some states are closer to one another than others
-    # -> We can define a real-valued function for distance between states
-    # -> O(o|s',a) could be defined as a function of distance between states
-    #    (closer states should have higher probability)
-
-    # Tentative formulation
-    #
-    # O(o|s', a) = normalize D(o,s')
-    #
-    # -> Y axis: D(o=1, s')
-    # -> X axis: s'
-    # This can be a distribution over s' if we normalize!
-
-    # State s is an in (e.g 1)
-    # But it translates into an instantiation of state space:
-    #
-    # [3,2,4,3,1]
-    #
-    # So, D could be just the norm of the difference vector!
-    
-    # Better example
-    # 4 states: [1,1], [1,2], [2,1], [2,2]
-    #           1      2      3      4
-    #
-    # We get o = 2
-    # Distances (from 2 to x):
-    #
-    # [1.0, 0.0, 1.41, 1.0]
-    #
-    # Subtract by maximum and take absolute:
-    #
-    # [0.41, 1.41, 0.0, 0.41]
-    #
-    # Normalize:
-    #
-    # [0.18, 0.63, 0.0, 0.18] -> Possible definition of O(o=2|s', a)
-    #
-    # If we want O(o=2, s'=1, a) -> we get 0.18
-
-
-    # Implementation
-    # -> Convert from int state to vector
-    # -> Calculate the difference vector: (C = A - B)
-    # -> Calculate the norm: (norm(C))
-
-    
-    #equation of the belief update_belief
-    #b(s)=norm(O(o|s,a)sum(T(s'|s,a))b(s)))
-    
-    #example of 4 states and 2 actions  
-    #println("Initial belief $belief")
-    #states = [[1,1] [1,2] [2,1] [2,2]]
-    #state_indices = [1, 2, 3, 4]
-    #o=1
-    #println("Observation: $o")
-    
     # TODO
     # Also rework argument types
     println("WARNING: belief update is returning simple distributions!")
 
     return apomdpDistribution(pomdp, [observation])
-
-    #println("Observation: $observation")
-    o=observation
-    #states
-    states = pomdp.states # these actually the indicies of the states not the actual ones 
-
-    #initialization
-    dist_vector = zeros(size(states,2))
-    b_prime = zeros(size(states,2)) 
     
-    # Possible optimization: mahalanobis-like distance for states
-    # s1 = [1, 2, 1, 0]
-    #
-    # We know that the closest possible states will differ by
-    # -> One variable
-    # -> One unit
-    #
-    # Meaning that the closes states will be (e.g.):
-    #
-    # s2 = [2, 2, 1, 0]
-    # s3 = [1, 3, 1, 0]
-    # s4 = [1, 2, 2, 0]
-    # [...]
-    #
-    # Thus, we have a neighborhood of arbitrary distance in the state space!
-    # Approach: we can disregard states that are farther away than a certain
-    # fixed distance, and take only the remaining into account when updating
-    # the belief.
-    #
-    # states = [1, 2, 3, 4, 5]
-    # obs = 2
-    # If states closer than distance = 1: [3, 4], then
-    # -> Calculate vector only for these,
-    # -> Update the belief only for these
-    # -> Re-normalize the belief
-    #
-    # So, instead of building dist_vector over the whole state space, we need
-    # to generate a neighborhood of states, and build dist_vector over those!
-    #
-    # Set a distance (for instance 1 or 2)
-    # Get all states within that maximum distance
-    # Re-calculate all the stuff based only on that
-
-
-    # Create a neighborhood of close states
-    # Idea: define neighborhood per agent
-
-    # Get the neighborhood surrounding o
-    #neighborhood = find_neighborhood(pomdp, o)
-
-    #create dist_vector- 
-    #for i in states
-    # OPERATE ONLY ON THE NEIGHBORHOOD
-    #for i in neighborhood
-    #    dist_vector[i]=norm(state_from_index(pomdp,o)-state_from_index(pomdp,i)) 
-    #end
-
-    #probability of distances and normalize 
-    dist_vector = abs.(dist_vector-maximum(dist_vector))
-    dist_vector = dist_vector / sum(dist_vector)
-    println("Distance/probability vector: $dist_vector")
-
     # TODO: correct this according to the equation
     # https://en.wikipedia.org/wiki/Partially_observable_Markov_decision_process
-    # CAREFUL: use only the indices of the neighborhood
-    #=for s_prime in neighborhood
-        sum_t = 0.0
-        for s in neighborhood
-            key = [s, action]
-            try
-                t = transition[key]
-                t_s_prime = t[s_prime]
-            catch
-                # then create a uniform distribution of the correct length
-                t_s_prime = #something else (uniform distribution, 1/n_states)
-            end
-            m = t_s_prime*belief[s]
-            sum_t = sum_t + m
-        end
-        b_prime[s_prime] = dist_vector[o]*sum_t
-    end =#
-    #normalize
-    #b_prime = b_prime / sum(b_prime)
-
-    # TODO: confirm with goncalo: Final type must match shared_data.msg
-    #return b_prime
 end
 
 
@@ -920,7 +592,8 @@ function get_policy(pomdp::aPOMDP, fused_T, c_vector, get_v_s::Function)
     #get the v_s
     #v = get_v_s(state)
     #TODO: this function will return the value of state v(s) 
-    println("calling get_policy")
+    println("WARNING: get_policy is returning bogus policies!")
+    return nothing
     # Integrate fuset_T into pomdp
     pomdp.transition_matrix = fused_T
     # Iterate over all possible states to -construct (set) the V(S) in apomdp
@@ -960,95 +633,6 @@ function learn(pomdp::aPOMDP, current_belief, action, previous_belief, local_tra
 
     # Return the matrix for assignment
     return local_transition_matrix
-end 
-
-function state_b_to_a(pomdp::aPOMDP, bpomdp_states::Dict)
-    # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
-    # correspondence between the two
-
-    # Get the number of agents from the state dict
-    n_agents = length(bpomdp_states["Agents"])
-    n_nodes = length(bpomdp_states["World"])
-
-    # Allocate the state array
-    alpha_states=Array{Int64}(n_agents+(n_nodes*length(bpomdp_states["World"][1])))
-    
-    # Add the elements to the state array in a specific order
-    index = 1
-    # Agent state
-    for x in 1:n_agents
-        for elem in bpomdp_states["Agents"][x]
-            alpha_states[index] = elem
-            index = index+1
-        end
-    end
-    # World state
-    for y in 1:n_nodes
-        for elem in bpomdp_states["World"][y]
-        #for z in 1: length(bpomdp_states["World"][y])
-        #    alpha_states[index] = bpomdp_states["World"][y][z]
-            alpha_states[index] = elem
-            index = index+1
-        end
-    end
-
-    # And return the index of the state
-    state_idx = state_index(pomdp, alpha_states)
-    println("HAAAAAAAAAAAAAAA")
-    println("State")
-    println(bpomdp_states)
-    println("Corresponds to")
-    println(alpha_states)
-    println("With index")
-    println(state_idx)
-    println("Which yields state")
-    println(state_from_index(pomdp, state_idx))
-    println("HAAAAAAAAAAAAAAA")
-    return state_idx
-end
-
-function state_a_to_b(pomdp::aPOMDP, apomdp_states) ##it should be return type ?
-    # Converts an aPOMDP state to a bPOMDP state, allowing for plug-and-play
-    # correspondence between the two
-    
-
-    #i=1
-    #construct agents_states
-    #p=0
-    #beta_states = zeros(pomdp.agents_size,pomdp.agents_specfi)
-    #for x in 1:pomdp.agents_specfi
-     #   b = zeros(pomdp.agents_size)
-    #  for y in 1:pomdp.agents_size
-            #create vector 
-     #       b[y]=apomdp_states[i]
-      #      i=i+1
-       # end 
-        #append vectors 
-        #beta_states[x+p:x+x]=b'
-        #p=x
-    #end
-     #  beta_states#to print the result 
-
-     println("WARNING: state_a_to_b is returning a bogus state")
-
-     # For now, we'll build a bogus state
-     state = Dict(
-         "Agents" => Dict(
-             1 => [5],
-             2 => [7],
-             ),
-         "World" => Dict(
-             1 => [1,0,0],
-             2 => [0,0,1],
-             3 => [0,1,0],
-             4 => [1,0,0],
-             5 => [0,0,0],
-             6 => [0,0,0],
-             7 => [0,0,0]
-             )
-         )
-
-    return state
 end 
 
 # Logging

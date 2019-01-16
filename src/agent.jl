@@ -34,7 +34,7 @@ using apomdp.msg
 # TODO: Figure out inter-thread communication
 global beliefs_vector
 global transitions_vector
-global pomdp = nothing
+global pomdp
 beliefs_vector = []
 transitions_vector = []
 
@@ -54,27 +54,20 @@ end
 
 
 # Function that returns the cost vector for all actions for this agent
-function calc_cost_vector(node_locations, n_agents, world_structure, agent_id, n_actions, belief, pomdp, agent_abilities) 
+function calc_cost_vector(node_locations, agent_id, n_actions, belief, pomdp, agent_abilities, state_lut) 
     # C_i(a,s) = Ab(a) * Cc(a,s)
     # The final cost of each action in each state is the product of the fixed
     # action cost (abilities or Ab) times the current cost (Cc) of the action
     # in the current state
-    
-    return 0
 
     # Determine the current state
-    if belief == nothing
-        println("calc_cost_vector is using a bogus index because beliefs were not defined.")
-        index = 11
-    else
-        index = argmax_belief(pomdp, belief)
-    end
+    index = argmax_belief(pomdp, belief)
 
     # Convert state index to actual state
     # After this, we should have a state dictionary, as in the simulator
     # The first call gets a state vector in the aPOMDP style, the second
     # converts that to a bPOMDP-style dict.
-    state = state_a_to_b(pomdp, state_from_index(pomdp, index))   
+    state = idx_to_state(index, state_lut)
 
     # Calculate the cost vector 
     cost_vector = zeros(Float32, n_actions)
@@ -114,7 +107,6 @@ function calc_cost_vector(node_locations, n_agents, world_structure, agent_id, n
 
     # And we're done costing!
     return cost_vector
-
 end 
 
 
@@ -186,9 +178,6 @@ end
 
 # And a main function
 function main(agent_id)
-    # TODO: make this consistent (1-indexed)
-    agent_index = agent_id
-
     # Initialize ROS node
     println("Initializing bPOMDP - agent_$(agent_id)")
     tic()
@@ -214,25 +203,24 @@ function main(agent_id)
     n_nodes = length(node_locations)
     n_actions = n_nodes + length(agent_abilities[1])
     println("Read a configuration file:")
-    println("\tn_actions: ",n_actions)
-    println("\tn_agents: ",n_agents)
-    println("\tn_nodes: ",n_nodes)
-    println("\tagents_structure: ",agents_structure)
-    println("\tworld_structure: ",world_structure)
-    println("\tnode_locations: ",node_locations)
-    println("\tnode_connectivity: ",node_connectivity)
-    println("\tagent_abilities: ",agent_abilities)
+    println("\tn_actions: ", n_actions)
+    println("\tn_agents: ", n_agents)
+    println("\tn_nodes: ", n_nodes)
+    println("\tagents_structure: ", agents_structure)
+    println("\tworld_structure: ", world_structure)
+    println("\tnode_locations: ", node_locations)
+    println("\tnode_connectivity: ", node_connectivity)
+    println("\tagent_abilities: ", agent_abilities)
 
     # Read state LUT
     println("Reading state LUT from ", state_lut_file)
+    global state_lut
     state_lut = YAML.load(open(state_lut_file))
     #println(state_lut)
     n_states = length(state_lut)
     println("Read an LUT with ", n_states, " states.")
 
     # Show state structure
-    state_structure = convert_structure(n_agents, n_nodes, agents_structure, world_structure)
-    println("This corresponds to aPOMDP state structure $state_structure.")
     elapsed = toq()
     println("Config read in $elapsed seconds.")
     println()
@@ -240,8 +228,6 @@ function main(agent_id)
     # Allocate belief and transition vectors
     global beliefs_vector
     global transitions_vector
-    #beliefs_vector = [nothing for a in 1:n_agents]
-    #transitions_vector = [nothing for a in 1:n_agents]
 
     beliefs_vector = Dict()
     transitions_vector = Dict()
@@ -258,11 +244,8 @@ function main(agent_id)
     # they inform the aPOMDP primitives in the same way and ensure
     # consistency.
     print("Creating aPOMDP object... ")
-    tic()
     global pomdp
     pomdp = aPOMDP("isvr", 1, [n_states], n_actions)
-    elapsed = toq()
-    println("Done in $elapsed seconds.")
 
     # Initialize this agent's belief
     beliefs_vector[agent_id] = initialize_belief(pomdp)
@@ -280,30 +263,31 @@ function main(agent_id)
         # Inform
         println("Iteration $iter")
 
-        # Get the cost 
+        # Get action costs for the current state
         println("Calculating cost vector")
         c_vector = calc_cost_vector(
             node_locations,
-            n_agents,
-            world_structure,
             agent_id,
             n_actions,
-            beliefs_vector[agent_index],
+            beliefs_vector[agent_id],
             pomdp,
-            agent_abilities
+            agent_abilities,
+            state_lut
             )
+
+        # Fuse new transition with everyone else's
+        fused_T = fuse_transitions(pomdp, transitions_vector)
 
         # Solve
         println("Calculating new policy")
-        #policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
+        policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
 
         # Call fuse belief function
         println("Fusing beliefs")
-        #fused_b = fuse_beliefs(pomdp, beliefs_vector)
+        fused_b = fuse_beliefs(pomdp, beliefs_vector)
 
         # Decision_making (action selection)
-        #action = get_action(pomdp, policy, fused_b)
-        action = rand(0:n_actions-1)
+        action = get_action(pomdp, policy, fused_b)
 
         # Act and receive an observation 
         println("Applying action $action")
@@ -314,18 +298,11 @@ function main(agent_id)
         # Update belief
         println("Updating local belief") 
         #TODO: rethink if we should use the local transition or the fused one
-        previous_b = beliefs_vector[agent_index] # save the previous belief 
-        beliefs_vector[agent_index] = update_belief(pomdp, index, action, beliefs_vector[agent_index], transitions_vector[agent_index])
-        
-        # Fuse beliefs
-        fused_b = fuse_beliefs(pomdp, beliefs_vector)
+        previous_b = beliefs_vector[agent_id] # save the previous belief 
+        beliefs_vector[agent_id] = update_belief(pomdp, index, action, beliefs_vector[agent_id], transitions_vector[agent_id])
 
         # Learn
-        # TODO: decide whether to use the fused_b or local belief to learn
-        transitions_vector[agent_index] = learn(pomdp, beliefs_vector[agent_index], action, previous_b, transitions_vector[agent_index])
-        
-        # Fuse new transition with everyone else's
-        fused_T = fuse_transitions(pomdp, transitions_vector)
+        transitions_vector[agent_id] = learn(pomdp, beliefs_vector[agent_id], action, previous_b, transitions_vector[agent_id])
 
         # Publish something to "broadcast" topic
         # TODO: decide when to do this  
