@@ -34,6 +34,7 @@ using apomdp.msg
 # TODO: Figure out inter-thread communication
 global beliefs_vector
 global transitions_vector
+global pomdp = nothing
 beliefs_vector = []
 transitions_vector = []
 
@@ -59,13 +60,14 @@ function calc_cost_vector(node_locations, n_agents, world_structure, agent_id, n
     # action cost (abilities or Ab) times the current cost (Cc) of the action
     # in the current state
     
+    return 0
+
     # Determine the current state
     if belief == nothing
         println("calc_cost_vector is using a bogus index because beliefs were not defined.")
         index = 11
-    else:
-        println("ERROR: calc_cost_vector got a non-nothing belief but does not know what to do with it.")
-        # TODO: get the state from belief using argmax
+    else
+        index = argmax_belief(pomdp, belief)
     end
 
     # Convert state index to actual state
@@ -141,7 +143,7 @@ function share_data(beliefs_vector, transitions_vector, publisher, agent_id)
 
     # Pack the belief and transistions in one ROS message 
     # TODO: refurbish when messages stabilize. YAML?
-    msg.b_s = JSON.json(beliefs_vector[agent_id])
+    msg.b_s = JSON.json(beliefs_vector[agent_id].dist)
     msg.T = JSON.json(transitions_vector[agent_id])
     
     # Publish message 
@@ -153,8 +155,32 @@ end
 function share_data_cb(msg)
     # every time we recieve new msg we need to update the vectors only with latest information (no repetition)
     println("I got a message from agent_$(msg.agent_id)")
-    beliefs_vector[msg.agent_id] = JSON.parse(msg.b_s)
+
+    # Parse other agent's belief into the vector
+    new_belief = apomdpDistribution(pomdp)
+    new_belief.dist = convert(Array{Float64,1}, JSON.parse(msg.b_s))
+    beliefs_vector[msg.agent_id] = new_belief
+    println("The other agent believes we're in state:")
+    println(argmax_belief(pomdp, beliefs_vector[msg.agent_id]))
+
+    # TODO: Parse other agent's belief into the vector
+    # (there's no way Julia will just let this one slide)
     transitions_vector[msg.agent_id] = JSON.parse(msg.T)
+end
+
+# Functions for converting to/from the states and indices using the LUT
+function state_to_idx(state, state_lut)
+    idx = 0
+    for (i, s) in enumerate(state_lut)
+        if s == state
+            idx = i
+        end
+    end
+    return idx
+end
+
+function idx_to_state(idx, state_lut)
+    return state_lut[idx]
 end
 
 
@@ -174,6 +200,7 @@ function main(agent_id)
 
     # Read configuration
     config_file = expanduser("~/catkin_ws/src/apomdp/config/common.yaml")
+    state_lut_file = expanduser("~/catkin_ws/src/apomdp/config/state_lut.yaml")
     println("Reading configuration from ", config_file)
     config = YAML.load(open(config_file))
 
@@ -196,6 +223,13 @@ function main(agent_id)
     println("\tnode_connectivity: ",node_connectivity)
     println("\tagent_abilities: ",agent_abilities)
 
+    # Read state LUT
+    println("Reading state LUT from ", state_lut_file)
+    state_lut = YAML.load(open(state_lut_file))
+    #println(state_lut)
+    n_states = length(state_lut)
+    println("Read an LUT with ", n_states, " states.")
+
     # Show state structure
     state_structure = convert_structure(n_agents, n_nodes, agents_structure, world_structure)
     println("This corresponds to aPOMDP state structure $state_structure.")
@@ -206,8 +240,16 @@ function main(agent_id)
     # Allocate belief and transition vectors
     global beliefs_vector
     global transitions_vector
-    beliefs_vector = [nothing for a in 1:n_agents]
-    transitions_vector = [nothing for a in 1:n_agents]
+    #beliefs_vector = [nothing for a in 1:n_agents]
+    #transitions_vector = [nothing for a in 1:n_agents]
+
+    beliefs_vector = Dict()
+    transitions_vector = Dict()
+
+    for i in 1:n_agents
+        beliefs_vector[i] = nothing
+        transitions_vector[i] = nothing
+    end
 
     # Create a pomdp object. This contains the structure of the problem,
     # and has to be used in almost all calls to apomdp.jl in order to
@@ -217,9 +259,14 @@ function main(agent_id)
     # consistency.
     print("Creating aPOMDP object... ")
     tic()
-    pomdp = aPOMDP(n_actions, n_agents, agents_structure, n_nodes, world_structure, node_locations, node_connectivity)
+    global pomdp
+    pomdp = aPOMDP("isvr", 1, [n_states], n_actions)
     elapsed = toq()
     println("Done in $elapsed seconds.")
+
+    # Initialize this agent's belief
+    beliefs_vector[agent_id] = initialize_belief(pomdp)
+    transitions_vector[agent_id] = initialize_transitions(pomdp)
 
     # Subscribe to the agent's shared_data topic
     # Create publisher, and a subscriber 
@@ -261,11 +308,8 @@ function main(agent_id)
         # Act and receive an observation 
         println("Applying action $action")
         observation = act(action, agent_id, service_client)
-        # TODO: Get apomdp state (index)
-        #temp_s = state_b_to_a(pomdp, observation)
-        #index = POMDPs.state_index(pomdp, temp_s)
-        #temp_s = state_from_index(pomdp,index)
-        index = 1
+        index = state_to_idx(observation, state_lut)
+        println("Got an index: ", index)
 
         # Update belief
         println("Updating local belief") 

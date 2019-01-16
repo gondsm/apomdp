@@ -11,13 +11,23 @@ initial_state:
     2: [0,0,1] #node 2
     3: [0,1,0] #node 3
     4: [1,0,0] #node 4
-    5: [0,0,0] #node 5
-    6: [0,0,0] #node 6
-    7: [0,0,0] #node 7 
+    5: [0,1,0] #node 5
+    6: [0,0,1] #node 6
+    7: [0,1,0] #node 7 
+
+  # Harder problem:
+  # World:
+  #   1: [1,0,1] #node 1
+  #   2: [0,1,1] #node 2
+  #   3: [0,1,0] #node 3
+  #   4: [1,1,0] #node 4
+  #   5: [0,0,1] #node 5
+  #   6: [0,1,0] #node 6
+  #   7: [0,1,1] #node 7 
 
 # This constant is multiplied by the probability of message delivery to modulate the
 # inverse-square law to fit our needs.  
-connectivity_constant: 1.0
+connectivity_constant: 10.0
 
 
      

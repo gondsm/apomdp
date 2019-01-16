@@ -76,6 +76,8 @@ type aPOMDP <: POMDP{Array{Int64, 1}, Int64, Array} # POMDP{State, Action, Obser
     # nodes_connectivity::Dict
     # # cost vector
     # c_vector::Array
+    # Corresponds to the old aPOMDP state structure, for state conversion
+    expanded_structure::Array
 end
 
 # Define probability distribution type
@@ -121,12 +123,13 @@ end
 
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
-    # Generate state space
-    states = collect(1:reduce(*, state_structure))
-    state_dims = ones(state_structure...)
-
     # Fill in state structure
-    state_structure = [states[end]]
+    expanded_structure = [s+1 for s in state_structure]
+    state_structure = [reduce(*, state_structure)]
+    state_dims = state_structure[:]
+
+    vecs = [collect(1:n) for n in state_structure]
+    states = collect(IterTools.product(vecs...))
 
     # Inform
     #println("Initialized new state structure:")
@@ -193,7 +196,8 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
                   state_dims,
                   #nodes_location,
                   #nodes_connectivity,
-                  #c_vector)
+                  #c_vector),
+                  expanded_structure
                   )
 end
 
@@ -388,16 +392,20 @@ POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(pomdp);
 
 # Define state indices
 function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
-    # = pomdp.state_indices[state];
-    #println("state_structure: ",pomdp.state_structure)
-    state_dims = ones(pomdp.state_structure...)
-    #println("state_dims: ",state_dims)
-    index = sub2ind(size(state_dims), state...)
+    # States may have zeroes, we don't want that
+    new_state = [s + 1 for s in state]
+    
+    # Convert
+    index = sub2ind(pomdp.expanded_structure, new_state...)
+
+    # And done!
     return index
 end
 
 function state_from_index(pomdp::aPOMDP, index)
-    state =  ind2sub(pomdp.state_dims, index)
+    state_matrix = ones(pomdp.expanded_structure...)
+    state = ind2sub(state_matrix, index)
+    #state = []
     return state
 end
 
@@ -680,6 +688,38 @@ function get_action(pomdp::aPOMDP, policy, belief)
 end
 
 
+function initialize_belief(pomdp::aPOMDP)
+    # Initializes an empty belief.
+    # Essentially abstracts away this initialization from the agent, so we can
+    # deal with beliefs only in this module.
+
+    # For now, we'll have this as a dict.
+    # Whatever values are not initialized will be valued as being whatever
+    # remains from the sum of the ones that are initialized.
+    return apomdpDistribution(pomdp)
+
+    # TODO: Use the get() function to provide a default value when running PDF!
+    # https://en.wikibooks.org/wiki/Introducing_Julia/Dictionaries_and_sets#Dictionaries
+end
+
+
+function initialize_transitions(pomdp::aPOMDP)
+    return Dict()
+end
+
+
+function argmax_belief(pomdp::aPOMDP, belief)
+    # Returns the most likely state according to the belief
+
+    # If the belief is empty, i.e. all states are equally likely, we return a
+    # random state.
+    state_maxval, state_idx = findmax(belief.dist,1)
+
+    # And we're done
+    return state_idx[1]
+end
+
+
 function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief, transition=Dict())
     # Steps: 
     # Will pass observation, action, belief and transition to a function in apomdp.update_belief
@@ -784,9 +824,11 @@ function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief,
     
     # TODO
     # Also rework argument types
-    return nothing
+    println("WARNING: belief update is returning simple distributions!")
 
-    println("Observation: $observation")
+    return apomdpDistribution(pomdp, [observation])
+
+    #println("Observation: $observation")
     o=observation
     #states
     states = pomdp.states # these actually the indicies of the states not the actual ones 
@@ -894,95 +936,75 @@ end
 
 
 function learn(pomdp::aPOMDP, current_belief, action, previous_belief, local_transition_matrix) 
-    # integrate_transition(pomdp, prev_state, state, prev_action) 
     # pomdp contains structure
     # belief contains the final state
     # action is the action
     # previous_b is the previous belief (previous state)
 
-    # TODO
-    return nothing
-
     # Get the key from the previous state
-    # key = prev_state[:]
-    # Key will be result of argmaxing the belif and appending action
-    prev_state_maxval, prev_state_indx = findmax(previous_belief,2)
+    prev_state_maxval, prev_state_indx = findmax(previous_belief.dist,1)
     key = [prev_state_indx[1], action]
-    
+
     # Find out which is the state we are in
-    current_belief_maxval, current_belief_indx = findmax(current_belief,2)
+    current_belief_maxval, current_belief_indx = findmax(current_belief.dist,1)
     final_state = current_belief_indx[1]
     
     # Add this transition to the matrix
     try
-        local_transition_matrix[key][final_state] += 1
+        local_transition_matrix[key].dist[final_state] += 1
     catch
-        local_transition_matrix[key] = ones(Float64, pomdp.state_structure...)/1000
-        local_transition_matrix[key][final_state] += 1
+        local_transition_matrix[key] = apomdpDistribution(pomdp)
+        local_transition_matrix[key].dist[final_state] += 1
+        local_transition_matrix[key].dist[:] = normalize(local_transition_matrix[key].dist[:], 1)
     end
 
     # Return the matrix for assignment
     return local_transition_matrix
-
-    # Return empty bogus array. Final type must match shared_data.msg
-    #return Float32[]
 end 
 
-function state_b_to_a(pomdp::aPOMDP,bpomdp_states::Dict)
+function state_b_to_a(pomdp::aPOMDP, bpomdp_states::Dict)
     # Converts a bPOMDP state to an aPOMDP state, allowing for plug-and-play
     # correspondence between the two
 
-    #println("bpomdp_states: ",bpomdp_states)
-    #println("bpomdp state agents: ",bpomdp_states["Agents"][1])
-    #println("bpomdp state agents length: ",length(bpomdp_states["Agents"]))
-    #println("bpomdp state world: ",bpomdp_states["World"][1])
-    #println("bpomdp state world length: ",length(bpomdp_states["World"]))
-    #println("size of array world: ", length(bpomdp_states["World"][1]))
+    # Get the number of agents from the state dict
+    n_agents = length(bpomdp_states["Agents"])
+    n_nodes = length(bpomdp_states["World"])
 
-    index =1
-    alpha_states=Array{Int64}(pomdp.agents_size+(pomdp.nodes_num*length(bpomdp_states["World"][1])))
-    #alpha_states= zeros(pomdp.agents_size+(pomdp.nodes_num*length(bpomdp_states["World"][1])))
-    #println("alpha_states length: ",length(alpha_states))
-    #println(alpha_states)
-
-    #TODO: make it general to use keys of dic===> for k in keys(dict) println(k, " ==> ", dict[k])
-    #for k in keys(bpomdp_states) 
-     #   println(k, " ==> ", bpomdp_states[k])
+    # Allocate the state array
+    alpha_states=Array{Int64}(n_agents+(n_nodes*length(bpomdp_states["World"][1])))
     
-    for x in 1: length(bpomdp_states["Agents"]) 
-        #println("agent in node: ",bpomdp_states["Agents"][x])
-        alpha_states[index] = bpomdp_states["Agents"][x]
-        index=index+1
-    end
-
-    for y in 1: length(bpomdp_states["World"])
-        #println("World in node: ",bpomdp_states["World"][y])
-        for z in 1: length(bpomdp_states["World"][y])
-            alpha_states[index] = bpomdp_states["World"][y][z]
+    # Add the elements to the state array in a specific order
+    index = 1
+    # Agent state
+    for x in 1:n_agents
+        for elem in bpomdp_states["Agents"][x]
+            alpha_states[index] = elem
             index = index+1
         end
-        
     end
-    #end
-    #println(alpha_states)
-    return alpha_states
-    #index = (pomdp.agents_size)+1 #index where i to continou the loop of alpha states 
-    #alpha_states=zeros(pomdp.nodes_num,pomdp.world_specfi)
-    #q=0
-    #construct world_states 
-    #for x in 1:pomdp.world_specfi
-    #   c = zeros(pomdp.nodes_num)
-     #   for y in 1:pomdp.nodes_num
-            #create vector 
-      #      c[y]=bpomdp_states[index]
-       #     index=index+1
-        #end 
-        #println(c)
-        #append vectors 
-        #alpha_states[x+q:x+x]=c
-        #q=x
-    #end
-    #alpha_states#to print the result 
+    # World state
+    for y in 1:n_nodes
+        for elem in bpomdp_states["World"][y]
+        #for z in 1: length(bpomdp_states["World"][y])
+        #    alpha_states[index] = bpomdp_states["World"][y][z]
+            alpha_states[index] = elem
+            index = index+1
+        end
+    end
+
+    # And return the index of the state
+    state_idx = state_index(pomdp, alpha_states)
+    println("HAAAAAAAAAAAAAAA")
+    println("State")
+    println(bpomdp_states)
+    println("Corresponds to")
+    println(alpha_states)
+    println("With index")
+    println(state_idx)
+    println("Which yields state")
+    println(state_from_index(pomdp, state_idx))
+    println("HAAAAAAAAAAAAAAA")
+    return state_idx
 end
 
 function state_a_to_b(pomdp::aPOMDP, apomdp_states) ##it should be return type ?
