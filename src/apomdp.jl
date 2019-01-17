@@ -109,6 +109,20 @@ end
 # Define iterator over distribution, returns the list of possible states
 POMDPs.iterator(d::apomdpDistribution) = d.state_space
 
+# A convenient constructor for bPOMDP agents
+function aPOMDP(n_states, n_actions, get_v_s, state_lut)
+    # Create object
+    pomdp = aPOMDP("isvr", 1, [n_states], n_actions)
+
+    # Set all the state values
+    for s in pomdp.states
+        set_state_value(pomdp, s, get_v_s(s, state_lut))
+    end
+
+    # And return it
+    return pomdp
+end
+
 # Default constructor, initializes everything as uniform
 function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Array{Int64,1}=[3,3], n_actions::Int64=8, weights::Array{Float64,1}=normalize(rand(n_v_s), 1))
     # Fill in state structure
@@ -118,6 +132,7 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
 
     vecs = [collect(1:n) for n in state_structure]
     states = collect(IterTools.product(vecs...))
+    states = [[a for a in s] for s in states]
 
     # Inform
     #println("Initialized new state structure:")
@@ -134,9 +149,9 @@ function aPOMDP(reward_type::String="svr", n_v_s::Int64=1, state_structure::Arra
     # initialize only when needed (i.e. when adding value to a state)
     for n = 1:n_v_s
         state_values_dict[n] = Dict()
-    #     for state in states
-    #         state_values_dict[n][state] = 0
-    #     end
+        for state in states
+            state_values_dict[n][state] = 0
+        end
     end
 
     # Initialize uniform transition matrix

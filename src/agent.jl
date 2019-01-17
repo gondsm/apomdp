@@ -41,15 +41,19 @@ transitions_vector = []
 
 # Agent-specific actions
 # Function that returns the state values for this particular agent
-function get_v_s(state)
-    # TODO
-    # Algorithm:
-    # Convert apomdp state to bpomdp state (where each var has meaning)
-    # Apply the equation:
-    # v(s) = -2n_victim * -n_depries * n_fire
+# It receives a state index and returns an int.
+function get_v_s(state, state_lut)
+    # Convert to bpompd state
+    bpomdp_state = idx_to_state(state[1], state_lut)
 
-    # For now, we'll return 0, and all states will have the same value
-    return 0
+    # Calculate the state's value
+    value = 0
+    for node in keys(bpomdp_state["World"])
+        value -= sum(bpomdp_state["World"][node])
+    end
+
+    # And return it
+    return value
 end 
 
 
@@ -220,11 +224,6 @@ function main(agent_id)
     n_states = length(state_lut)
     println("Read an LUT with ", n_states, " states.")
 
-    # Show state structure
-    elapsed = toq()
-    println("Config read in $elapsed seconds.")
-    println()
-
     # Allocate belief and transition vectors
     global beliefs_vector
     global transitions_vector
@@ -245,7 +244,7 @@ function main(agent_id)
     # consistency.
     print("Creating aPOMDP object... ")
     global pomdp
-    pomdp = aPOMDP("isvr", 1, [n_states], n_actions)
+    pomdp = aPOMDP(n_states, n_actions, get_v_s, state_lut)
 
     # Initialize this agent's belief
     beliefs_vector[agent_id] = initialize_belief(pomdp)
@@ -255,6 +254,11 @@ function main(agent_id)
     # Create publisher, and a subscriber 
     pub = Publisher{shared_data}("broadcast", queue_size=10)
     sub = Subscriber{shared_data}("shared_data/$(agent_id)", share_data_cb, queue_size=10)
+
+    # Inform on initialization time
+    elapsed = toq()
+    println("Initialization completed in $elapsed seconds.")
+    println()
 
     # Start main loop
     println("Going into execution loop!")
