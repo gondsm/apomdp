@@ -490,8 +490,27 @@ end
 
 # betapomdp
 function fuse_beliefs(pomdp::aPOMDP, belief_vector)
-    # TODO
-    return nothing    
+    # Determine which beliefs are defined
+    idxs = [index for (index, value) in enumerate(belief_vector) if belief_vector[index] != nothing]
+
+    # Fuse them    
+    if length(idxs) > 1
+        # Multiply all of the beliefs together
+        fused_belief = broadcast(*,  [belief_vector[i].dist for i in idxs]...)
+        # Normalize
+        fused_belief[:] = normalize(fused_belief[:], 1)
+        # And pack into an apomdpDistribution
+        new_distribution = apomdpDistribution(pomdp)
+        new_distribution.dist = fused_belief
+        print("Fused beliefs from agents ")
+        println(idxs)
+    else
+        # Copy this agent's distribution
+        new_distribution = belief_vector[idxs[1]]
+    end
+
+    # And return the fused belief
+    return new_distribution
 end
 
 
