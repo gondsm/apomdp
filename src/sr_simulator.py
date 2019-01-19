@@ -16,18 +16,7 @@ model a noisy channel with message loss.
 from __future__ import print_function
 from __future__ import division
 
-# ROS Imports
-import rospy
-import rospkg
-from apomdp.msg import action
-from apomdp.msg import obs
-from apomdp.msg import shared_data
-from apomdp.srv import Act
-import apomdp.srv
-import pickle
-
 # STD Imports
-import yaml
 from threading import Lock
 import math
 import random
@@ -35,8 +24,15 @@ import copy
 import time
 import datetime
 import copy
-from pprint import pprint
 import itertools
+import yaml
+
+# ROS Imports
+import rospy
+import rospkg
+from apomdp.msg import shared_data
+from apomdp.srv import Act
+import apomdp.srv
 
 
 # Global Variables
@@ -56,6 +52,7 @@ agent_abilities = []        # A dictionary containing the agents' abilities (see
 n_actions = 0               # The action space (see common.yaml)
 occupied_cells = []         # The coordinates of the occupied cells
 state_lut = []              # The whole state space
+mission_over = False        # Tells us whether the mission has ended
 
 
 # Logging functions
@@ -344,6 +341,20 @@ def transition(state, action, agent_id):
     return new_state
 
 
+def detect_end(state):
+    """ Determines whether the mission has ended. """
+    ended = True
+    for node in state["World"]:
+        if 1 in state["World"][node]:
+            ended = False
+
+    if ended == True:
+        print("MISSION ENDED:")
+        print(state)
+
+    return ended
+
+
 # ROS Message/Service Handlers
 def broadcast(msg):
     """ Callback fuction for the /broadcast topic which propagates messages
@@ -410,6 +421,10 @@ def receive_action(req):
     res = apomdp.srv.ActResponse()
     res.o.obs = obs_string
 
+    # Detect if the mission is over
+    global mission_over
+    mission_over = detect_end(state)
+
     # Return the response
     rospy.loginfo("Returning observation to agent.")
     return res
@@ -442,7 +457,13 @@ if __name__ == "__main__":
     global_lock = Lock()
 
     # Wait for stuff to happen
-    rospy.spin()
+    global mission_over
+    r = rospy.Rate(0.1)
+    while not rospy.is_shutdown() and not mission_over:
+        r.sleep()
+
+    if mission_over:
+        rospy.loginfo("Mission is over. Terminating!")
 
     # Dump logs to file
     rospy.loginfo("Dumping logs!")
