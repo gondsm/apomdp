@@ -59,18 +59,11 @@ end
 
 # Function that returns the cost vector for all actions for this agent
 function calc_cost_vector(node_locations, agent_id, n_actions, belief, pomdp, agent_abilities, state_lut) 
-    # C_i(a,s) = Ab(a) * Cc(a,s)
-    # The final cost of each action in each state is the product of the fixed
-    # action cost (abilities or Ab) times the current cost (Cc) of the action
-    # in the current state
-
     # Determine the current state
     index = argmax_belief(pomdp, belief)
 
     # Convert state index to actual state
     # After this, we should have a state dictionary, as in the simulator
-    # The first call gets a state vector in the aPOMDP style, the second
-    # converts that to a bPOMDP-style dict.
     state = idx_to_state(index, state_lut)
 
     # Calculate the cost vector 
@@ -79,10 +72,10 @@ function calc_cost_vector(node_locations, agent_id, n_actions, belief, pomdp, ag
     # Actually calculate the cost
     # For non-movement actions, the cost will be the inverse of the agent's
     # abilities: if an action is desired, its cost is 0, if it is undesireable
-    # then its cost is 1, and if impossible its cost is 10.
+    # then its cost is 1, and if impossible its cost is 100.
     for (i, ability) in enumerate(agent_abilities[agent_id])
         if  ability == -1
-            cost_vector[i] = 1000
+            cost_vector[i] = 100
         elseif  ability == 0
             cost_vector[i] = 1
         elseif  ability == 1
@@ -284,7 +277,10 @@ function main(agent_id)
 
         # Solve
         println("Calculating new policy")
+        tic()
         policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
+        elapsed = toq()
+        println("Policy calculated in $elapsed seconds.")
 
         # Call fuse belief function
         println("Fusing beliefs")
