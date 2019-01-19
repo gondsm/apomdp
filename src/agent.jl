@@ -256,7 +256,8 @@ function main(agent_id)
     # Start main loop
     println("Going into execution loop!")
     iter = 0
-    while ! is_shutdown()
+    service_active = true
+    while ! is_shutdown() && service_active
         # Inform
         println("Iteration $iter")
 
@@ -291,7 +292,13 @@ function main(agent_id)
 
         # Act and receive an observation 
         println("Applying action $action")
-        observation = act(action, agent_id, service_client)
+        try
+            observation = act(action, agent_id, service_client)
+        catch
+            println("Acting not successful. The simulator is shut down or mission is completed.")
+            service_active = false
+            continue
+        end
         index = state_to_idx(observation, state_lut)
         println("Got an index: ", index)
 
