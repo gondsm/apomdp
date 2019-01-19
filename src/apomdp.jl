@@ -208,64 +208,29 @@ end
 function calculate_reward_matrix(pomdp::aPOMDP)
     # Re-calculate the whole reward matrix according to the current transition matrix and state values
     for s in pomdp.states, k = 1:pomdp.n_actions
-        tic()
         key = vcat(s,[k])
-        println("Starting new key")
-        print(key)
         sum_var = 0
         # Get P(S'|S,A)
         dist = transition(pomdp, s, k)
         if pomdp.reward_type == "msvr"
             for f = 1:pomdp.n_v_s
+                #println("Calculating MSVR for f = ", f)
                 inner_sum = 0
                 for state = dist.state_space
-                    try
-                        v_s_1 =pomdp.state_values[f][state]
-                    catch
-                        0
-                    end
-                    try 
-                        v_s_2 =pomdp.state_values[f][s]
-                    catch
-                        0
-                    end
-                    inner_sum += pdf(dist, state)*(v_s_1-v_s_2)
+                    inner_sum += pdf(dist, state)*(pomdp.state_values[f][state]-pomdp.state_values[f][s])
                 end
                 sum_var += pomdp.weights[f]*inner_sum
             end
         else
             for state = dist.state_space
-                 
-                try
-                    v_s_1 =pomdp.state_values[1][state]
-                catch
-                    0
-                end
-                 
-                try 
-                    v_s_2 =pomdp.state_values[1][s]
-                catch
-                    0
-                end
-                sum_var += pdf(dist, state)*(v_s_1-v_s_2)
+                sum_var += pdf(dist, state)*(pomdp.state_values[1][state]-pomdp.state_values[1][s])
             end
         end
         if pomdp.reward_type == "isvr" || pomdp.reward_type == "msvr"
             sum_var += calc_entropy(dist.dist)
         end
-
-        # Add the cost relative to the c_vector
-        try
-            sum_var += c_vector[k]
-        catch
-            println("Tried to add action cost to reward, but c_vector seems to be emtpy!")
-        end
-
-        if sum_var != 0
-            pomdp.reward_matrix[key] = sum_var
-        end
+        pomdp.reward_matrix[key] = sum_var
     end
-    toc()
 end
 
 # A function for calculating the entropy of a discrete distribution
@@ -372,11 +337,8 @@ function POMDPs.reward(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     key = state[:]
     append!(key, action)
      
-    try
-        r =pomdp.reward_matrix[key]
-    catch
-        0
-    end
+    r = pomdp.reward_matrix[key]
+
     return r
 end
 
@@ -395,11 +357,8 @@ POMDPs.initial_state_distribution(pomdp::aPOMDP) = apomdpDistribution(pomdp);
 
 # Define state indices
 function POMDPs.state_index(pomdp::aPOMDP, state::Array{Int64, 1})
-    # States may have zeroes, we don't want that
-    new_state = [s + 1 for s in state]
-    
     # Convert
-    index = sub2ind(pomdp.expanded_structure, new_state...)
+    index = state[1]
 
     # And done!
     return index
@@ -602,14 +561,8 @@ end
 
 
 function update_belief(pomdp::aPOMDP, observation::Int64, action::Int64, belief, transition=Dict())
-    # Steps: 
-    # Will pass observation, action, belief and transition to a function in apomdp.update_belief
-    # It will return the updated belief 
-
     # Use the apomdp machinery and the classical formulation to determine the
     # belief over the next state.
-    # Observation is a dict, action is an int, belief is a vector over state
-    # indices as usual, transition is a transition matrix as defined before.
 
     # TODO
     # Also rework argument types
@@ -623,15 +576,16 @@ end
 
 
 function get_policy(pomdp::aPOMDP, fused_T, c_vector, get_v_s::Function)
-    #get the v_s
-    #v = get_v_s(state)
-    #TODO: this function will return the value of state v(s) 
     println("WARNING: get_policy is returning bogus policies!")
     return nothing
+
     # Integrate fuset_T into pomdp
-    pomdp.transition_matrix = fused_T
+    println("WARNING: get_policy is not taking cost vectors into account!")
+    #pomdp.transition_matrix = fused_T
+
     # Iterate over all possible states to -construct (set) the V(S) in apomdp
-    calculate_reward_matrix(pomdp, c_vector, get_v_s)
+    #calculate_reward_matrix(pomdp, c_vector, get_v_s)
+    calculate_reward_matrix(pomdp)
 
     # Initialize a solver and solve
     solver = QMDPSolver()
