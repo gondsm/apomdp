@@ -489,38 +489,24 @@ end
 
 
 function fuse_transitions(pomdp::aPOMDP, transition_vector)
-    # Steps
-    # First we check if there is a need to fuse transistions 
-    # Create the vector of fusion from the transitions_vector which will only contains transitions for fusion --> the clean vector
-    # Pass a clean vector(a vector without nothing, a vector that can be used)
-    # We should have the fused_T to be returned
+    println("Warning: transition fusion is returning bogus values!")
 
     # TODO
     return nothing
 end
 
 
-function set_c_vector(pomdp::aPOMDP, c_vector)
-    # Set the current c vector as the one received
-    # TODO: 
-    # extend the apomdp to have a c_vector (all ones by default)
-    # extend the reward (MSVR by defaul, uniform thetas by default).
-    # SVR corresponds to having theta 1 just for that term, and so on
-end
-
-
 function get_action(pomdp::aPOMDP, policy, belief)
     # Get the best action according to policy for the received belief
-    # The belief is assumed as a vector of floars over the state space,
-    # which will have to be converted into a apomdpDistribution to
-    # plug into the policy using: 
-    # a = action(policy, apomdpDistribution(pomdp, belief))
+    if policy == nothing
+        println("WARNING: get_action is returning random actions. because a bogus belief was received.")
+        a = rand(0:pomdp.n_actions-1)
+    else
+        println("Getting action from policy.")
+        a = SARSOP.action(policy, belief)
+    end
 
-    println("WARNING: get_action is returning random actions.")
-    a = rand(0:pomdp.n_actions-1)
-
-    # TODO: actually get from policy!
-    # The return value should be integer
+    # And return the action
     return a
 end
 
@@ -576,8 +562,8 @@ end
 
 
 function get_policy(pomdp::aPOMDP, fused_T, c_vector, get_v_s::Function)
-    println("WARNING: get_policy is returning bogus policies!")
-    return nothing
+    #println("WARNING: get_policy is returning bogus policies!")
+    #return nothing
 
     # Integrate fuset_T into pomdp
     println("WARNING: get_policy is not taking cost vectors into account!")
