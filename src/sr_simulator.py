@@ -184,7 +184,8 @@ def generate_state_lut(state):
 
     while open_states:
         curr_state = open_states.pop()
-        world_states.append(copy.deepcopy(curr_state))
+        if curr_state not in world_states:
+            world_states.append(copy.deepcopy(curr_state))
         for node in curr_state:
             node_state = curr_state[node]
             for i, elem in enumerate(node_state):
