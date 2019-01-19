@@ -165,6 +165,11 @@ function state_to_idx(state, state_lut)
             idx = i
         end
     end
+    if idx == 0
+        println("ERROR: somehow, we got a state not in the LUT:")
+        println(state)
+        println(typeof(state))
+    end
     return idx
 end
 
@@ -292,6 +297,7 @@ function main(agent_id)
 
         # Act and receive an observation 
         println("Applying action $action")
+        observation = nothing
         try
             observation = act(action, agent_id, service_client)
         catch
