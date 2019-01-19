@@ -515,10 +515,6 @@ function initialize_belief(pomdp::aPOMDP)
     # Initializes an empty belief.
     # Essentially abstracts away this initialization from the agent, so we can
     # deal with beliefs only in this module.
-
-    # For now, we'll have this as a dict.
-    # Whatever values are not initialized will be valued as being whatever
-    # remains from the sum of the ones that are initialized.
     return apomdpDistribution(pomdp)
 
     # TODO: Use the get() function to provide a default value when running PDF!
