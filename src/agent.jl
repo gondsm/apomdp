@@ -179,7 +179,7 @@ end
 
 
 # And a main function
-function main(agent_id)
+function main(agent_id, rand_actions=false)
     # Initialize ROS node
     println("Initializing bPOMDP - agent_$(agent_id)")
     tic()
@@ -282,18 +282,24 @@ function main(agent_id)
         fused_T = fuse_transitions(pomdp, transitions_vector)
 
         # Solve
-        println("Calculating new policy")
-        tic()
-        policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
-        elapsed = toq()
-        println("Policy calculated in $elapsed seconds.")
+        if !rand_actions
+            println("Calculating new policy")
+            tic()
+            policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
+            elapsed = toq()
+            println("Policy calculated in $elapsed seconds.")
+        end
 
         # Call fuse belief function
         println("Fusing beliefs")
         fused_b = fuse_beliefs(pomdp, beliefs_vector)
 
         # Decision_making (action selection)
-        action = get_action(pomdp, policy, fused_b)
+        if rand_actions
+            action = get_action(pomdp, nothing, nothing)
+        else
+            action = get_action(pomdp, policy, fused_b)
+        end
 
         # Act and receive an observation 
         println("Applying action $action")
@@ -340,10 +346,22 @@ if size(ARGS)[1] == 0
     println("For now, I need to receive an int on the command line to use as agent ID.")
     exit(-1)
 else
+    # Parse ID
     id = parse(Int64,ARGS[1])
+
+    # Determine if we'll do random actions
+    rand_actions = false
+    try
+        if ARGS[2] == "true"
+            rand_actions = true
+        end
+    catch BoundsError
+        println("WARNING: you can pass a second argument \"true\" to have the agents perform random actions.")
+    end
+
     if id < 1
         println("Agent indices start at 1.")
     else
-        main(id)
+        main(id, rand_actions)
     end
 end
