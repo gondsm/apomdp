@@ -459,7 +459,7 @@ if __name__ == "__main__":
 
     # Wait for stuff to happen
     global mission_over
-    r = rospy.Rate(0.1)
+    r = rospy.Rate(1)
     while not rospy.is_shutdown() and not mission_over:
         r.sleep()
 
