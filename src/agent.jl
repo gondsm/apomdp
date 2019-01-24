@@ -31,12 +31,13 @@ using apomdp.msg
 
 # Global vars
 # These need to be global in order to be written to by the callback
-# TODO: Figure out inter-thread communication
 global beliefs_vector
 global transitions_vector
+global observed_transitions
 global pomdp
-beliefs_vector = []
-transitions_vector = []
+beliefs_vector = []             # A vector containing the apomdpDistribution beliefs of each agents_structure
+transitions_vector = []         # A vector containing transitions of all agents
+observed_transitions = Dict()   # A simpler representation of transitions to ease propagation
 
 
 # Agent-specific actions
@@ -133,7 +134,7 @@ function share_data(beliefs_vector, transitions_vector, publisher, agent_id)
     # Pack the belief and transistions in one ROS message 
     # TODO: refurbish when messages stabilize. YAML?
     msg.b_s = JSON.json(beliefs_vector[agent_id].dist)
-    msg.T = JSON.json(transitions_vector[agent_id])
+    msg.T = JSON.json(observed_transitions)
     
     # Publish message 
     publish(publisher, msg)
@@ -152,9 +153,12 @@ function share_data_cb(msg)
     println("The other agent believes we're in state:")
     println(argmax_belief(pomdp, beliefs_vector[msg.agent_id]))
 
-    # TODO: Parse other agent's belief into the vector
-    # (there's no way Julia will just let this one slide)
-    transitions_vector[msg.agent_id] = JSON.parse(msg.T)
+    # Parse other agent's belief into the vector
+    for (key, val) in JSON.parse(msg.T)
+        new_key = map(x->parse(Int64,x),split(key[2:end-1], ","))
+        read_transitions[new_key] = val
+    end
+    transitions_vector[msg.agent_id] = read_transitions
 end
 
 # Functions for converting to/from the states and indices using the LUT
@@ -313,6 +317,15 @@ function main(agent_id, rand_actions=false)
         end
         index = state_to_idx(observation, state_lut)
         println("Got an index: ", index)
+
+        # Update the transition observation dict
+        prev_state = argmax_belief(pomdp, beliefs_vector[agent_id])
+        try
+            push!(observed_transitions[prev_state, action], index)
+        catch KeyError
+            observed_transitions[prev_state, action] = []
+            push!(observed_transitions[prev_state, action], index)
+        end
 
         # Update belief
         println("Updating local belief") 
