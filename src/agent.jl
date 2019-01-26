@@ -241,6 +241,12 @@ function main(agent_id, rand_actions=false)
         transitions_vector[i] = nothing
     end
 
+    # A few logging variables
+    action_history = []
+    entropy_history = []
+    state_history = []
+    reward_history = []
+
     # Create a pomdp object. This contains the structure of the problem,
     # and has to be used in almost all calls to apomdp.jl in order to
     # inform the functions of the problem structure
@@ -290,6 +296,9 @@ function main(agent_id, rand_actions=false)
         fused_T = fuse_transitions(pomdp, transitions_vector)
         pomdp.transition_matrix = fused_T
 
+        # After integrating the new stuff, get average entropy
+        append!(entropy_history, calc_average_entropy(pomdp))
+
         # Solve
         if !rand_actions
             println("Calculating new policy")
@@ -297,6 +306,8 @@ function main(agent_id, rand_actions=false)
             policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
             elapsed = toq()
             println("Policy calculated in $elapsed seconds.")
+        else
+            calculate_reward_matrix(pomdp)
         end
 
         # Call fuse belief function
@@ -309,6 +320,7 @@ function main(agent_id, rand_actions=false)
         else
             action = get_action(pomdp, policy, fused_b)
         end
+        push!(action_history, action)
 
         # Act and receive an observation 
         println("Applying action $action")
@@ -321,7 +333,11 @@ function main(agent_id, rand_actions=false)
             continue
         end
         index = state_to_idx(observation, state_lut)
+        push!(state_history, index)
         println("Got an index: ", index)
+
+        # Get a reward as well
+        push!(reward_history, get_reward(pomdp, index, action))
 
         # Update the transition observation dict
         prev_state = argmax_belief(pomdp, beliefs_vector[agent_id])
@@ -356,7 +372,21 @@ function main(agent_id, rand_actions=false)
     # Inform
     println("Agent exiting!")
 
-    # TODO: Write apomdp logs
+    # Write apomdp logs
+    exec_time = now() - start_time
+    out_file = open(log_file, "w")
+    log_execution(
+        out_file, 
+        iter, 
+        exec_time,
+        pomdp.state_values,
+        action_history,
+        entropy_history,
+        state_history,
+        reward_history,
+        pomdp
+        )
+    close(out_file)
 end
 
 

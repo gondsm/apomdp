@@ -526,7 +526,7 @@ function get_action(pomdp::aPOMDP, policy, belief)
     # Get the best action according to policy for the received belief
     if policy == nothing
         println("WARNING: get_action is returning random actions. because a bogus belief was received.")
-        a = rand(0:pomdp.n_actions-1)
+        a = rand(1:pomdp.n_actions)
     else
         println("Getting action from policy.")
         a = SARSOP.action(policy, belief)
@@ -631,38 +631,34 @@ function learn(pomdp::aPOMDP, current_belief, action, previous_belief, local_tra
     return local_transition_matrix
 end 
 
+function get_reward(pomdp, index, action)
+    return reward(pomdp, [index], action)
+end
+
 # Logging
 function log_execution(out_file, 
                        num_iter, 
-                       reward_change_interval, 
-                       re_calc_interval, 
                        exec_time,
                        v_s,
                        action_history,
                        entropy_history,
                        state_history,
                        reward_history,
-                       scenario,
                        pomdp,)
     # Number of iterations used
     write(out_file, "- iterations: $num_iter\n")
-    # Interval of reward change
-    write(out_file, "  reward_change_interval: $reward_change_interval\n")
-    # Whether the toy example was run
-    write(out_file, "  scenario: $scenario\n")
-    # Policy re-calculation inteval
-    write(out_file, "  re_calc_interval: $re_calc_interval\n")
     # Time it took to execute the whole scenario
     exec_time = exec_time.value
     write(out_file, "  execution_time_ms: $exec_time\n")
     # The V(S) function used for this scenario
     write(out_file, "  v_s:\n")
-    for state in keys(v_s)
-        write(out_file, "    ? !!python/tuple\n")
-        for i in state
-            write(out_file, "    - $i\n")
-        end
-        write(out_file, "    : $(v_s[state])\n")
+    #println(keys(v_s))
+    for (state, val) in v_s[1]
+        #write(out_file, "    ? !!python/tuple\n")
+        #for i in state
+        write(out_file, "    - $(state)\n")
+        #end
+        write(out_file, "    : $(val)\n")
     end
     # The timeseries of action the system took
     write(out_file, "  actions:\n")
