@@ -154,6 +154,7 @@ function share_data_cb(msg)
     println(argmax_belief(pomdp, beliefs_vector[msg.agent_id]))
 
     # Parse other agent's belief into the vector
+    read_transitions = Dict()
     for (key, val) in JSON.parse(msg.T)
         new_key = map(x->parse(Int64,x),split(key[2:end-1], ","))
         read_transitions[new_key] = val
@@ -196,7 +197,9 @@ function main(agent_id, rand_actions=false)
     # Read configuration
     config_file = expanduser("~/catkin_ws/src/apomdp/config/common.yaml")
     state_lut_file = expanduser("~/catkin_ws/src/apomdp/config/state_lut.yaml")
+    log_file = expanduser("~/catkin_ws/src/apomdp/results/$(start_time)_agent$(agent_id).yaml")
     println("Reading configuration from ", config_file)
+    println("Writing agent logs to ", log_file)
     config = YAML.load(open(config_file))
 
     # Parse configuration
@@ -283,7 +286,9 @@ function main(agent_id, rand_actions=false)
             )
 
         # Fuse new transition with everyone else's
+        println("Fusing transitions")
         fused_T = fuse_transitions(pomdp, transitions_vector)
+        pomdp.transition_matrix = fused_T
 
         # Solve
         if !rand_actions
@@ -334,7 +339,8 @@ function main(agent_id, rand_actions=false)
         beliefs_vector[agent_id] = update_belief(pomdp, index, action, beliefs_vector[agent_id], transitions_vector[agent_id])
 
         # Learn
-        transitions_vector[agent_id] = learn(pomdp, beliefs_vector[agent_id], action, previous_b, transitions_vector[agent_id])
+        #transitions_vector[agent_id] = learn(pomdp, beliefs_vector[agent_id], action, previous_b, transitions_vector[agent_id])
+        transitions_vector[agent_id] = observed_transitions
 
         # Publish something to "broadcast" topic
         # TODO: decide when to do this  

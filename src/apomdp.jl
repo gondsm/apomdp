@@ -91,9 +91,10 @@ end
 
 # Define a deterministic distribution from a simple state
 function apomdpDistribution(pomdp::aPOMDP, state::Array)
-    # TODO: change this to work with the new new state structure
     dist = ones(Float64, pomdp.state_structure...)/1000
-    dist[state...] = 1000
+    for s in state
+        dist[s] = 1000
+    end
     dist[:] = normalize(dist[:], 1)
     return apomdpDistribution(POMDPs.states(pomdp), dist)
 end
@@ -489,10 +490,35 @@ end
 
 
 function fuse_transitions(pomdp::aPOMDP, transition_vector)
-    println("Warning: transition fusion is returning bogus values!")
+    # Combine the observations from all agents
+    observed_transitions = Dict()
+    for (agent, trans) in transition_vector
+        if trans != nothing
+            for (key, state) in trans
+                try
+                    push!(observed_transitions[key], state)
+                catch KeyError
+                    observed_transitions[key] = []
+                    push!(observed_transitions[key], state)
+                end
+            end
+        end
+    end
 
-    # TODO
-    return nothing
+    # Convert them to a transition matrix and return it
+    return observations_to_transition_matrix(pomdp, observed_transitions)
+end
+
+
+function observations_to_transition_matrix(pomdp::aPOMDP, observed_transitions)
+    # Builds a matrix of apomdpDistribution, as necessary for policy calculation,
+    # from a dict of observed transitions
+    transition_matrix = Dict()
+    for (key, states) in observed_transitions
+        transition_matrix[key] = apomdpDistribution(pomdp, states)
+    end
+
+    return transition_matrix
 end
 
 
