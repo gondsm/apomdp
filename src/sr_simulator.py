@@ -401,6 +401,7 @@ def receive_action(req):
     rospy.loginfo("Updating world state!")
     global state
     state = transition(state, req.a.action, req.a.agent_id)
+    print("new state's index:", state_lut.index(state))
 
     # Update the connectivity
     global connection_matrix
