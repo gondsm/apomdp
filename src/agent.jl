@@ -182,9 +182,37 @@ function idx_to_state(idx, state_lut)
     return state_lut[idx]
 end
 
+# This function adds transitions to the agent's observed transitions
+function learn_from_folder(learning_folder, agent_id, state_lut)
+    println("Learning from folder: $learning_folder")
+    learning_files = [f for f in readdir(learning_folder) if contains(f, "sim_log.yaml")]
+    for file in learning_files
+        data = YAML.load(open(joinpath(learning_folder,file)))
+        trans = data["transitions"]
+        last_state = state_to_idx(data["initial_state"], state_lut)
+        for t in trans
+            action = t["action"]
+            final_state = state_to_idx(trans[1]["final_state"], state_lut)
+            if final_state == 0 || last_state == 0
+                println("ERROR: got an invalid state while learning from the folder!")
+            end
+            try
+                push!(observed_transitions[last_state, action], final_state)
+            catch BoundsError
+                observed_transitions[last_state, action] = []
+                push!(observed_transitions[last_state, action], final_state)
+            end
+            last_state = final_state
+        end
+        println("Loaded transitions from $file")
+    end
+
+    transitions_vector[agent_id] = observed_transitions
+
+end
 
 # And a main function
-function main(agent_id, rand_actions=false)
+function main(agent_id, rand_actions=false, learning_folder=nothing)
     # Initialize ROS node
     println("Initializing bPOMDP - agent_$(agent_id)")
     tic()
@@ -253,13 +281,18 @@ function main(agent_id, rand_actions=false)
     # All agents need to build aPOMDP structs that are the same, so that
     # they inform the aPOMDP primitives in the same way and ensure
     # consistency.
-    print("Creating aPOMDP object... ")
+    println("Creating aPOMDP object... ")
     global pomdp
     pomdp = aPOMDP(n_states, n_actions, get_v_s, state_lut)
 
     # Initialize this agent's belief
     beliefs_vector[agent_id] = initialize_belief(pomdp)
     transitions_vector[agent_id] = initialize_transitions(pomdp)
+
+    # Learn from a folder of log files
+    if learning_folder != nothing
+        learn_from_folder(learning_folder, agent_id, state_lut)
+    end
 
     # Subscribe to the agent's shared_data topic
     # Create publisher, and a subscriber 
@@ -339,6 +372,7 @@ function main(agent_id, rand_actions=false)
         # Get a reward as well
         push!(reward_history, get_reward(pomdp, index, action))
 
+        # Learn
         # Update the transition observation dict
         prev_state = argmax_belief(pomdp, beliefs_vector[agent_id])
         try
@@ -347,16 +381,14 @@ function main(agent_id, rand_actions=false)
             observed_transitions[prev_state, action] = []
             push!(observed_transitions[prev_state, action], index)
         end
+        #transitions_vector[agent_id] = learn(pomdp, beliefs_vector[agent_id], action, previous_b, transitions_vector[agent_id])
+        transitions_vector[agent_id] = observed_transitions
 
         # Update belief
         println("Updating local belief") 
         #TODO: rethink if we should use the local transition or the fused one
         previous_b = beliefs_vector[agent_id] # save the previous belief 
         beliefs_vector[agent_id] = update_belief(pomdp, index, action, beliefs_vector[agent_id], transitions_vector[agent_id])
-
-        # Learn
-        #transitions_vector[agent_id] = learn(pomdp, beliefs_vector[agent_id], action, previous_b, transitions_vector[agent_id])
-        transitions_vector[agent_id] = observed_transitions
 
         # Publish something to "broadcast" topic
         # TODO: decide when to do this  
@@ -400,9 +432,12 @@ else
 
     # Determine if we'll do random actions
     rand_actions = false
+    learning_folder = nothing
     try
         if ARGS[2] == "true"
             rand_actions = true
+        else
+            learning_folder = ARGS[2]
         end
     catch BoundsError
         println("WARNING: you can pass a second argument \"true\" to have the agents perform random actions.")
@@ -411,6 +446,6 @@ else
     if id < 1
         println("Agent indices start at 1.")
     else
-        main(id, rand_actions)
+        main(id, rand_actions, learning_folder)
     end
 end
