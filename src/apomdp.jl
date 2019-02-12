@@ -305,12 +305,11 @@ function POMDPs.transition(pomdp::aPOMDP, state::Array{Int64, 1}, action::Int64)
     append!(key, action)
     dist = nothing
     try
-        dist = copy(pomdp.transition_matrix[key])
-    catch
-        dist = ones(Float64, pomdp.state_structure...)/1000
+        dist = pomdp.transition_matrix[key]
+    catch ex
+        dist = apomdpDistribution(pomdp)
     end
-    dist[:] = normalize(dist[:], 1)
-    return apomdpDistribution(POMDPs.states(pomdp), dist)
+    return dist
 end
 
 function POMDPs.transition(pomdp::aPOMDP, state::Int64, action::Int64)
@@ -492,18 +491,22 @@ end
 function fuse_transitions(pomdp::aPOMDP, transition_vector)
     # Combine the observations from all agents
     observed_transitions = Dict()
+    i = 0
     for (agent, trans) in transition_vector
         if trans != nothing
             for (key, state) in trans
                 try
-                    push!(observed_transitions[key], state)
+                    append!(observed_transitions[key], state)
+                    i+=length(state)
                 catch KeyError
                     observed_transitions[key] = []
-                    push!(observed_transitions[key], state)
+                    append!(observed_transitions[key], state)
+                    i+=length(state)
                 end
             end
         end
     end
+    println("Fused a total of $i transitions")
 
     # Convert them to a transition matrix and return it
     return observations_to_transition_matrix(pomdp, observed_transitions)
