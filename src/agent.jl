@@ -186,6 +186,7 @@ end
 function learn_from_folder(learning_folder, agent_id, state_lut)
     println("Learning from folder: $learning_folder")
     learning_files = [f for f in readdir(learning_folder) if contains(f, "sim_log.yaml")]
+    n_learned = 0
     for file in learning_files
         data = YAML.load(open(joinpath(learning_folder,file)))
         trans = data["transitions"]
@@ -198,14 +199,18 @@ function learn_from_folder(learning_folder, agent_id, state_lut)
             end
             try
                 push!(observed_transitions[last_state, action], final_state)
+                n_learned += 1
             catch BoundsError
                 observed_transitions[last_state, action] = []
                 push!(observed_transitions[last_state, action], final_state)
+                n_learned += 1
             end
             last_state = final_state
         end
         println("Loaded transitions from $file")
     end
+
+    println("Learned $n_learned transitions from file.")
 
     transitions_vector[agent_id] = observed_transitions
 
@@ -308,6 +313,7 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
     println("Going into execution loop!")
     iter = 0
     service_active = true
+    policy = nothing
     while ! is_shutdown() && service_active
         # Inform
         println("Iteration $iter")
@@ -333,7 +339,7 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
         append!(entropy_history, calc_average_entropy(pomdp))
 
         # Solve
-        if !rand_actions
+        if !rand_actions && learning_folder == nothing || policy == nothing && learning_folder != nothing
             println("Calculating new policy")
             tic()
             policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
@@ -342,6 +348,28 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
         else
             calculate_reward_matrix(pomdp)
         end
+
+        # println("POLICY")
+        # println(policy)
+        # println()
+        # println("V_S")
+        # println(pomdp.state_values)
+        # println()
+        # println("FUSED TRANSITIONS")
+        # println(fused_T)
+        # println()
+        # println("TRANSITIONS")
+        # println(pomdp.transition_matrix)
+        # println()
+        # println("OBSERVED TRANSITIONS")
+        # println(observed_transitions)
+        # println()
+        # println("KNOWN KEYS IN MAIN:")
+        # println(keys(pomdp.transition_matrix))
+        # println()
+        # println("REWARDS")
+        # println(pomdp.reward_matrix)
+        # println()
 
         # Call fuse belief function
         println("Fusing beliefs")
@@ -376,10 +404,10 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
         # Update the transition observation dict
         prev_state = argmax_belief(pomdp, beliefs_vector[agent_id])
         try
-            push!(observed_transitions[prev_state, action], index)
+            push!(observed_transitions[[prev_state, action]], index)
         catch KeyError
-            observed_transitions[prev_state, action] = []
-            push!(observed_transitions[prev_state, action], index)
+            observed_transitions[[prev_state, action]] = []
+            push!(observed_transitions[[prev_state, action]], index)
         end
         #transitions_vector[agent_id] = learn(pomdp, beliefs_vector[agent_id], action, previous_b, transitions_vector[agent_id])
         transitions_vector[agent_id] = observed_transitions
