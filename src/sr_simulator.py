@@ -314,24 +314,26 @@ def transition(state, action, agent_id):
     # If action is put out fire
     # [fire, victim, path, <move to node i>]
     if action == 0:
+        print("ERROR: received a 0 action. This should not happen.")
+    if action == 1:
         # If there is fire in the current position, it gets put out
         if state["World"][node][0] == 1:
             new_state["World"][node][0] = 0
     # If action is remove debris
-    elif action == 1:
+    elif action == 2:
         # If there is a person in the current position, they get removed
         if state["World"][node][1] == 1:
             new_state["World"][node][1] = 0
     # If action is extract person
-    elif action == 2:
+    elif action == 3:
         # If there is debris in the current position, they get extracted
         if state["World"][node][2] == 1:
             new_state["World"][node][2] = 0
     # If action is move
-    elif action > 2:
+    elif action > 3:
         # If the agent wants to move, we move it.
         # (pomdp costs should avoid illegal movement)
-        new_node = action - 2
+        new_node = action - 3
         new_state["Agents"][agent_id][0] = new_node
 
     print("agent in node: ", state["Agents"][agent_id])
