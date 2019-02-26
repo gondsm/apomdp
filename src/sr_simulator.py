@@ -137,6 +137,8 @@ def initialize_system(common_data_filename, problem_config_filename, lut_filenam
     global agent_abilities
     agent_abilities = common_data["agent_abilities"]
 
+    n_agents = len(common_data["agent_abilities"])
+
     global n_actions
     n_actions = len(node_connectivity) + len(agent_abilities[1])
 
@@ -163,7 +165,17 @@ def initialize_system(common_data_filename, problem_config_filename, lut_filenam
     # And save it to the appropriate file
     with open(lut_filename, "w") as lut_outfile:
         lut_outfile.write(yaml.dump(state_lut, default_flow_style=False))
-    print("LUT Generated!")
+    print("LUT generated!")
+
+    # Generate pre-learning data
+    print("Generating pre-learning data")
+    pre_learn = generate_pre_learn(state_lut, n_actions, n_agents)
+
+    # And save it to the appropriate file
+    for key in pre_learn:
+        with open(pre_learning_filename.format(key), "w") as pre_outfile:
+            pre_outfile.write(yaml.dump(pre_learn[key], default_flow_style=False))
+    print("Pre-learning data generated!")
 
 
 def generate_state_lut(state):
@@ -216,6 +228,29 @@ def generate_state_lut(state):
 
     print("Ended with {} full states.".format(len(states)))
     return states
+
+
+def generate_pre_learn(state_lut, n_actions, n_agents):
+    transitions = dict()
+    for agent in range(1, n_agents+1):
+        observed_transitions = dict()
+        for state in state_lut:
+            for action in range(1, n_actions+1):
+                # Transition to the new state
+                state_prime = transition(state, action, agent)
+
+                # Get state indices
+                state_idx = state_lut.index(state)+1
+                state_prime_idx = state_lut.index(state_prime)+1
+                
+                # Introduce into the dict
+                # Key as a string to ensure that YAML doesn't complain
+                key = "{}, {}".format(state_idx, action)
+                observed_transitions[key] = state_prime_idx
+        transitions[agent] = observed_transitions
+
+    return transitions
+
 
 
 def calc_connection_matrix(state, c):
@@ -443,6 +478,7 @@ if __name__ == "__main__":
     common_filename = rospack.get_path('apomdp') + "/config/common.yaml"
     problem_filename = rospack.get_path('apomdp') + "/config/problem.yaml"
     lut_filename = rospack.get_path('apomdp') + "/config/state_lut.yaml"
+    pre_learning_filename = rospack.get_path('apomdp') + "/config/pre_learning_{}.yaml"
     initialize_system(common_filename, problem_filename, lut_filename)
 
     # Define log file location
