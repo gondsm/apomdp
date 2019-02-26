@@ -50,7 +50,7 @@ function get_v_s(state, state_lut)
     # Calculate the state's value
     value = 0
     for node in keys(bpomdp_state["World"])
-        value -= sum(bpomdp_state["World"][node])
+        value -= 10*sum(bpomdp_state["World"][node])
     end
 
     # And return it
@@ -294,8 +294,21 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
     beliefs_vector[agent_id] = initialize_belief(pomdp)
     transitions_vector[agent_id] = initialize_transitions(pomdp)
 
+    
+
     # Learn from a folder of log files
-    if learning_folder != nothing
+    pre_learn_file = nothing
+    if learning_folder != nothing && learning_folder == "pre_learn"
+        println("Reading from pre-learning file:")
+        pre_learn_file = expanduser("~/catkin_ws/src/apomdp/config/pre_learning_$agent_id.yaml")
+        println(pre_learn_file)
+        pre_learn = YAML.load(open(pre_learn_file))
+        for (key, val) in pre_learn
+            new_key = map(x->parse(Int64,x),split(key, ", "))
+            observed_transitions[new_key] = val
+        end
+        transitions_vector[agent_id] = observed_transitions
+    elseif learning_folder != nothing
         learn_from_folder(learning_folder, agent_id, state_lut)
     end
 
@@ -339,7 +352,7 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
         append!(entropy_history, calc_average_entropy(pomdp))
 
         # Solve
-        if !rand_actions && learning_folder == nothing || policy == nothing && learning_folder != nothing
+        if !rand_actions && learning_folder == nothing && pre_learn_file == nothing || policy == nothing && (learning_folder != nothing || pre_learn_file != nothing)
             println("Calculating new policy")
             tic()
             policy = get_policy(pomdp, fused_T, c_vector, get_v_s)
