@@ -224,9 +224,6 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
     init_node("agent_$(agent_id)")
     start_time = now()
 
-    # Create the service client object
-    service_client = ServiceProxy{Act}("act")
-
     # Read configuration
     config_file = expanduser("~/catkin_ws/src/apomdp/config/common.yaml")
     state_lut_file = expanduser("~/catkin_ws/src/apomdp/config/state_lut.yaml")
@@ -253,6 +250,13 @@ function main(agent_id, rand_actions=false, learning_folder=nothing)
     println("\tnode_locations: ", node_locations)
     println("\tnode_connectivity: ", node_connectivity)
     println("\tagent_abilities: ", agent_abilities)
+
+    # Wait for the simulator to do irs thing and update the files
+    println("Waiting for simulator...")
+    wait_for_service("act")
+
+    # Create the service client object
+    service_client = ServiceProxy{Act}("act")
 
     # Read state LUT
     println("Reading state LUT from ", state_lut_file)

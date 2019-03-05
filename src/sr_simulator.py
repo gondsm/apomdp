@@ -237,7 +237,7 @@ def generate_pre_learn(state_lut, n_actions, n_agents):
         for state in state_lut:
             for action in range(1, n_actions+1):
                 # Transition to the new state
-                state_prime = transition(state, action, agent)
+                state_prime = transition(state, action, agent, silent=True)
 
                 # Get state indices
                 state_idx = state_lut.index(state)+1
@@ -335,7 +335,7 @@ def generate_observation(state, action, agent, noisy=True):
     return obs
 
 
-def transition(state, action, agent_id):
+def transition(state, action, agent_id, silent=False):
     """ Updates the state of the world according to the action that
     was received. Returns the updated state of the world.
     """
@@ -371,9 +371,10 @@ def transition(state, action, agent_id):
         new_node = action - 3
         new_state["Agents"][agent_id][0] = new_node
 
-    print("agent in node: ", state["Agents"][agent_id])
-    print("action taken:", action)
-    print("new state: ", new_state["Agents"][agent_id])
+    if not silent:
+        print("agent in node: ", state["Agents"][agent_id])
+        print("action taken:", action)
+        print("new state: ", new_state["Agents"][agent_id])
 
     # Return the newly-constructed state
     return new_state
