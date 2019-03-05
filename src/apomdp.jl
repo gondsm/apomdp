@@ -659,9 +659,8 @@ function log_execution(out_file,
     for (state, val) in v_s[1]
         #write(out_file, "    ? !!python/tuple\n")
         #for i in state
-        write(out_file, "    - $(state)\n")
+        write(out_file, "    $(state[1]): $(val)\n")
         #end
-        write(out_file, "    : $(val)\n")
     end
     # The timeseries of action the system took
     write(out_file, "  actions:\n")
